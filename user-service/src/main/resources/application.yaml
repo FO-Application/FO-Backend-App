@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: user-service
+
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${USER_DB_NAME:fo_user_db}
+    username: ${USER_DB_USERNAME:user_user}
+    password: ${USER_DB_PASSWORD:user1012}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 60000
+
+  jpa:
+    open-in-view: true
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jws-algorithm: HS512
+
+server:
+  port: ${USER_SERVICE_PORT:8081}
+  error:
+    include-message: always
+    include-binding-error: always
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expiration: 900
+  refresh-token-expiration: 604800

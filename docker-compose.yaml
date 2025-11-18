@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  # --- 1. MySQL Service ---
+  mysql-db:
+    image: mysql:8.0
+    container_name: fo-mysql
+    ports:
+      - "${MYSQL_PORT}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE_NAME}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - fo-network
+
+  # --- 2. Redis Service ---
+  redis-cache:
+    image: redis:alpine
+    container_name: fo-redis
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - fo-network
+
+  # --- 3. Discovery Service ---
+  discovery-service:
+    image: discovery-service:latest
+    build: ./discovery-server
+    container_name: fo-discovery-server
+    ports:
+      - "8761:8761" # Hard-code 8761 là OK
+    networks:
+      - fo-network
+
+  # --- 4. User Service ---
+  user-service:
+    image: user-service:latest
+    build: ./user-service
+    container_name: fo-user-service
+    ports:
+      - "${USER_SERVICE_PORT}:${USER_SERVICE_PORT}" # Map Port Host:Container
+    env_file:
+      - .env
+    environment:
+      # Cấu hình Eureka
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka
+
+      # --- FIX QUAN TRỌNG: Ép Spring Boot dùng chung user ROOT để tránh lỗi permission ---
+      USER_DB_USERNAME: root
+      USER_DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      USER_DB_NAME: ${MYSQL_DATABASE_NAME}
+      # Đảm bảo Spring Boot nhận đúng Port từ .env
+      USER_SERVICE_PORT: ${USER_SERVICE_PORT}
+    depends_on:
+      - mysql-db
+      - discovery-service
+    networks:
+      - fo-network
+
+  # --- 5. API Gateway ---
+  api-gateway:
+    image: api-gateway:latest
+    build: ./api-gateway
+    container_name: fo-api-gateway
+    ports:
+      - "${GATEWAY_PORT}:${GATEWAY_PORT}"
+    env_file:
+      - .env
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka
+    depends_on:
+      - discovery-service
+    networks:
+      - fo-network
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  fo-network:
+    driver: bridge

@@ -1,0 +1,34 @@
+server:
+  port: ${GATEWAY_PORT}
+
+spring:
+  application:
+    name: api-gateway
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jws-algorithm: HS512
+
+  cloud:
+    gateway:
+      routes:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/v1/users/**
+        - id: auth-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/v1/auth/**
+
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    service-url:
+      default-zone: http://localhost:8761/eureka
+
+jwt:
+  secret: ${JWT_SECRET}

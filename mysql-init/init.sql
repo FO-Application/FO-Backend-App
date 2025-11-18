@@ -1,0 +1,33 @@
+-- CHỈ CHẠY LẦN ĐẦU KHI CONTAINER ĐƯỢC TẠO
+-- 1. Tạo các Database
+CREATE DATABASE IF NOT EXISTS `fo_user_db`;
+CREATE DATABASE IF NOT EXISTS `fo_restaurant_db`;
+CREATE DATABASE IF NOT EXISTS `fo_order_db`;
+CREATE DATABASE IF NOT EXISTS `fo_payment_db`;
+CREATE DATABASE IF NOT EXISTS `fo_ship_order_db`;
+CREATE DATABASE IF NOT EXISTS `fo_notification_db`;
+
+-- 2. Tạo User riêng cho mỗi Service (Bảo mật)
+-- Thay 'MatKhauServiceChung123' bằng một mật khẩu BÍ MẬT
+-- Đây là mật khẩu các service sẽ dùng để kết nối, KHÔNG PHẢI mật khẩu 'root'
+
+CREATE USER 'user_user'@'%' IDENTIFIED BY 'user1012';
+GRANT ALL ON `fo_user_db`.* TO 'user_user'@'%';
+
+CREATE USER 'restaurant_user'@'%' IDENTIFIED BY 'res1012';
+GRANT ALL ON `fo_restaurant_db`.* TO 'restaurant_user'@'%';
+
+CREATE USER 'order_user'@'%' IDENTIFIED BY 'order1012';
+GRANT ALL ON `fo_order_db`.* TO 'order_user'@'%';
+
+CREATE USER 'payment_user'@'%' IDENTIFIED BY 'pay1012';
+GRANT ALL ON `fo_payment_db`.* TO 'payment_user'@'%';
+
+CREATE USER 'ship_order_user'@'%' IDENTIFIED BY 'ship1012';
+GRANT ALL ON `fo_ship_order_db`.* TO 'ship_order_user'@'%';
+
+CREATE USER 'notification_user'@'%' IDENTIFIED BY 'not1012';
+GRANT ALL ON `fo_notification_db`.* TO 'notification_user'@'%';
+
+-- 3. Áp dụng các thay đổi
+FLUSH PRIVILEGES;
