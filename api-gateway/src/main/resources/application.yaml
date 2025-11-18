@@ -9,26 +9,30 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          jws-algorithm: HS512
+          jws-algorithms: HS512
 
   cloud:
     gateway:
-      routes:
-        - id: user-service
-          uri: lb://user-service
-          predicates:
-            - Path=/api/v1/users/**
-        - id: auth-service
-          uri: lb://user-service
-          predicates:
-            - Path=/api/v1/auth/**
+      server:
+        webflux:
+          routes:
+            - id: user-service
+              uri: lb://user-service
+              predicates:
+                - Path=/api/v1/user/**
+            - id: auth-service
+              uri: lb://user-service
+              predicates:
+                - Path=/api/v1/auth/**
 
 eureka:
   instance:
     prefer-ip-address: true
   client:
+    register-with-eureka: true
+    fetch-registry: true
     service-url:
-      default-zone: http://localhost:8761/eureka
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka/}
 
 jwt:
   secret: ${JWT_SECRET}

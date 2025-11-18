@@ -20,7 +20,7 @@ public class SecurityConfig {
     @Value("${jwt.secret}")
     protected String SECRET_KEY;
 
-    @Value("${spring.security.oauth2.resourceserver.jwt.jws-algorithm}")
+    @Value("${spring.security.oauth2.resourceserver.jwt.jws-algorithms}")
     protected String ALGORITHM;
 
     @Bean
@@ -30,6 +30,7 @@ public class SecurityConfig {
                 .authorizeExchange(exchange -> exchange
                         // Cho phép các endpoint public của user-service
                         .pathMatchers("/api/v1/auth/**").permitAll()
+                        .pathMatchers("/api/v1/user/**").permitAll()
                         .pathMatchers("/eureka/**").permitAll()
                         // Tất cả các request khác phải được xác thực
                         .anyExchange().authenticated())

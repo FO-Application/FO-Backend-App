@@ -42,19 +42,20 @@ services:
     build: ./user-service
     container_name: fo-user-service
     ports:
-      - "${USER_SERVICE_PORT}:${USER_SERVICE_PORT}" # Map Port Host:Container
+      - "${USER_SERVICE_PORT}:${USER_SERVICE_PORT}"
     env_file:
       - .env
     environment:
-      # Cấu hình Eureka
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka
+      EUREKA_URI: http://fo-discovery-server:8761/eureka
+      MYSQL_HOST: fo-mysql
+      MYSQL_PORT: 3306
 
-      # --- FIX QUAN TRỌNG: Ép Spring Boot dùng chung user ROOT để tránh lỗi permission ---
+      # Các biến DB khác
       USER_DB_USERNAME: root
       USER_DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       USER_DB_NAME: ${MYSQL_DATABASE_NAME}
-      # Đảm bảo Spring Boot nhận đúng Port từ .env
       USER_SERVICE_PORT: ${USER_SERVICE_PORT}
+
     depends_on:
       - mysql-db
       - discovery-service
@@ -71,7 +72,7 @@ services:
     env_file:
       - .env
     environment:
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka
+      EUREKA_URI: http://fo-discovery-server:8761/eureka
     depends_on:
       - discovery-service
     networks:
