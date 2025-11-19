@@ -1,23 +1,22 @@
-# --- GIAI ĐOẠN 1: BUILD (Dùng Maven để đóng gói JAR) ---
-# Dùng image có sẵn Maven và JDK
+# --- GIAI ĐOẠN 1: BUILD ---
 FROM maven:3.9.6-eclipse-temurin-21-alpine AS build
-
-# Tạo thư mục làm việc
 WORKDIR /app
 
-# Copy toàn bộ source code vào trong Docker (bao gồm pom.xml và src)
-COPY . .
+# 1. CHỈ Copy file pom.xml vào trước
+COPY pom.xml .
 
-# Chạy lệnh build ngay bên trong Docker
+# 2. Tải thư viện về (Bước này sẽ được Docker CACHE lại nếu pom.xml không đổi)
+# Lệnh này chỉ tải thư viện, không build code
+RUN mvn dependency:go-offline
+
+# 3. Bây giờ mới Copy source code vào
+COPY src ./src
+
+# 4. Build (Lúc này đã có sẵn thư viện, chỉ việc compile code thôi -> Rất nhanh)
 RUN mvn clean package -DskipTests -Dfile.encoding=UTF-8
 
-# --- GIAI ĐOẠN 2: RUN (Chỉ lấy file JAR để chạy cho nhẹ) ---
+# --- GIAI ĐOẠN 2: RUN (Giữ nguyên) ---
 FROM eclipse-temurin:21-jdk-alpine
-
 WORKDIR /app
-
-# Copy file JAR từ "GIAI ĐOẠN 1" sang đây
-# Lưu ý: đường dẫn target/*.jar phải khớp với cấu trúc maven
 COPY --from=build /app/target/*.jar app.jar
-
 ENTRYPOINT ["java", "-jar", "app.jar"]
