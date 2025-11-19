@@ -14,6 +14,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -27,32 +28,25 @@ import java.util.StringJoiner;
 import java.util.UUID;
 
 @Service
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
+@RequiredArgsConstructor
 @Slf4j
-@Builder
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class JwtService implements IJwtService {
 
     InvalidatedTokenRepository invalidatedTokenRepository;
     UserRepository userRepository;
 
+    @NonFinal
     @Value("${jwt.secret}")
     protected String SECRET_KEY;
 
+    @NonFinal
     @Value("${jwt.access-token-expiration}")
     protected int ACCESS_TOKEN_EXPIRATION;
 
+    @NonFinal
     @Value("${jwt.refresh-token-expiration}")
     protected int REFRESH_TOKEN_EXPIRATION;
-
-    public JwtService(InvalidatedTokenRepository invalidatedTokenRepository,
-                      UserRepository userRepository) {
-        this.invalidatedTokenRepository = invalidatedTokenRepository;
-        this.userRepository = userRepository;
-    }
 
 
     private String generateToken(User user, long expiration, String tokenType) {
@@ -91,6 +85,10 @@ public class JwtService implements IJwtService {
 
     @Override
     public SignedJWT verifyToken(String token, String type) throws JOSEException, ParseException {
+        if (token == null || token.trim().isEmpty()) {
+            throw new AppException(AppCode.UNAUTHENTICATED);
+        }
+
         //Kí với chữ kí bảo mật của hệ thống
         JWSVerifier verifier = new MACVerifier(SECRET_KEY.getBytes());
         SignedJWT signedJWT = SignedJWT.parse(token);
@@ -142,7 +140,10 @@ public class JwtService implements IJwtService {
         String jwtId = signedJWT.getJWTClaimsSet().getJWTID();
         Date expirationTime = signedJWT.getJWTClaimsSet().getExpirationTime();
 
+
         long timeLeftBySeconds = (expirationTime.getTime() - System.currentTimeMillis()) / 1000;
+
+        log.info("Time left: {}", timeLeftBySeconds);
         if (timeLeftBySeconds <= 0) {
             log.info("Token đã hết hạn, không cần add vào black list");
             return;
@@ -153,6 +154,7 @@ public class JwtService implements IJwtService {
         invalidatedToken.setExpiredTime(timeLeftBySeconds);
 
         invalidatedTokenRepository.save(invalidatedToken);
+        log.info("Đã gọi lệnh Save vào Redis với ID: {}", jwtId);
     }
 
     //Helper method

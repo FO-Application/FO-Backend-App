@@ -18,6 +18,6 @@ public class InvalidatedToken {
     @Id
     String jwtId;
 
-    @TimeToLive(unit = TimeUnit.MINUTES)
+    @TimeToLive(unit = TimeUnit.SECONDS)
     long expiredTime;
 }

@@ -50,6 +50,8 @@ services:
       MYSQL_HOST: fo-mysql
       MYSQL_PORT: 3306
 
+      REDIS_HOST: redis-cache
+      REDIS_PORT: 6379
       # Các biến DB khác
       USER_DB_USERNAME: root
       USER_DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
