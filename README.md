@@ -1,64 +1,68 @@
-# 🛠️ Hướng dẫn Build & Chạy Dự án (Food Ordering Backend)
+# 🛠️ Food Ordering Backend - Developer Guide
 
-Tài liệu này hướng dẫn chi tiết cách **build code bằng Maven** và **triển khai hệ thống bằng Docker** dành cho môi trường Development.
+Tài liệu hướng dẫn chi tiết quy trình **Build (Maven)** và **Deploy (Docker)** dành cho môi trường Development.
 
-## 📋 1. Tiền đề (Prerequisites)
+---
 
-Bạn cần chuẩn bị trước:
+## 📋 1. Yêu cầu hệ thống (Prerequisites)
 
-- **Java JDK:** 21 trở lên
-- **Maven:** hoặc dùng `mvnw` có sẵn
-- **Docker & Docker Desktop:** đang chạy bình thường
+Trước khi bắt đầu, hãy đảm bảo máy của bạn đã cài đặt:
+
+- **Java JDK:** Phiên bản 21 trở lên.
+- **Maven:** Đã cài đặt (hoặc sử dụng `mvnw` từ project).
+- **Docker & Docker Desktop:** Đang chạy ổn định.
 
 ---
 
 ## 🚧 2. Build Code (Maven)
 
-Trước khi chạy Docker, bạn **bắt buộc** phải build code Java thành file `.jar` mới nhất.
+Trước khi chạy Docker, bạn **bắt buộc** phải build code Java thành file `.jar`.
 
-### 🟢 Cách 1 – Build toàn bộ project (Khuyên dùng)
+### 🟢 Cách 1: Build Chuẩn (Khuyên dùng hằng ngày)
 
-Chạy trong Terminal tại thư mục gốc:
-
-```
+```powershell
+# Chạy tại thư mục gốc
 .\mvnw clean package -DskipTests -Dfile.encoding=UTF-8
-
-# Hoặc dùng Maven trên máy
-mvn clean package -DskipTests -Dfile.encoding=UTF-8
 ```
 
-### 🟡 Cách 2 – Build chỉ một microservice
+### 🔴 Cách 2: Force Re-build (Khi đổi dependency hoặc lỗi thư viện)
 
+```powershell
+.\mvnw clean install -U -DskipTests -Dfile.encoding=UTF-8
 ```
+
+### 🟡 Cách 3: Build riêng lẻ một Service
+
+```powershell
 cd user-service
 ..\mvnw clean package -DskipTests -Dfile.encoding=UTF-8
 ```
 
 ---
 
-## 🐳 3. Chạy Docker
+## 🐳 3. Chạy Docker (Deployment)
 
-### 🚀 Khởi động hệ thống
+### 🚀 Khởi động toàn bộ hệ thống
 
-```
+```powershell
 docker-compose up -d --build
 ```
 
-### 🔄 Khởi động lại một service cụ thể
+### 🔄 Cập nhật code cho 1 Service cụ thể
 
-```
-docker-compose up -d --build user-service
+```powershell
+docker-compose up -d --build --force-recreate user-service
 ```
 
 ### 🛑 Dừng hệ thống
 
-```
+```powershell
 docker-compose stop
 ```
 
-### 🧹 Reset Database
+### 🧹 Reset sạch Database & Cache (Cẩn thận!)
 
-```
+```powershell
 docker-compose down -v
 ```
 
@@ -66,20 +70,26 @@ docker-compose down -v
 
 ## ⚠️ 4. Lỗi thường gặp & Cách xử lý nhanh
 
-### 1. Gateway 503
+### 🛑 1. Gateway 503
 
-```
+```powershell
 docker restart fo-api-gateway
 ```
 
-### 2. TLS handshake timeout
+### 🛑 2. TLS handshake timeout
 
-=> Restart Docker Desktop và chạy lại.
+→ Restart Docker Desktop và chạy lại lệnh.
 
-### 3. JDBC connection failed
+### 🛑 3. JDBC Connection Failed
 
-```
+```powershell
 docker restart fo-user-service
+```
+
+### 🛑 4. Redis không lưu dữ liệu
+
+```powershell
+docker-compose up -d --force-recreate user-service
 ```
 
 ---

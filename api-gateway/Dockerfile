@@ -1,12 +1,23 @@
-# 1. Dùng Java 21 (Phù hợp với project của bạn)
-FROM eclipse-temurin:21-jdk-alpine
+# --- GIAI ĐOẠN 1: BUILD (Dùng Maven để đóng gói JAR) ---
+# Dùng image có sẵn Maven và JDK
+FROM maven:3.9.6-eclipse-temurin-21-alpine AS build
 
-# 2. Tạo thư mục làm việc
+# Tạo thư mục làm việc
 WORKDIR /app
 
-# 3. Copy file JAR vào container
-# Vì file này nằm trong thư mục code nào, nó sẽ tự tìm folder /target của thư mục đó
-COPY target/*.jar app.jar
+# Copy toàn bộ source code vào trong Docker (bao gồm pom.xml và src)
+COPY . .
 
-# 4. Chạy
+# Chạy lệnh build ngay bên trong Docker
+RUN mvn clean package -DskipTests -Dfile.encoding=UTF-8
+
+# --- GIAI ĐOẠN 2: RUN (Chỉ lấy file JAR để chạy cho nhẹ) ---
+FROM eclipse-temurin:21-jdk-alpine
+
+WORKDIR /app
+
+# Copy file JAR từ "GIAI ĐOẠN 1" sang đây
+# Lưu ý: đường dẫn target/*.jar phải khớp với cấu trúc maven
+COPY --from=build /app/target/*.jar app.jar
+
 ENTRYPOINT ["java", "-jar", "app.jar"]
