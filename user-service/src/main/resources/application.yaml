@@ -8,6 +8,9 @@ spring:
     password: ${USER_DB_PASSWORD:user1012}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  cache:
+    type: redis
+
   data:
     redis:
       host: ${REDIS_HOST:localhost}
