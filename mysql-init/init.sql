@@ -5,7 +5,6 @@ CREATE DATABASE IF NOT EXISTS `fo_restaurant_db`;
 CREATE DATABASE IF NOT EXISTS `fo_order_db`;
 CREATE DATABASE IF NOT EXISTS `fo_payment_db`;
 CREATE DATABASE IF NOT EXISTS `fo_ship_order_db`;
-CREATE DATABASE IF NOT EXISTS `fo_notification_db`;
 
 -- 2. Tạo User riêng cho mỗi Service (Bảo mật)
 -- Thay 'MatKhauServiceChung123' bằng một mật khẩu BÍ MẬT
@@ -25,9 +24,6 @@ GRANT ALL ON `fo_payment_db`.* TO 'payment_user'@'%';
 
 CREATE USER 'ship_order_user'@'%' IDENTIFIED BY 'ship1012';
 GRANT ALL ON `fo_ship_order_db`.* TO 'ship_order_user'@'%';
-
-CREATE USER 'notification_user'@'%' IDENTIFIED BY 'not1012';
-GRANT ALL ON `fo_notification_db`.* TO 'notification_user'@'%';
 
 -- 3. Áp dụng các thay đổi
 FLUSH PRIVILEGES;

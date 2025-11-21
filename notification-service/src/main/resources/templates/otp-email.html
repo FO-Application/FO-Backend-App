@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Mã Xác Thực OTP</title>
+    <style>
+        /* Reset CSS */
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 40px auto;
+            background: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        /* Header phong cách App Food */
+        .header {
+            background-color: #00B14F; /* Màu xanh đặc trưng kiểu Grab/Food App */
+            padding: 30px 20px;
+            text-align: center;
+            color: white;
+        }
+
+        .app-logo {
+            font-size: 40px;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .content {
+            padding: 30px;
+            text-align: center;
+        }
+
+        .greeting {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        /* Box chứa OTP cách điệu */
+        .otp-wrapper {
+            background-color: #f7fff9;
+            border: 2px dashed #00B14F;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 0 auto 25px auto;
+            width: fit-content;
+            min-width: 200px;
+        }
+
+        .otp-label {
+            color: #00B14F;
+            font-size: 12px;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .otp-code {
+            font-size: 42px;
+            font-weight: 800;
+            color: #1c1c1c;
+            letter-spacing: 8px;
+            line-height: 1;
+        }
+
+        /* Banner quảng cáo nhỏ (tạo cảm giác app food) */
+        .food-banner {
+            margin: 20px 0;
+            font-size: 14px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .warning {
+            background: #fff8e1;
+            color: #b76e00;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            text-align: left;
+            margin-top: 20px;
+            border-left: 4px solid #ffc107;
+        }
+
+        .footer {
+            background-color: #f9f9f9;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+            border-top: 1px solid #eee;
+        }
+
+        .footer a {
+            color: #00B14F;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="app-logo">🛵🍔</div> <h1>FO FOOD DELIVERY</h1>
+        <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.9;">Món ngon nóng hổi đang chờ bạn!</p>
+    </div>
+
+    <div class="content">
+        <p class="greeting">
+            Xin chào thực khách,<br>
+            Để hoàn tất yêu cầu <strong style="color: #00B14F;" th:text="${action}"></strong>, vui lòng nhập mã xác thực bên dưới vào ứng dụng:
+        </p>
+
+        <div class="otp-wrapper">
+            <div class="otp-label">Mã OTP Của Bạn</div>
+            <div class="otp-code" th:text="${otpCode}">123456</div>
+        </div>
+
+        <div class="food-banner">
+            🍽️ "Có thực mới vực được đạo" - Xác thực ngay để đặt món nhé!
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Lưu ý bảo mật:</strong>
+            <ul style="margin: 5px 0 0 0; padding-left: 20px;">
+                <li>Mã này có hiệu lực trong <strong>5 phút</strong>.</li>
+                <li>Tuyệt đối không chia sẻ mã cho tài xế hay bất kỳ ai khác.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Đây là email tự động, vui lòng không trả lời.</p>
+        <p>
+            Cần hỗ trợ? Liên hệ <a href="#">Trung tâm trợ giúp</a><br>
+            © 2025 FO Food Project - Đồ án tốt nghiệp
+        </p>
+    </div>
+</div>
+</body>
+</html>

@@ -2,7 +2,6 @@ package com.fo_product.user_service.controllers;
 
 import com.fo_product.user_service.resources.APIResponse;
 import com.fo_product.user_service.resources.requests.UserPatchRequest;
-import com.fo_product.user_service.resources.requests.UserRequest;
 import com.fo_product.user_service.resources.responses.UserResponse;
 import com.fo_product.user_service.services.interfaces.IUserService;
 import jakarta.validation.Valid;
@@ -18,15 +17,6 @@ import org.springframework.web.bind.annotation.*;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class UserController {
     IUserService userService;
-
-    @PostMapping
-    APIResponse<UserResponse> create(@Valid @RequestBody UserRequest request) {
-        UserResponse response = userService.createUser(request);
-        return APIResponse.<UserResponse>builder()
-                .result(response)
-                .message("Create user success")
-                .build();
-    }
 
     @PutMapping("/{userId}")
     APIResponse<UserResponse> update(

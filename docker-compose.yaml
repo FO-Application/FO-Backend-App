@@ -1,7 +1,37 @@
 version: '3.8'
 
 services:
-  # --- 1. MySQL Service ---
+  # --- 1. Zookeeper Service ---
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.4
+    container_name: fo-zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - fo-network
+
+  # --- 2. Kafka Service ---
+  kafka:
+    image: confluentinc/cp-kafka:7.4.4
+    container_name: fo-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: fo-zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      # [QUAN TRỌNG] Sửa localhost thành fo-kafka để các service trong Docker nhìn thấy nhau
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://fo-kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+    networks:
+      - fo-network
+
+  # --- 3. MySQL Service ---
   mysql-db:
     image: mysql:8.0
     container_name: fo-mysql
@@ -15,7 +45,7 @@ services:
     networks:
       - fo-network
 
-  # --- 2. Redis Service ---
+  # --- 4. Redis Service ---
   redis-cache:
     image: redis:alpine
     container_name: fo-redis
@@ -26,20 +56,20 @@ services:
     networks:
       - fo-network
 
-  # --- 3. Discovery Service ---
+  # --- 5. Discovery Service ---
   discovery-service:
     image: discovery-service:latest
-    build: ./discovery-server
+    build: discovery-server
     container_name: fo-discovery-server
     ports:
-      - "8761:8761" # Hard-code 8761 là OK
+      - "8761:8761"
     networks:
       - fo-network
 
-  # --- 4. User Service ---
+  # --- 6. User Service ---
   user-service:
     image: user-service:latest
-    build: ./user-service
+    build: user-service
     container_name: fo-user-service
     ports:
       - "${USER_SERVICE_PORT}:${USER_SERVICE_PORT}"
@@ -47,27 +77,28 @@ services:
       - .env
     environment:
       EUREKA_URI: http://fo-discovery-server:8761/eureka
+      # Dùng tên container name cho nhất quán
       MYSQL_HOST: fo-mysql
       MYSQL_PORT: 3306
-
-      REDIS_HOST: redis-cache
+      REDIS_HOST: fo-redis
       REDIS_PORT: 6379
-      # Các biến DB khác
+      KAFKA_BOOTSTRAP_SERVERS: fo-kafka:9092
+
       USER_DB_USERNAME: root
       USER_DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       USER_DB_NAME: ${MYSQL_DATABASE_NAME}
       USER_SERVICE_PORT: ${USER_SERVICE_PORT}
-
     depends_on:
       - mysql-db
       - discovery-service
+      - kafka
     networks:
       - fo-network
 
-  # --- 5. API Gateway ---
+  # --- 7. API Gateway ---
   api-gateway:
     image: api-gateway:latest
-    build: ./api-gateway
+    build: api-gateway
     container_name: fo-api-gateway
     ports:
       - "${GATEWAY_PORT}:${GATEWAY_PORT}"
@@ -77,6 +108,29 @@ services:
       EUREKA_URI: http://fo-discovery-server:8761/eureka
     depends_on:
       - discovery-service
+    networks:
+      - fo-network
+
+  # --- 8. Notification service ---
+  notification-service:
+    image: notification-service:latest
+    build: notification-service
+    container_name: fo-notification-service
+    ports:
+      - "${NOTIFICATION_SERVICE_PORT}:${NOTIFICATION_SERVICE_PORT}"
+    env_file:
+      - .env
+    environment:
+      EUREKA_URI: http://fo-discovery-server:8761/eureka
+      KAFKA_BOOTSTRAP_SERVERS: fo-kafka:9092
+      NOTIFICATION_SERVICE_PORT: ${NOTIFICATION_SERVICE_PORT}
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+    depends_on:
+      - discovery-service
+      - kafka
     networks:
       - fo-network
 

@@ -1,11 +1,13 @@
 package com.fo_product.user_service.controllers;
 
 import com.fo_product.user_service.resources.APIResponse;
-import com.fo_product.user_service.resources.requests.AuthenticateRequest;
-import com.fo_product.user_service.resources.requests.TokenRequest;
+import com.fo_product.user_service.resources.requests.*;
 import com.fo_product.user_service.resources.responses.AuthResponse;
+import com.fo_product.user_service.resources.responses.PendingUserResponse;
+import com.fo_product.user_service.resources.responses.UserResponse;
 import com.fo_product.user_service.services.interfaces.IAuthService;
 import com.nimbusds.jose.JOSEException;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -19,6 +21,32 @@ import java.text.ParseException;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AuthController {
     IAuthService authService;
+
+    @PostMapping("/sign-up")
+    APIResponse<PendingUserResponse> create(@Valid @RequestBody UserRequest request) {
+        PendingUserResponse response = authService.createPendingUser(request);
+        return APIResponse.<PendingUserResponse>builder()
+                .result(response)
+                .message("Create user success")
+                .build();
+    }
+
+    @PostMapping("/verify-otp")
+    APIResponse<UserResponse> verifyAndCreateUSer(@Valid @RequestBody VerifyOtpRequest request) {
+        UserResponse result = authService.verifyAndCreateUser(request);
+
+        return APIResponse.<UserResponse>builder()
+                .result(result)
+                .build();
+    }
+
+    @PostMapping("/resend-otp")
+    APIResponse<?> resendOtp(@Valid @RequestBody EmailRequest request) {
+        authService.resendOtp(request);
+        return APIResponse.builder()
+                .message("New OTP code sent to your email")
+                .build();
+    }
 
     @PostMapping("/login")
     APIResponse<AuthResponse> login (@RequestBody AuthenticateRequest request) {
