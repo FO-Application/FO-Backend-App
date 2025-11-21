@@ -23,7 +23,6 @@ services:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: fo-zookeeper:2181
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
-      # [QUAN TRỌNG] Sửa localhost thành fo-kafka để các service trong Docker nhìn thấy nhau
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://fo-kafka:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     depends_on:
@@ -42,6 +41,7 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE_NAME}
     volumes:
       - mysql_data:/var/lib/mysql
+      - ./mysql-init/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - fo-network
 
@@ -76,17 +76,15 @@ services:
     env_file:
       - .env
     environment:
-      EUREKA_URI: http://fo-discovery-server:8761/eureka
-      # Dùng tên container name cho nhất quán
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://fo-discovery-server:8761/eureka/
       MYSQL_HOST: fo-mysql
       MYSQL_PORT: 3306
       REDIS_HOST: fo-redis
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: fo-kafka:9092
-
-      USER_DB_USERNAME: root
-      USER_DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      USER_DB_NAME: ${MYSQL_DATABASE_NAME}
+      USER_DB_USERNAME: ${USER_DB_USERNAME}
+      USER_DB_PASSWORD: ${USER_DB_PASSWORD}
+      USER_DB_NAME: ${USER_DB_NAME}
       USER_SERVICE_PORT: ${USER_SERVICE_PORT}
     depends_on:
       - mysql-db
@@ -105,9 +103,12 @@ services:
     env_file:
       - .env
     environment:
-      EUREKA_URI: http://fo-discovery-server:8761/eureka
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://fo-discovery-server:8761/eureka/
+      REDIS_HOST: fo-redis
+      REDIS_PORT: 6379
     depends_on:
       - discovery-service
+      - redis-cache
     networks:
       - fo-network
 
@@ -121,7 +122,7 @@ services:
     env_file:
       - .env
     environment:
-      EUREKA_URI: http://fo-discovery-server:8761/eureka
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://fo-discovery-server:8761/eureka/
       KAFKA_BOOTSTRAP_SERVERS: fo-kafka:9092
       NOTIFICATION_SERVICE_PORT: ${NOTIFICATION_SERVICE_PORT}
       MAIL_HOST: ${MAIL_HOST}

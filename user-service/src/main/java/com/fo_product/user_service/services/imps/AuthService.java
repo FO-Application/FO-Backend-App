@@ -5,6 +5,7 @@ import com.fo_product.user_service.exceptions.custom.AppException;
 import com.fo_product.user_service.mappers.UserMapper;
 import com.fo_product.user_service.models.entities.User;
 import com.fo_product.user_service.models.enums.OtpTokenType;
+import com.fo_product.user_service.models.enums.UserStatus;
 import com.fo_product.user_service.models.hashes.PendingUser;
 import com.fo_product.user_service.models.repositories.PendingUserRepository;
 import com.fo_product.user_service.models.repositories.UserRepository;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.ParseException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 @Service
@@ -75,19 +77,6 @@ public class AuthService implements IAuthService {
     }
 
     @Override
-    public void resendOtp(EmailRequest request) {
-        if (request == null) throw new AppException(AppCode.REQUEST_NULL);
-
-        String email = request.email();
-
-        PendingUser pendingUser = pendingUserRepository.findById(email)
-                .orElseThrow(() -> new AppException(AppCode.PENDING_USER_NOT_FOUND));
-
-        otpService.generateAndSendOtp(pendingUser.getEmail(), OtpTokenType.REGISTER);
-        log.info("Resent OTP to email: {}", email);
-    }
-
-    @Override
     @Transactional
     @CacheEvict(value = "cacheUsers", allEntries = true)
     public UserResponse verifyAndCreateUser(VerifyOtpRequest request) {
@@ -109,6 +98,8 @@ public class AuthService implements IAuthService {
                 .lastName(pendingUser.getLastName())
                 .phone(pendingUser.getPhone())
                 .dob(pendingUser.getDob())
+                .createdAt(LocalDateTime.now())
+                .userStatus(UserStatus.ACTIVE)
                 .build();
 
         user.setRoles(new ArrayList<>());
@@ -118,6 +109,19 @@ public class AuthService implements IAuthService {
 
         return userMapper.response(result);
 
+    }
+
+    @Override
+    public void resendOtp(EmailRequest request) {
+        if (request == null) throw new AppException(AppCode.REQUEST_NULL);
+
+        String email = request.email();
+
+        PendingUser pendingUser = pendingUserRepository.findById(email)
+                .orElseThrow(() -> new AppException(AppCode.PENDING_USER_NOT_FOUND));
+
+        otpService.generateAndSendOtp(pendingUser.getEmail(), OtpTokenType.REGISTER);
+        log.info("Resent OTP to email: {}", email);
     }
 
     @Override

@@ -27,7 +27,7 @@ public class AuthController {
         PendingUserResponse response = authService.createPendingUser(request);
         return APIResponse.<PendingUserResponse>builder()
                 .result(response)
-                .message("Create user success")
+                .message("Create user success, waiting for verification")
                 .build();
     }
 
@@ -37,6 +37,7 @@ public class AuthController {
 
         return APIResponse.<UserResponse>builder()
                 .result(result)
+                .message("Verify complete, save user successfully")
                 .build();
     }
 

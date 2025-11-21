@@ -1,10 +1,14 @@
 package com.fo_product.user_service.models.entities;
 
+import com.fo_product.user_service.models.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +19,7 @@ import java.util.List;
 @Getter
 @Setter
 @Builder
+@EntityListeners(AuditingEntityListener.class)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class User {
     @Id
@@ -27,6 +32,13 @@ public class User {
     String lastName;
     LocalDate dob;
     String phone;
+    LocalDateTime createdAt;
+
+    @LastModifiedDate
+    LocalDateTime updatedAt;
+
+    @Enumerated(EnumType.STRING)
+    UserStatus userStatus;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
