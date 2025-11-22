@@ -1,7 +1,7 @@
 -- CHỈ CHẠY LẦN ĐẦU KHI CONTAINER ĐƯỢC TẠO
 -- 1. Tạo các Database
 CREATE DATABASE IF NOT EXISTS `fo_user_db`;
-CREATE DATABASE IF NOT EXISTS `fo_restaurant_db`;
+CREATE DATABASE IF NOT EXISTS `fo_merchant_db`;
 CREATE DATABASE IF NOT EXISTS `fo_order_db`;
 CREATE DATABASE IF NOT EXISTS `fo_payment_db`;
 CREATE DATABASE IF NOT EXISTS `fo_ship_order_db`;
@@ -13,8 +13,8 @@ CREATE DATABASE IF NOT EXISTS `fo_ship_order_db`;
 CREATE USER 'user_user'@'%' IDENTIFIED BY 'user1012';
 GRANT ALL ON `fo_user_db`.* TO 'user_user'@'%';
 
-CREATE USER 'restaurant_user'@'%' IDENTIFIED BY 'res1012';
-GRANT ALL ON `fo_restaurant_db`.* TO 'restaurant_user'@'%';
+CREATE USER 'merchant_user'@'%' IDENTIFIED BY 'merchant1012';
+GRANT ALL ON `fo_merchant_db`.* TO 'merchant_user'@'%';
 
 CREATE USER 'order_user'@'%' IDENTIFIED BY 'order1012';
 GRANT ALL ON `fo_order_db`.* TO 'order_user'@'%';

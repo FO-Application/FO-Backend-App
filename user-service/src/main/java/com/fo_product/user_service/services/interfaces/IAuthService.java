@@ -9,8 +9,8 @@ import com.nimbusds.jose.JOSEException;
 import java.text.ParseException;
 
 public interface IAuthService {
+    PendingUserResponse createPendingUser(UserRequest request, String role);
     UserResponse verifyAndCreateUser(VerifyOtpRequest request);
-    PendingUserResponse createPendingUser(UserRequest request);
     void resendOtp(EmailRequest request);
     AuthResponse authentication(AuthenticateRequest request);
     AuthResponse refreshToken(TokenRequest request) throws ParseException, JOSEException;

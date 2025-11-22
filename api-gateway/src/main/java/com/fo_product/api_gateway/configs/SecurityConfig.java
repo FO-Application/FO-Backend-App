@@ -1,4 +1,4 @@
-package com.fo_product.api_gateway.config;
+package com.fo_product.api_gateway.configs;
 
 
 import org.springframework.beans.factory.annotation.Value;

@@ -7,8 +7,8 @@ spring:
 
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
 
   security:
     oauth2:
@@ -43,6 +43,17 @@ spring:
                     redis-rate-limiter.burstCapacity: 5
                     key-resolver: "#{@userKeyResolver}"
 
+            - id: merchant-service
+              uri: lb://merchant-service
+              predicates:
+                - Path=/api/v1/merchant/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 2
+                    redis-rate-limiter.burstCapacity: 5
+                    key-resolver: "#{@userKeyResolver}"
+
 eureka:
   instance:
     prefer-ip-address: true
@@ -50,4 +61,4 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}

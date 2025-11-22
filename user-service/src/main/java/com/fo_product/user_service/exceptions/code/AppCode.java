@@ -17,6 +17,7 @@ public enum AppCode {
     PENDING_USER_NOT_FOUND(1010, "Pending user not found", HttpStatus.BAD_REQUEST),
     SEND_MAIL_FAILED(1011, "Send mail failed!", HttpStatus.BAD_REQUEST),
     VERIFY_OTP_FAILED(1012, "Invalid OTP!", HttpStatus.BAD_REQUEST),
+    ROLE_NOT_EXIST(1013, "This role is not exist!", HttpStatus.BAD_REQUEST),
 
     ;
 

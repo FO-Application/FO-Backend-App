@@ -1,13 +1,10 @@
-package com.fo_product.api_gateway.config;
+package com.fo_product.api_gateway.configs;
 
 import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.server.reactive.ServerHttpRequest;
 import reactor.core.publisher.Mono;
 
-import java.net.InetSocketAddress;
-import java.util.Objects;
 import java.util.Optional;
 
 @Configuration

@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: merchant-service
+
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MERCHANT_DB_NAME}
+    username: ${MERCHANT_DB_USERNAME}
+    password: ${MERCHANT_DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  cache:
+      type: redis
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      timeout: 60000
+
+  jpa:
+    open-in-view: true
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jws-algorithm: HS512
+
+server:
+  port: ${MERCHANT_SERVICE_PORT}
+  error:
+    include-message: always
+    include-binding-error: always
+
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}

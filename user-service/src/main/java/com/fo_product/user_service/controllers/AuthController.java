@@ -22,9 +22,18 @@ import java.text.ParseException;
 public class AuthController {
     IAuthService authService;
 
-    @PostMapping("/sign-up")
-    APIResponse<PendingUserResponse> create(@Valid @RequestBody UserRequest request) {
-        PendingUserResponse response = authService.createPendingUser(request);
+    @PostMapping("/sign-up/customer")
+    APIResponse<PendingUserResponse> signUpCustomer(@Valid @RequestBody UserRequest request) {
+        PendingUserResponse response = authService.createPendingUser(request, "CUSTOMER");
+        return APIResponse.<PendingUserResponse>builder()
+                .result(response)
+                .message("Create user success, waiting for verification")
+                .build();
+    }
+
+    @PostMapping("/sign-up/merchant")
+    APIResponse<PendingUserResponse> signUpMerchant(@Valid @RequestBody UserRequest request) {
+        PendingUserResponse response = authService.createPendingUser(request, "MERCHANT");
         return APIResponse.<PendingUserResponse>builder()
                 .result(response)
                 .message("Create user success, waiting for verification")

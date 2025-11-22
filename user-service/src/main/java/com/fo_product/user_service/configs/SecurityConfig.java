@@ -1,4 +1,4 @@
-package com.fo_product.user_service.config;
+package com.fo_product.user_service.configs;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

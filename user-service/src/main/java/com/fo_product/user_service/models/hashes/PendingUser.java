@@ -25,6 +25,7 @@ public class PendingUser {
     String lastName;
     String phone;
     LocalDate dob;
+    String role;
 
     @TimeToLive(unit = TimeUnit.MINUTES)
     Long expiredTime;

@@ -90,6 +90,7 @@ services:
       - mysql-db
       - discovery-service
       - kafka
+      - redis-cache
     networks:
       - fo-network
 
@@ -132,6 +133,55 @@ services:
     depends_on:
       - discovery-service
       - kafka
+    networks:
+      - fo-network
+
+  # --- 8. Merchant service ---
+  merchant-service:
+    image: merchant-service:latest
+    build: merchant-service
+    container_name: fo-merchant-service
+    ports:
+      - "${MERCHANT_SERVICE_PORT}:${MERCHANT_SERVICE_PORT}"
+    env_file:
+      - .env
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://fo-discovery-server:8761/eureka/
+      MYSQL_HOST: fo-mysql
+      MYSQL_PORT: 3306
+      REDIS_HOST: fo-redis
+      REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: fo-kafka:9092
+      MERCHANT_DB_USERNAME: ${MERCHANT_DB_USERNAME}
+      MERCHANT_DB_PASSWORD: ${MERCHANT_DB_PASSWORD}
+      MERCHANT_DB_NAME: ${MERCHANT_DB_NAME}
+      MERCHANT_SERVICE_PORT: ${MERCHANT_SERVICE_PORT}
+      MINIO_URL: http://fo_minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET: restaurant-images
+    depends_on:
+      - mysql-db
+      - discovery-service
+      - redis-cache
+      - minio
+    networks:
+      - fo-network
+
+  minio:
+    image: minio/minio:latest
+    container_name: fo_minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    env_file:
+      - .env
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - ./minio_data:/data
     networks:
       - fo-network
 

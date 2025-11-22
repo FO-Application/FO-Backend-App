@@ -24,3 +24,6 @@ target/
 
 ### Secrets ###
 .env
+
+### Databases ###
+./mysql-init/init.sql

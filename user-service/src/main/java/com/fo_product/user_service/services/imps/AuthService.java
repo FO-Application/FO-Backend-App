@@ -3,11 +3,13 @@ package com.fo_product.user_service.services.imps;
 import com.fo_product.user_service.exceptions.code.AppCode;
 import com.fo_product.user_service.exceptions.custom.AppException;
 import com.fo_product.user_service.mappers.UserMapper;
+import com.fo_product.user_service.models.entities.Role;
 import com.fo_product.user_service.models.entities.User;
 import com.fo_product.user_service.models.enums.OtpTokenType;
 import com.fo_product.user_service.models.enums.UserStatus;
 import com.fo_product.user_service.models.hashes.PendingUser;
 import com.fo_product.user_service.models.repositories.PendingUserRepository;
+import com.fo_product.user_service.models.repositories.RoleRepository;
 import com.fo_product.user_service.models.repositories.UserRepository;
 import com.fo_product.user_service.resources.requests.*;
 import com.fo_product.user_service.resources.responses.AuthResponse;
@@ -31,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -44,10 +47,11 @@ public class AuthService implements IAuthService {
     IOtpService otpService;
     PendingUserRepository pendingUserRepository;
     UserMapper userMapper;
+    RoleRepository roleRepository;
 
     @Override
     @Transactional
-    public PendingUserResponse createPendingUser(UserRequest request) {
+    public PendingUserResponse createPendingUser(UserRequest request, String role) {
         if (request == null)
             throw new AppException(AppCode.REQUEST_NULL);
 
@@ -62,6 +66,7 @@ public class AuthService implements IAuthService {
                 .password(passwordEncoder.encode(request.password()))
                 .phone(request.phone())
                 .dob(request.dob())
+                .role(role)
                 .expiredTime(15L)
                 .build();
 
@@ -102,7 +107,10 @@ public class AuthService implements IAuthService {
                 .userStatus(UserStatus.ACTIVE)
                 .build();
 
-        user.setRoles(new ArrayList<>());
+        Role role = roleRepository.findById(pendingUser.getRole())
+                .orElseThrow(() -> new AppException(AppCode.ROLE_NOT_EXIST));
+
+        user.setRoles(Set.of(role));
 
         User result = userRepository.save(user);
         pendingUserRepository.deleteById(email);

@@ -1,0 +1,65 @@
+package com.fo_product.merchant_service.models.entities.restaurant;
+
+import com.fo_product.merchant_service.models.entities.product.Category;
+import jakarta.persistence.*;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "restaurants")
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class Restaurant {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    Long id;
+
+    String name;
+
+    Long ownerId;
+
+    //Slug: URL thân thiện (VD: com-tam-sai-gon-hao-nam) - dùng để SEO và share link.
+    String slug;
+    String address;
+
+    Double latitude;
+    Double longitude;
+
+    String phone;
+
+    @Column(name = "cover_image_url")
+    String coverImageUrl;
+
+    @Column(name = "is_active")
+    boolean isActive;
+
+    @Column(name = "is_open")
+    boolean isOpen;
+
+    @Column(name = "rating_average")
+    Double ratingAverage;
+
+    @Column(name = "review_count")
+    int reviewCount;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "restaurant_cuisine",
+            joinColumns = @JoinColumn(name = "restaurant_id"),
+            inverseJoinColumns = @JoinColumn(name = "cuisine_id")
+    )
+    List<Cuisine> cuisines = new ArrayList<>();
+
+    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<RestaurantSchedule> restaurantSchedules = new ArrayList<>();
+
+    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
+    List<Category> categories = new ArrayList<>();
+}
