@@ -2,159 +2,239 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Mã Xác Thực OTP</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mã Xác Thực OTP - FO Food</title>
     <style>
-        /* Reset CSS */
+        /* Reset CSS cơ bản */
         body {
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            background-color: #f0f2f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
             margin: 0;
             padding: 0;
             -webkit-font-smoothing: antialiased;
+            color: #333333;
         }
 
-        .container {
-            max-width: 500px;
-            margin: 40px auto;
-            background: #ffffff;
+        .email-wrapper {
+            width: 100%;
+            background-color: #f4f4f4;
+            padding: 40px 0;
+        }
+
+        .email-container {
+            max-width: 550px;
+            margin: 0 auto;
+            background-color: #ffffff;
             border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
         }
 
-        /* Header phong cách App Food */
         .header {
-            background-color: #00B14F; /* Màu xanh đặc trưng kiểu Grab/Food App */
-            padding: 30px 20px;
+            background: linear-gradient(135deg, #FF9900 0%, #FF5500 100%);
+            padding: 35px 20px;
             text-align: center;
-            color: white;
         }
 
-        .app-logo {
-            font-size: 40px;
-            margin-bottom: 10px;
-            display: inline-block;
+        /* KHUNG TRÒN BAO NGOÀI LOGO */
+        .logo-container {
+            background-color: #ffffff;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 15px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            overflow: hidden;
+            /* QUAN TRỌNG: line-height 0 giúp triệt tiêu khoảng trắng thừa dưới chân ảnh */
+            line-height: 0;
+        }
+
+        /* ẢNH LOGO */
+        .logo-img {
+            /* Tăng lên 78px để sát viền (chỉ chừa 1px viền trắng mỗi bên cho nổi bật) */
+            width: 78px;
+            height: 78px;
+            object-fit: contain;
+            display: block;
         }
 
         .header h1 {
+            color: #ffffff;
             margin: 0;
-            font-size: 22px;
+            font-size: 24px;
             font-weight: 700;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .content {
-            padding: 30px;
+            padding: 40px 30px;
             text-align: center;
         }
 
-        .greeting {
+        .welcome-text {
             font-size: 16px;
-            color: #333;
-            margin-bottom: 25px;
-            line-height: 1.5;
+            color: #555555;
+            margin-bottom: 30px;
+            line-height: 1.6;
         }
 
-        /* Box chứa OTP cách điệu */
-        .otp-wrapper {
-            background-color: #f7fff9;
-            border: 2px dashed #00B14F;
+        .action-highlight {
+            color: #FF5500;
+            font-weight: 700;
+        }
+
+        .otp-box {
+            background-color: #FFF3E0;
+            border: 2px dashed #FF9800;
             border-radius: 12px;
-            padding: 25px;
-            margin: 0 auto 25px auto;
-            width: fit-content;
-            min-width: 200px;
+            padding: 20px;
+            margin: 0 auto 30px auto;
+            display: inline-block;
+            min-width: 220px;
         }
 
-        .otp-label {
-            color: #00B14F;
+        .otp-title {
+            color: #E65100;
             font-size: 12px;
             text-transform: uppercase;
-            font-weight: bold;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            margin-bottom: 10px;
+            display: block;
         }
 
         .otp-code {
-            font-size: 42px;
+            font-size: 48px;
             font-weight: 800;
-            color: #1c1c1c;
+            color: #333333;
             letter-spacing: 8px;
-            line-height: 1;
+            display: block;
+            line-height: 1.2;
+            font-family: 'Courier New', Courier, monospace;
         }
 
-        /* Banner quảng cáo nhỏ (tạo cảm giác app food) */
-        .food-banner {
-            margin: 20px 0;
-            font-size: 14px;
-            color: #666;
-            font-style: italic;
-        }
-
-        .warning {
-            background: #fff8e1;
-            color: #b76e00;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 13px;
+        .info-section {
+            border-top: 1px solid #eeeeee;
+            padding-top: 25px;
+            margin-top: 10px;
             text-align: left;
-            margin-top: 20px;
-            border-left: 4px solid #ffc107;
+        }
+
+        .warning-box {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            background-color: #FAFAFA;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #FFC107;
+        }
+
+        .warning-text {
+            font-size: 13px;
+            color: #666;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .food-slogan {
+            margin-top: 25px;
+            font-style: italic;
+            color: #888;
+            font-size: 14px;
         }
 
         .footer {
-            background-color: #f9f9f9;
+            background-color: #333333;
             padding: 20px;
             text-align: center;
             font-size: 12px;
-            color: #888;
-            border-top: 1px solid #eee;
+            color: #aaaaaa;
         }
 
         .footer a {
-            color: #00B14F;
+            color: #FF9800;
             text-decoration: none;
-            font-weight: bold;
+        }
+
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                width: 100% !important;
+                border-radius: 0;
+            }
+            .content {
+                padding: 30px 20px;
+            }
+            .otp-code {
+                font-size: 36px;
+            }
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="header">
-        <div class="app-logo">🛵🍔</div> <h1>FO FOOD DELIVERY</h1>
-        <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.9;">Món ngon nóng hổi đang chờ bạn!</p>
-    </div>
 
-    <div class="content">
-        <p class="greeting">
-            Xin chào thực khách,<br>
-            Để hoàn tất yêu cầu <strong style="color: #00B14F;" th:text="${action}"></strong>, vui lòng nhập mã xác thực bên dưới vào ứng dụng:
-        </p>
-
-        <div class="otp-wrapper">
-            <div class="otp-label">Mã OTP Của Bạn</div>
-            <div class="otp-code" th:text="${otpCode}">123456</div>
+<div class="email-wrapper">
+    <div class="email-container">
+        <!-- HEADER -->
+        <div class="header">
+            <div class="logo-container">
+                <!--
+                     CẬP NHẬT CUỐI:
+                     - Tăng lên 78px (gần full size 80px)
+                     - Viền trắng sẽ chỉ còn là 1 nét mảnh rất đẹp bao quanh.
+                -->
+                <img src="cid:logoImage" alt="FO Food Logo" class="logo-img" width="78" height="78">
+            </div>
+            <h1>FO FOOD DELIVERY</h1>
         </div>
 
-        <div class="food-banner">
-            🍽️ "Có thực mới vực được đạo" - Xác thực ngay để đặt món nhé!
+        <!-- CONTENT -->
+        <div class="content">
+            <p class="welcome-text">
+                Xin chào thực khách,<br>
+                Hệ thống ghi nhận yêu cầu <span class="action-highlight" th:text="${action}">Đăng nhập / Đặt lại mật khẩu</span> của bạn.
+            </p>
+
+            <!-- OTP BOX -->
+            <div class="otp-box">
+                <span class="otp-title">Mã xác thực của bạn</span>
+                <span class="otp-code" th:text="${otpCode}">863920</span>
+            </div>
+
+            <p style="font-size: 14px; color: #777; margin-bottom: 25px;">
+                Vui lòng nhập mã này vào ứng dụng để tiếp tục thưởng thức món ngon!
+            </p>
+
+            <!-- WARNING & INFO -->
+            <div class="info-section">
+                <div class="warning-box">
+                    <div style="font-size: 20px;">🛡️</div>
+                    <div class="warning-text">
+                        <strong>Lưu ý bảo mật:</strong><br>
+                        Mã OTP này sẽ hết hạn trong <strong>5 phút</strong>. Tuyệt đối không chia sẻ mã này cho bất kỳ ai (kể cả nhân viên FO Food).
+                    </div>
+                </div>
+            </div>
+
+            <div class="food-slogan">
+                🍔 "Ngon miệng - Nhanh chóng - Tiện lợi"
+            </div>
         </div>
 
-        <div class="warning">
-            <strong>⚠️ Lưu ý bảo mật:</strong>
-            <ul style="margin: 5px 0 0 0; padding-left: 20px;">
-                <li>Mã này có hiệu lực trong <strong>5 phút</strong>.</li>
-                <li>Tuyệt đối không chia sẻ mã này cho bất kỳ ai.</li>
-            </ul>
+        <!-- FOOTER -->
+        <div class="footer">
+            <p>&copy; 2025 FO Food Delivery. All rights reserved.</p>
+            <p>
+                Đây là email tự động. Cần hỗ trợ?
+                <a href="#">Liên hệ CSKH</a>
+            </p>
         </div>
-    </div>
-
-    <div class="footer">
-        <p>Đây là email tự động, vui lòng không trả lời.</p>
-        <p>
-            Cần hỗ trợ? Liên hệ <a href="#">Trung tâm trợ giúp</a><br>
-            © 2025 FO Food Project - Đồ án tốt nghiệp
-        </p>
     </div>
 </div>
+
 </body>
 </html>
