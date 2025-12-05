@@ -1,7 +1,7 @@
 package com.fo_product.user_service.services.imps;
 
-import com.fo_product.user_service.exceptions.code.AppCode;
-import com.fo_product.user_service.exceptions.custom.AppException;
+import com.fo_product.user_service.exceptions.code.UserExceptionCode;
+import com.fo_product.user_service.exceptions.UserException;
 import com.fo_product.user_service.mappers.UserMapper;
 import com.fo_product.user_service.models.entities.Role;
 import com.fo_product.user_service.models.entities.User;
@@ -11,10 +11,10 @@ import com.fo_product.user_service.models.hashes.PendingUser;
 import com.fo_product.user_service.models.repositories.PendingUserRepository;
 import com.fo_product.user_service.models.repositories.RoleRepository;
 import com.fo_product.user_service.models.repositories.UserRepository;
-import com.fo_product.user_service.resources.requests.*;
-import com.fo_product.user_service.resources.responses.AuthResponse;
-import com.fo_product.user_service.resources.responses.PendingUserResponse;
-import com.fo_product.user_service.resources.responses.UserResponse;
+import com.fo_product.user_service.dtos.requests.*;
+import com.fo_product.user_service.dtos.responses.AuthResponse;
+import com.fo_product.user_service.dtos.responses.PendingUserResponse;
+import com.fo_product.user_service.dtos.responses.UserResponse;
 import com.fo_product.user_service.services.interfaces.IAuthService;
 import com.fo_product.user_service.services.interfaces.IJwtService;
 import com.fo_product.user_service.services.interfaces.IOtpService;
@@ -32,7 +32,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.text.ParseException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Set;
 
 @Service
@@ -53,11 +52,11 @@ public class AuthService implements IAuthService {
     @Transactional
     public PendingUserResponse createPendingUser(UserRequest request, String role) {
         if (request == null)
-            throw new AppException(AppCode.REQUEST_NULL);
+            throw new UserException(UserExceptionCode.REQUEST_NULL);
 
         if (userRepository.existsByEmail(request.email()) ||
                 userRepository.existsByPhone(request.phone()))
-            throw new AppException(AppCode.ACCOUNT_EXIST);
+            throw new UserException(UserExceptionCode.ACCOUNT_EXIST);
 
         PendingUser pendingUser = PendingUser.builder()
                 .email(request.email())
@@ -73,9 +72,9 @@ public class AuthService implements IAuthService {
         PendingUserResponse response = pendingUserService.savePendingUser(pendingUser);
         try {
             otpService.generateAndSendOtp(pendingUser.getEmail(), OtpTokenType.REGISTER);
-        } catch (AppException e) {
+        } catch (UserException e) {
             pendingUserRepository.deleteById(pendingUser.getEmail());
-            throw new AppException(AppCode.SEND_MAIL_FAILED);
+            throw new UserException(UserExceptionCode.SEND_MAIL_FAILED);
         }
 
         return response;
@@ -85,7 +84,7 @@ public class AuthService implements IAuthService {
     @Transactional
     @CacheEvict(value = "cacheUsers", allEntries = true)
     public UserResponse verifyAndCreateUser(VerifyOtpRequest request) {
-        if (request == null) throw new AppException(AppCode.REQUEST_NULL);
+        if (request == null) throw new UserException(UserExceptionCode.REQUEST_NULL);
 
         String email = request.email();
         String otpCode = request.otpCode();
@@ -93,7 +92,7 @@ public class AuthService implements IAuthService {
         PendingUser pendingUser = pendingUserService.getPendingUser(email);
 
         boolean verified = otpService.verifyOtp(email, otpCode);
-        if (!verified) throw new AppException(AppCode.VERIFY_OTP_FAILED);
+        if (!verified) throw new UserException(UserExceptionCode.VERIFY_OTP_FAILED);
 
         // Tạo User và lưu vào DB
         User user = User.builder()
@@ -108,7 +107,7 @@ public class AuthService implements IAuthService {
                 .build();
 
         Role role = roleRepository.findById(pendingUser.getRole())
-                .orElseThrow(() -> new AppException(AppCode.ROLE_NOT_EXIST));
+                .orElseThrow(() -> new UserException(UserExceptionCode.ROLE_NOT_EXIST));
 
         user.setRoles(Set.of(role));
 
@@ -116,17 +115,16 @@ public class AuthService implements IAuthService {
         pendingUserRepository.deleteById(email);
 
         return userMapper.response(result);
-
     }
 
     @Override
     public void resendOtp(EmailRequest request) {
-        if (request == null) throw new AppException(AppCode.REQUEST_NULL);
+        if (request == null) throw new UserException(UserExceptionCode.REQUEST_NULL);
 
         String email = request.email();
 
         PendingUser pendingUser = pendingUserRepository.findById(email)
-                .orElseThrow(() -> new AppException(AppCode.PENDING_USER_NOT_FOUND));
+                .orElseThrow(() -> new UserException(UserExceptionCode.PENDING_USER_NOT_FOUND));
 
         otpService.generateAndSendOtp(pendingUser.getEmail(), OtpTokenType.REGISTER);
         log.info("Resent OTP to email: {}", email);
@@ -135,10 +133,10 @@ public class AuthService implements IAuthService {
     @Override
     public AuthResponse authentication(AuthenticateRequest request) {
         User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new AppException(AppCode.USER_NOT_EXIST));
+                .orElseThrow(() -> new UserException(UserExceptionCode.USER_NOT_EXIST));
 
         boolean matches = passwordEncoder.matches(request.password(), user.getPassword());
-        if (!matches) throw new AppException(AppCode.UNAUTHENTICATED);
+        if (!matches) throw new UserException(UserExceptionCode.UNAUTHENTICATED);
 
         JwtService.TokenPair token = jwtService.generateTokenPair(user);
         return AuthResponse.builder()
@@ -149,7 +147,7 @@ public class AuthService implements IAuthService {
 
     @Override
     public AuthResponse refreshToken(TokenRequest request) throws ParseException, JOSEException {
-        if (request == null) throw new AppException(AppCode.UNAUTHENTICATED);
+        if (request == null) throw new UserException(UserExceptionCode.UNAUTHENTICATED);
         String rt = request.refreshToken();
 
         JwtService.TokenPair tokenPair = jwtService.refreshToken(rt);
@@ -158,7 +156,7 @@ public class AuthService implements IAuthService {
 
     @Override
     public void logout(TokenRequest request) throws ParseException, JOSEException {
-        if (request == null) throw new AppException(AppCode.UNAUTHENTICATED);
+        if (request == null) throw new UserException(UserExceptionCode.UNAUTHENTICATED);
         String rt = request.refreshToken();
 
         SignedJWT token = jwtService.verifyToken(rt, "refresh");

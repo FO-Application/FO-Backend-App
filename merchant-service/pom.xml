@@ -11,7 +11,7 @@
 	<groupId>com.fo-product</groupId>
 	<artifactId>merchant-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>restaurant-service</name>
+	<name>merchant-service</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
 	<licenses>
@@ -38,6 +38,16 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.fo-product</groupId>
+			<artifactId>common-lib</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>io.minio</groupId>
+			<artifactId>minio</artifactId>
+			<version>8.5.7</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

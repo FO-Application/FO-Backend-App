@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
+import java.nio.charset.StandardCharsets;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -27,14 +29,17 @@ public class MailSenderService implements IMailSenderService {
 
     @NonFinal
     @Value("${spring.mail.username}")
-    String mail;
+    String mailFrom; // Đổi tên biến cho rõ nghĩa
 
-    @Async
+    @Async // Nhớ thêm @EnableAsync ở file Main Application
     @Override
     public void sendOtpEmail(String to, String otp, String type) {
         try {
             MimeMessage message = javaMailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            // Cấu hình mã hóa UTF-8 để không lỗi font tiếng Việt
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
+
+            helper.setFrom(mailFrom); // QUAN TRỌNG: Phải có dòng này
             helper.setTo(to);
             helper.setSubject(type);
 
@@ -45,13 +50,21 @@ public class MailSenderService implements IMailSenderService {
             String htmlContent = templateEngine.process("otp-email", context);
             helper.setText(htmlContent, true);
 
+            // Đảm bảo file ảnh tồn tại trong folder: src/main/resources/static/images/
             ClassPathResource imageResource = new ClassPathResource("static/images/logo-fo-app.png");
-            helper.addInline("logoImage", imageResource);
+            if (imageResource.exists()) {
+                helper.addInline("logoImage", imageResource);
+            } else {
+                log.warn("Logo image not found in resources!");
+            }
 
             javaMailSender.send(message);
-            log.info("Email send to: {}", to);
+            log.info("Email sent successfully to: {}", to);
+
         } catch (MessagingException e) {
-            throw new RuntimeException(e);
+            // Với @Async, không throw exception ra ngoài vì main thread đã chạy xong rồi
+            // Chỉ log lỗi để debug
+            log.error("Failed to send email to {}: {}", to, e.getMessage());
         }
     }
 }

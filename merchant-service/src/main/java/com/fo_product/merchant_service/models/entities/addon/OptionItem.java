@@ -4,6 +4,29 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+/**
+ * <pre>
+ * ============================================================================
+ * ENTITY: OptionItem
+ * ============================================================================
+ * Đại diện cho từng lựa chọn cụ thể nằm trong một OptionGroup.
+ * (VD: Nếu Group là "Size", thì Item là "Size M", "Size L").
+ *
+ * -----------------------
+ * CHI TIẾT CÁC TRƯỜNG
+ * -----------------------
+ * 1. name: Tên lựa chọn (VD: "Size L", "Trân châu đen").
+ *
+ * 2. priceAdjustment:
+ *    -> Số tiền cộng thêm vào giá gốc món ăn khi chọn item này.
+ *    -> Nếu không tính thêm tiền thì để là 0.
+ *
+ * 3. isAvailable: Trạng thái còn hàng/hết hàng của riêng option này.
+ *
+ * 4. optionGroup (FK): Nhóm tùy chọn cha chứa item này.
+ * ============================================================================
+ * </pre>
+ */
 @Entity
 @Table(name = "option_items")
 @AllArgsConstructor

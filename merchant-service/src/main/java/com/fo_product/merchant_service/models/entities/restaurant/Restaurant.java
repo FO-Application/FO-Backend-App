@@ -8,6 +8,33 @@ import lombok.experimental.FieldDefaults;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * <pre>
+ * ============================================================================
+ * ENTITY: Restaurant
+ * ============================================================================
+ * Thông tin chi tiết về Cửa hàng / Quán ăn đối tác.
+ *
+ * -----------------------
+ * CHI TIẾT CÁC TRƯỜNG
+ * -----------------------
+ * 1. slug: URL thân thiện để SEO và share link (VD: com-tam-sai-gon-hao-nam).
+ *
+ * 2. latitude / longitude: Tọa độ GPS để tính khoảng cách giao hàng.
+ *
+ * 3. isActive:
+ *    -> [TRUE]: Quán đang hợp tác hoạt động bình thường.
+ *    -> [FALSE]: Quán bị khóa hoặc ngừng hợp tác.
+ *
+ * 4. isOpen:
+ *    -> Trạng thái đóng/mở cửa Real-time (do chủ quán gạt nút hoặc auto theo lịch).
+ *
+ * 5. ratingAverage: Điểm đánh giá trung bình (VD: 4.8).
+ *
+ * 6. reviewCount: Tổng số lượng đánh giá.
+ * ============================================================================
+ * </pre>
+ */
 @Entity
 @Table(name = "restaurants")
 @AllArgsConstructor

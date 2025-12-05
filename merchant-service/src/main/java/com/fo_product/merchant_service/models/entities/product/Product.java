@@ -8,6 +8,28 @@ import lombok.experimental.FieldDefaults;
 
 import java.util.List;
 
+/**
+ * <pre>
+ * ============================================================================
+ * ENTITY: Product
+ * ============================================================================
+ * Đại diện cho món ăn hoặc đồ uống cụ thể được bán.
+ *
+ * -----------------------
+ * CHI TIẾT CÁC TRƯỜNG
+ * -----------------------
+ * 1. price: Giá bán thực tế hiện tại.
+ *
+ * 2. originalPrice:
+ *    -> Giá gốc trước khi giảm (dùng để gạch ngang giá: 50k -> 30k).
+ *    -> Có thể null nếu không có giảm giá.
+ *
+ * 3. status: Trạng thái kinh doanh (VD: ACTIVE, OUT_OF_STOCK, INACTIVE).
+ *
+ * 4. category (FK): Món này thuộc danh mục nào.
+ * ============================================================================
+ * </pre>
+ */
 @Entity
 @Table(name = "products")
 @AllArgsConstructor

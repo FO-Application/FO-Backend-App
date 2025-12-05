@@ -29,6 +29,11 @@ spring:
         jwt:
           jws-algorithm: HS512
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
 server:
   port: ${MERCHANT_SERVICE_PORT}
   error:
@@ -43,3 +48,9 @@ eureka:
     fetch-registry: true
     service-url:
       defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+
+minio:
+  url: ${MINIO_URL:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY}
+  secret-key: ${MINIO_SECRET_KEY}
+  bucket-name: ${MINIO_BUCKET:merchant-images}

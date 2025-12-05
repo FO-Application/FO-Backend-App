@@ -49,6 +49,11 @@
 			<version>10.4.1</version>
 		</dependency>
 		<dependency>
+			<groupId>com.fo-product</groupId>
+			<artifactId>common-lib</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-api</artifactId>
 			<version>0.11.5</version>

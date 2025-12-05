@@ -1,7 +1,7 @@
 package com.fo_product.user_service.services.interfaces;
 
-import com.fo_product.user_service.resources.requests.UserPatchRequest;
-import com.fo_product.user_service.resources.responses.UserResponse;
+import com.fo_product.user_service.dtos.requests.UserPatchRequest;
+import com.fo_product.user_service.dtos.responses.UserResponse;
 import org.springframework.data.domain.Page;
 
 public interface IUserService {

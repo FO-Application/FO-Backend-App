@@ -1,10 +1,9 @@
 package com.fo_product.user_service.controllers;
 
-import com.fo_product.user_service.resources.APIResponse;
-import com.fo_product.user_service.resources.requests.UserPatchRequest;
-import com.fo_product.user_service.resources.responses.UserResponse;
+import com.fo_product.common_lib.dtos.APIResponse;
+import com.fo_product.user_service.dtos.requests.UserPatchRequest;
+import com.fo_product.user_service.dtos.responses.UserResponse;
 import com.fo_product.user_service.services.interfaces.IUserService;
-import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

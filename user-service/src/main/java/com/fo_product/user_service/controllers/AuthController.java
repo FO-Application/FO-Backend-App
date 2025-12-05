@@ -1,10 +1,10 @@
 package com.fo_product.user_service.controllers;
 
-import com.fo_product.user_service.resources.APIResponse;
-import com.fo_product.user_service.resources.requests.*;
-import com.fo_product.user_service.resources.responses.AuthResponse;
-import com.fo_product.user_service.resources.responses.PendingUserResponse;
-import com.fo_product.user_service.resources.responses.UserResponse;
+import com.fo_product.common_lib.dtos.APIResponse;
+import com.fo_product.user_service.dtos.requests.*;
+import com.fo_product.user_service.dtos.responses.AuthResponse;
+import com.fo_product.user_service.dtos.responses.PendingUserResponse;
+import com.fo_product.user_service.dtos.responses.UserResponse;
 import com.fo_product.user_service.services.interfaces.IAuthService;
 import com.nimbusds.jose.JOSEException;
 import jakarta.validation.Valid;

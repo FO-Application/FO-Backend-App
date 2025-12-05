@@ -1,7 +1,7 @@
 package com.fo_product.user_service.mappers;
 
 import com.fo_product.user_service.models.entities.User;
-import com.fo_product.user_service.resources.responses.UserResponse;
+import com.fo_product.user_service.dtos.responses.UserResponse;
 import org.springframework.stereotype.Component;
 
 @Component

@@ -69,7 +69,9 @@ services:
   # --- 6. User Service ---
   user-service:
     image: user-service:latest
-    build: user-service
+    build:
+      context: .
+      dockerfile: user-service/Dockerfile
     container_name: fo-user-service
     ports:
       - "${USER_SERVICE_PORT}:${USER_SERVICE_PORT}"
@@ -97,7 +99,9 @@ services:
   # --- 7. API Gateway ---
   api-gateway:
     image: api-gateway:latest
-    build: api-gateway
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
     container_name: fo-api-gateway
     ports:
       - "${GATEWAY_PORT}:${GATEWAY_PORT}"
@@ -116,7 +120,9 @@ services:
   # --- 8. Notification service ---
   notification-service:
     image: notification-service:latest
-    build: notification-service
+    build:
+      context: .
+      dockerfile: notification-service/Dockerfile
     container_name: fo-notification-service
     ports:
       - "${NOTIFICATION_SERVICE_PORT}:${NOTIFICATION_SERVICE_PORT}"
@@ -136,10 +142,12 @@ services:
     networks:
       - fo-network
 
-  # --- 8. Merchant service ---
+  # --- 9. Merchant service ---
   merchant-service:
     image: merchant-service:latest
-    build: merchant-service
+    build:
+      context: .
+      dockerfile: merchant-service/Dockerfile
     container_name: fo-merchant-service
     ports:
       - "${MERCHANT_SERVICE_PORT}:${MERCHANT_SERVICE_PORT}"
@@ -156,10 +164,11 @@ services:
       MERCHANT_DB_PASSWORD: ${MERCHANT_DB_PASSWORD}
       MERCHANT_DB_NAME: ${MERCHANT_DB_NAME}
       MERCHANT_SERVICE_PORT: ${MERCHANT_SERVICE_PORT}
-      MINIO_URL: http://fo_minio:9000
+      # >>> QUAN TRỌNG: Sửa URL thành fo-minio (gạch ngang) <<<
+      MINIO_URL: http://fo-minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
-      MINIO_BUCKET: restaurant-images
+      MINIO_BUCKET: merchant-images
     depends_on:
       - mysql-db
       - discovery-service
@@ -168,9 +177,11 @@ services:
     networks:
       - fo-network
 
+  # --- 10. Minio ---
   minio:
     image: minio/minio:latest
-    container_name: fo_minio
+    # >>> QUAN TRỌNG: Tên container phải là fo-minio (gạch ngang) <<<
+    container_name: fo-minio
     command: server /data --console-address ":9001"
     ports:
       - "9000:9000"

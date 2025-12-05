@@ -4,6 +4,25 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+/**
+ * <pre>
+ * ============================================================================
+ * ENTITY: Cuisine
+ * ============================================================================
+ * Các thẻ (tag) loại hình ẩm thực (VD: Cơm tấm, Trà sữa, Fast Food).
+ * Dùng để phân loại, lọc và tìm kiếm nhà hàng trên hệ thống.
+ *
+ * -----------------------
+ * CHI TIẾT CÁC TRƯỜNG
+ * -----------------------
+ * 1. name: Tên hiển thị loại hình (VD: "Món Hàn Quốc").
+ *
+ * 2. slug:
+ *    -> URL thân thiện dùng để SEO hoặc tạo link filter.
+ *    -> (VD: "mon-han-quoc", "tra-sua").
+ * ============================================================================
+ * </pre>
+ */
 @Entity
 @Table(name = "cuisines")
 @AllArgsConstructor
@@ -20,4 +39,6 @@ public class Cuisine {
     String name;
 
     String slug;
+
+    String imageFileName;
 }

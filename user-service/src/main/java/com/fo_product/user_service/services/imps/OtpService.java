@@ -1,7 +1,7 @@
 package com.fo_product.user_service.services.imps;
 
-import com.fo_product.user_service.exceptions.code.AppCode;
-import com.fo_product.user_service.exceptions.custom.AppException;
+import com.fo_product.user_service.exceptions.code.UserExceptionCode;
+import com.fo_product.user_service.exceptions.UserException;
 import com.fo_product.user_service.kafka.KafkaProducerService;
 import com.fo_product.user_service.kafka.events.MailSenderEvent;
 import com.fo_product.user_service.models.enums.OtpTokenType;
@@ -50,7 +50,7 @@ public class OtpService implements IOtpService {
     @Override
     public boolean verifyOtp(String email, String otp) {
         OtpToken otpToken = otpTokenRepository.findById(email)
-                .orElseThrow(() -> new AppException(AppCode.OTP_NOT_EXIST));
+                .orElseThrow(() -> new UserException(UserExceptionCode.OTP_NOT_EXIST));
 
         if (otpToken.getOtpCode().equals(otp)) {
             otpTokenRepository.delete(otpToken);

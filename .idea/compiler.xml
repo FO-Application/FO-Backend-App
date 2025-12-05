@@ -19,7 +19,7 @@
         </processorPath>
         <module name="notification-service" />
       </profile>
-      <profile name="Annotation profile for restaurant-service" enabled="true">
+      <profile name="Annotation profile for user-service" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
@@ -28,12 +28,14 @@
         </processorPath>
         <module name="merchant-service" />
         <module name="user-service" />
+        <module name="common-lib" />
       </profile>
     </annotationProcessing>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="api-gateway" options="-parameters" />
+      <module name="common-lib" options="-parameters" />
       <module name="discovery-server" options="-parameters" />
       <module name="merchant-service" options="-parameters" />
       <module name="notification-service" options="-parameters" />

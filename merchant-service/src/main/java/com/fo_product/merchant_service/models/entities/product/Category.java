@@ -7,6 +7,25 @@ import lombok.experimental.FieldDefaults;
 
 import java.util.List;
 
+/**
+ * <pre>
+ * ============================================================================
+ * ENTITY: Category
+ * ============================================================================
+ * Phân loại thực đơn trong nhà hàng (VD: Món khai vị, Đồ uống, Món chính).
+ *
+ * -----------------------
+ * CHI TIẾT CÁC TRƯỜNG
+ * -----------------------
+ * 1. displayOrder:
+ *    -> Thứ tự hiển thị trên Menu (Số nhỏ hiện trước).
+ *
+ * 2. isActive: Ẩn/Hiện danh mục này trên ứng dụng client.
+ *
+ * 3. restaurant (FK): Nhà hàng sở hữu danh mục này.
+ * ============================================================================
+ * </pre>
+ */
 @Entity
 @Table(name = "categories")
 @AllArgsConstructor
@@ -33,5 +52,5 @@ public class Category {
     Restaurant restaurant;
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
-    private List<Product> products;
+    List<Product> products;
 }
