@@ -1,5 +1,7 @@
 package com.fo_product.user_service.configs;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -10,38 +12,45 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
-/**
- * Đoạn code này đóng vai trò là Cấu hình "Bộ dịch thuật" (Serialization) giữa ứng dụng Java (Spring Boot) và Redis Database.
- *
- * Nói một cách đơn giản: Java dùng Object, Redis lưu Byte. File này quy định cách biến Object thành Byte (và ngược lại) sao cho cả người và máy đều đọc hiểu được.
-*/
 @Configuration
 @EnableRedisRepositories(value = "com.fo_product.user_service.models.repositories")
 public class RedisConfig {
+
+    // 1. Tạo Bean ObjectMapper đã đăng ký module Java 8 Date/Time
     @Bean
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
+    public ObjectMapper redisObjectMapper() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        return objectMapper;
+    }
+
+    @Bean
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory, ObjectMapper redisObjectMapper) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
 
-        // Sử dụng StringRedisSerializer để serialize Key (để key đọc được dạng text)
+        // 2. Tạo Serializer sử dụng ObjectMapper đã cấu hình ở trên
+        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(redisObjectMapper);
+
         template.setKeySerializer(new StringRedisSerializer());
         template.setHashKeySerializer(new StringRedisSerializer());
 
-        // Sử dụng Jackson để serialize Value sang JSON (để nhìn thấy data bên trong)
-        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
-        template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
+        // 3. Set Serializer đã cấu hình vào Template
+        template.setValueSerializer(serializer);
+        template.setHashValueSerializer(serializer);
 
         template.afterPropertiesSet();
         return template;
     }
 
     @Bean
-    public RedisCacheConfiguration cacheConfiguration() {
+    public RedisCacheConfiguration cacheConfiguration(ObjectMapper redisObjectMapper) {
+        // 4. Sử dụng cùng ObjectMapper đó cho Cache Config
+        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(redisObjectMapper);
+
         return RedisCacheConfiguration.defaultCacheConfig()
                 .serializeValuesWith(
-                        RedisSerializationContext.SerializationPair.fromSerializer(
-                                new GenericJackson2JsonRedisSerializer()
-                        )
+                        RedisSerializationContext.SerializationPair.fromSerializer(serializer)
                 );
     }
 }
