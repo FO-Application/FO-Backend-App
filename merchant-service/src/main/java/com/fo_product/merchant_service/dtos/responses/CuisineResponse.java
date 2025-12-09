@@ -4,6 +4,9 @@ import lombok.Builder;
 
 @Builder
 public record CuisineResponse(
-
+    Long id,
+    String name,
+    String slug,
+    String imageFileName
 ) {
 }

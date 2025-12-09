@@ -10,6 +10,7 @@ import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.web.cors.reactive.CorsConfigurationSource;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -24,9 +25,12 @@ public class SecurityConfig {
     protected String ALGORITHM;
 
     @Bean
-    public SecurityWebFilterChain filterChain(ServerHttpSecurity httpSecurity) {
-        httpSecurity.csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .cors(Customizer.withDefaults())
+    public SecurityWebFilterChain filterChain(ServerHttpSecurity http, CorsConfigurationSource corsConfigurationSource) {
+        return http
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
+
+                .cors(corsSpec -> corsSpec.configurationSource(corsConfigurationSource))
+
                 .authorizeExchange(exchange -> exchange
                         // Cho phép các endpoint public của user-service
                         .pathMatchers("/api/v1/auth/**").permitAll()
@@ -37,9 +41,11 @@ public class SecurityConfig {
 
                 // KÍCH HOẠT "FILTER" XÁC THỰC TOKEN TẠI ĐÂY
                 // Nó sẽ tự động sử dụng Bean JwtDecoder ở dưới
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
-
-        return httpSecurity.build();
+                .oauth2ResourceServer(
+                        oauth2 -> oauth2.jwt(
+                                jwtSpec -> jwtSpec.jwtDecoder(jwtDecoder())
+                        )
+                ).build();
     }
 
     /**

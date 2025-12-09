@@ -40,6 +40,7 @@ public class User {
     @Enumerated(EnumType.STRING)
     UserStatus userStatus;
 
+    @Builder.Default
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "user_roles",

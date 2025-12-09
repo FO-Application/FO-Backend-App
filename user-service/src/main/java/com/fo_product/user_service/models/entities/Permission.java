@@ -14,8 +14,12 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Permission {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    Long id;
+
+    @Column(unique = true, nullable = false)
     String name;
+
+    @Column(columnDefinition = "TEXT")
     String description;
-    String httpMethod;
-    String endpoint;
 }

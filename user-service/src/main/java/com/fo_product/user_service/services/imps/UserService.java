@@ -26,7 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class UserService implements IUserService {
     UserRepository userRepository;
-    UserMapper userMapper;
+    UserMapper mapper;
 
     @Override
     @Transactional
@@ -64,7 +64,7 @@ public class UserService implements IUserService {
 
         User result = userRepository.save(user);
 
-        return userMapper.response(result);
+        return mapper.response(result);
     }
 
     @Override
@@ -74,7 +74,7 @@ public class UserService implements IUserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserException(UserExceptionCode.USER_NOT_EXIST));
 
-        return userMapper.response(user);
+        return mapper.response(user);
     }
 
     @Override
@@ -84,7 +84,7 @@ public class UserService implements IUserService {
         Pageable pageable = PageRequest.of(page, size);
         Page<User> userPage = userRepository.findAll(pageable);
 
-        return userPage.map(userMapper::response);
+        return userPage.map(mapper::response);
     }
 
     @Override

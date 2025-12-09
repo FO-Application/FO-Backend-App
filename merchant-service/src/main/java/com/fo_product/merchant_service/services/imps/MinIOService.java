@@ -108,8 +108,7 @@ public class MinIOService implements IMinIOService {
         }
     }
 
-    @Override
-    public String getPublicUrl(String fileName) {
+    private String getPublicUrl(String fileName) {
         //Nơi đổi và viết domain thật cho front end dùng link để hiển thị hình ảnh
         // VD: http://localhost:9000/bucket-name/ten-file.jpg
         return "http://localhost:8080/" + bucketName + "/" + fileName;

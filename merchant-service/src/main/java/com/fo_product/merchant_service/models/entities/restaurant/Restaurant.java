@@ -1,6 +1,7 @@
 package com.fo_product.merchant_service.models.entities.restaurant;
 
 import com.fo_product.merchant_service.models.entities.product.Category;
+import com.fo_product.merchant_service.models.entities.product.Food;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -53,6 +54,7 @@ public class Restaurant {
     Long ownerId;
 
     //Slug: URL thân thiện (VD: com-tam-sai-gon-hao-nam) - dùng để SEO và share link.
+    @Column(nullable = false, unique = true)
     String slug;
     String address;
 
@@ -76,6 +78,9 @@ public class Restaurant {
     @Column(name = "review_count")
     int reviewCount;
 
+    @Column(name = "image_file_name")
+    String imageFileName;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "restaurant_cuisine",
@@ -89,4 +94,7 @@ public class Restaurant {
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
     List<Category> categories = new ArrayList<>();
+
+    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
+    List<Food> foods;
 }

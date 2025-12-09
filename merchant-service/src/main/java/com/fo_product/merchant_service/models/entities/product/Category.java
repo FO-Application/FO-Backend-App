@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -53,4 +54,7 @@ public class Category {
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
     List<Product> products;
+
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
+    List<Food> foods;
 }

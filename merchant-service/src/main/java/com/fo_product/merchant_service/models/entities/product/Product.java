@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -50,8 +51,8 @@ public class Product {
 
     Long price;
 
-    @Column(name = "original_price")
-    Long originalPrice;
+    @Column(name = "original_price", precision = 19, scale = 2)
+    BigDecimal originalPrice;
 
     @Column(name = "image_url")
     String imageUrl;

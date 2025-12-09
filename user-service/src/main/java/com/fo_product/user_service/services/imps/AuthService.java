@@ -106,7 +106,7 @@ public class AuthService implements IAuthService {
                 .userStatus(UserStatus.ACTIVE)
                 .build();
 
-        Role role = roleRepository.findById(pendingUser.getRole())
+        Role role = roleRepository.findByName(pendingUser.getRole())
                 .orElseThrow(() -> new UserException(UserExceptionCode.ROLE_NOT_EXIST));
 
         user.setRoles(Set.of(role));

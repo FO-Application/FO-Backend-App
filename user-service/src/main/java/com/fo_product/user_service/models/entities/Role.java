@@ -17,9 +17,16 @@ import java.util.Set;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Role {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    Long id;
+
+    @Column(unique = true, nullable = false)
     String name;
+
+    @Column(columnDefinition = "TEXT")
     String description;
 
+    @Builder.Default
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "role_permissions",

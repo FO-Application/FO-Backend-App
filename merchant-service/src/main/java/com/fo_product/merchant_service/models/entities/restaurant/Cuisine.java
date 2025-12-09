@@ -38,7 +38,9 @@ public class Cuisine {
 
     String name;
 
+    @Column(nullable = false, unique = true)
     String slug;
 
+    @Column(name = "image_file_name")
     String imageFileName;
 }

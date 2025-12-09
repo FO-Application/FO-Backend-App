@@ -10,6 +10,11 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+/**
+ * Đoạn code này đóng vai trò là Cấu hình "Bộ dịch thuật" (Serialization) giữa ứng dụng Java (Spring Boot) và Redis Database.
+ *
+ * Nói một cách đơn giản: Java dùng Object, Redis lưu Byte. File này quy định cách biến Object thành Byte (và ngược lại) sao cho cả người và máy đều đọc hiểu được.
+*/
 @Configuration
 @EnableRedisRepositories(value = "com.fo_product.user_service.models.repositories")
 public class RedisConfig {

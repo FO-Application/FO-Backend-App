@@ -40,7 +40,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          jws-algorithm: HS512
+          jws-algorithms: HS512
 
 server:
   port: ${USER_SERVICE_PORT}

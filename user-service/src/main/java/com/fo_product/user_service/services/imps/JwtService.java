@@ -47,7 +47,6 @@ public class JwtService implements IJwtService {
     @Value("${jwt.refresh-token-expiration}")
     protected int REFRESH_TOKEN_EXPIRATION;
 
-
     private String generateToken(User user, long expiration, String tokenType) {
         //Create header for JWT Token
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
