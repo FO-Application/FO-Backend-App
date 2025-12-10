@@ -16,11 +16,10 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -102,11 +101,10 @@ public class CuisineService implements ICuisineService {
     @Override
     @Transactional(readOnly = true)
     @Cacheable(value = "cacheCuisines")
-    public Page<CuisineResponse> getAllCuisines(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Cuisine> cuisinePage = cuisineRepository.findAll(pageable);
+    public List<CuisineResponse> getAllCuisines() {
+        List<Cuisine> cuisines = cuisineRepository.findAll();
 
-        return cuisinePage.map(mapper::response);
+        return cuisines.stream().map(mapper::response).toList();
     }
 
     @Override

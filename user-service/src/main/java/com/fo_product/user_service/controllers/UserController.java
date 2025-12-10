@@ -38,6 +38,15 @@ public class UserController {
                 .build();
     }
 
+    @GetMapping("/me")
+    APIResponse<UserResponse> getMe() {
+        UserResponse response = userService.getMe();
+        return APIResponse.<UserResponse>builder()
+                .result(response)
+                .message("Get me successfully")
+                .build();
+    }
+
     @GetMapping
     APIResponse<Page<UserResponse>> getAll(
             @RequestParam(defaultValue = "0") int page,

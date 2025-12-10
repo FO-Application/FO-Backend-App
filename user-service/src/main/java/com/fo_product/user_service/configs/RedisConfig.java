@@ -29,13 +29,11 @@ public class RedisConfig {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
 
-        // 2. Tạo Serializer sử dụng ObjectMapper đã cấu hình ở trên
         GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(redisObjectMapper);
 
         template.setKeySerializer(new StringRedisSerializer());
         template.setHashKeySerializer(new StringRedisSerializer());
 
-        // 3. Set Serializer đã cấu hình vào Template
         template.setValueSerializer(serializer);
         template.setHashValueSerializer(serializer);
 
@@ -45,7 +43,6 @@ public class RedisConfig {
 
     @Bean
     public RedisCacheConfiguration cacheConfiguration(ObjectMapper redisObjectMapper) {
-        // 4. Sử dụng cùng ObjectMapper đó cho Cache Config
         GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(redisObjectMapper);
 
         return RedisCacheConfiguration.defaultCacheConfig()

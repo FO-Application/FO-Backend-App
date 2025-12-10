@@ -9,8 +9,9 @@ import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/cuisine")
@@ -50,12 +51,9 @@ public class CuisineController {
     }
 
     @GetMapping
-    APIResponse<Page<CuisineResponse>> getAllCuisines(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
-        Page<CuisineResponse> result = cuisineService.getAllCuisines(page, size);
-        return APIResponse.<Page<CuisineResponse>>builder()
+    APIResponse<List<CuisineResponse>> getAllCuisines() {
+        List<CuisineResponse> result = cuisineService.getAllCuisines();
+        return APIResponse.<List<CuisineResponse>>builder()
                 .result(result)
                 .message("Get all cuisines")
                 .build();

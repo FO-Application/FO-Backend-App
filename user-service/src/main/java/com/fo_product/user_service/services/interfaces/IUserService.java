@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 public interface IUserService {
     UserResponse updateUserById(Long id, UserPatchRequest request);
     UserResponse getUserById(Long id);
+    UserResponse getMe();
     Page<UserResponse> getAllUsers(int page, int size);
     void deleteUserById(Long id);
 }

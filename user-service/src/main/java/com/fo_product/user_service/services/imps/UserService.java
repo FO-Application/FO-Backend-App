@@ -17,6 +17,9 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,10 +33,7 @@ public class UserService implements IUserService {
 
     @Override
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(value = "cacheUsers", allEntries = true), // Xóa cache list (vì data thay đổi, list cũ sai)
-            @CacheEvict(value = "user_details", key = "#id")      // Xóa cache của RIÊNG user này để lần sau getById nó load cái mới
-    })
+    @CacheEvict(value = "user_details", key = "#id")      // Xóa cache của RIÊNG user này để lần sau getById nó load cái mới
     public UserResponse updateUserById(Long id, UserPatchRequest request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserException(UserExceptionCode.USER_NOT_EXIST));
@@ -78,7 +78,17 @@ public class UserService implements IUserService {
     }
 
     @Override
-    @Cacheable(value = "cacheUsers")
+    public UserResponse getMe() {
+        SecurityContext authentication = SecurityContextHolder.getContext();
+        String email = authentication.getAuthentication().getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserException(UserExceptionCode.USER_NOT_EXIST));
+
+        return mapper.response(user);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public Page<UserResponse> getAllUsers(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
@@ -89,15 +99,11 @@ public class UserService implements IUserService {
 
     @Override
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(value = "cacheUsers", allEntries = true), // Xóa cache list (vì data thay đổi, list cũ sai)
-            @CacheEvict(value = "user_details", key = "#id")      // Xóa cache của RIÊNG user này để lần sau getById nó load cái mới
-    })
+    @CacheEvict(value = "user_details", key = "#id")      // Xóa cache của RIÊNG user này để lần sau getById nó load cái mới
     public void deleteUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserException(UserExceptionCode.USER_NOT_EXIST));
 
         userRepository.delete(user);
     }
-
 }

@@ -4,27 +4,21 @@ import com.fo_product.common_lib.exceptions.validation.constraint.PhoneConstrain
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.web.multipart.MultipartFile;
 
-public record RestaurantRequest(
-        @NotBlank(message = "NOT_BLANK")
+public record RestaurantPatchRequest(
         String name,
-
-        @NotBlank(message = "NOT_BLANK")
-        Long ownerId,
 
         String description,
 
+        Long ownerId,
+
         String slug,
 
-        @NotBlank(message = "NOT_BLANK")
         String address,
 
-        @NotBlank(message = "NOT_BLANK")
         Double latitude,
 
-        @NotBlank(message = "NOT_BLANK")
         Double longitude,
 
-        @NotBlank(message = "NOT_BLANK")
         @PhoneConstraint(length = 10, message = "INVALID_PHONE")
         String phone,
 

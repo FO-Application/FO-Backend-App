@@ -63,9 +63,6 @@ public class Restaurant {
 
     String phone;
 
-    @Column(name = "cover_image_url")
-    String coverImageUrl;
-
     @Column(name = "is_active")
     boolean isActive;
 
@@ -80,6 +77,9 @@ public class Restaurant {
 
     @Column(name = "image_file_name")
     String imageFileName;
+
+    @Column(columnDefinition = "TEXT")
+    String description;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
