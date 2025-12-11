@@ -11,7 +11,7 @@ public class CuisineMapper {
                 .id(cuisine.getId())
                 .name(cuisine.getName())
                 .slug(cuisine.getSlug())
-                .imageFileName(cuisine.getImageFileName())
+                .imageFileUrl(cuisine.getImageFileUrl())
                 .build();
     }
 }

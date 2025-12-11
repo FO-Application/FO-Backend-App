@@ -46,7 +46,7 @@ spring:
             - id: merchant-service
               uri: lb://merchant-service
               predicates:
-                - Path=/api/v1/merchant/**
+                - Path=/api/v1/cuisine/**, /api/v1/restaurant/**
               filters:
                 - name: RequestRateLimiter
                   args:

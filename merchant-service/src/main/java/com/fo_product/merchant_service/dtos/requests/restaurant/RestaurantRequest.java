@@ -2,7 +2,6 @@ package com.fo_product.merchant_service.dtos.requests.restaurant;
 
 import com.fo_product.common_lib.exceptions.validation.constraint.PhoneConstraint;
 import jakarta.validation.constraints.NotBlank;
-import org.springframework.web.multipart.MultipartFile;
 
 public record RestaurantRequest(
         @NotBlank(message = "NOT_BLANK")
@@ -26,8 +25,6 @@ public record RestaurantRequest(
 
         @NotBlank(message = "NOT_BLANK")
         @PhoneConstraint(length = 10, message = "INVALID_PHONE")
-        String phone,
-
-        MultipartFile image
+        String phone
 ) {
 }

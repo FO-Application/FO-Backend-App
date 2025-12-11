@@ -41,6 +41,6 @@ public class Cuisine {
     @Column(nullable = false, unique = true)
     String slug;
 
-    @Column(name = "image_file_name")
-    String imageFileName;
+    @Column(name = "image_file_url")
+    String imageFileUrl;
 }

@@ -12,6 +12,7 @@ public record UserResponse(
         String firstName,
         String lastName,
         String phone,
-        LocalDate dob
+        LocalDate dob,
+        String role
 ) {
 }

@@ -6,7 +6,7 @@ import lombok.Builder;
 public record RestaurantResponse(
         Long id,
         String name,
-        Long ownerId,
+        UserResponse user,
         String slug,
         String address,
         Double latitude,
@@ -15,7 +15,7 @@ public record RestaurantResponse(
         boolean isActive,
         Double ratingAverage,
         int reviewCount,
-        String imageUrl,
+        String imageFileUrl,
         String description
     ) {
 }

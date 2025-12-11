@@ -9,6 +9,6 @@ public record CuisineResponse(
     Long id,
     String name,
     String slug,
-    String imageFileName
+    String imageFileUrl
 ) implements Serializable {
 }

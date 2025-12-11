@@ -2,6 +2,7 @@ package com.fo_product.user_service.services.imps;
 
 import com.fo_product.user_service.exceptions.code.UserExceptionCode;
 import com.fo_product.user_service.exceptions.UserException;
+import com.fo_product.user_service.models.entities.Role;
 import com.fo_product.user_service.models.entities.User;
 import com.fo_product.user_service.models.hashes.InvalidatedToken;
 import com.fo_product.user_service.models.repositories.InvalidatedTokenRepository;
@@ -158,16 +159,13 @@ public class JwtService implements IJwtService {
     //Helper method
     private String buildScope(User user) {
         StringJoiner stringJoiner = new StringJoiner(" ");
-
-        if (!CollectionUtils.isEmpty(user.getRoles())) {
-            user.getRoles().forEach(
-                    role -> {
-                        stringJoiner.add("ROLE_" + role.getName());
-                        if (!CollectionUtils.isEmpty(role.getPermissions())) {
-                            role.getPermissions().forEach(permission -> stringJoiner.add(permission.getName()));
-                        }
-                    }
-            );
+        Role role = user.getRole();
+        if (role != null) {
+            stringJoiner.add("ROLE_" + role.getName());
+            if (!CollectionUtils.isEmpty(role.getPermissions())) {
+                role.getPermissions()
+                        .forEach(permission -> stringJoiner.add(permission.getName()));
+            }
         }
         return stringJoiner.toString();
     }

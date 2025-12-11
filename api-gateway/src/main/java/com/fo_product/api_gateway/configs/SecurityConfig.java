@@ -7,8 +7,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtGrantedAuthoritiesConverterAdapter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
 
@@ -35,6 +40,8 @@ public class SecurityConfig {
                         // Cho phép các endpoint public của user-service
                         .pathMatchers("/api/v1/auth/**").permitAll()
                         .pathMatchers("/api/v1/user/**").permitAll()
+                        .pathMatchers("/api/v1/cuisine/**").permitAll()
+                        .pathMatchers("/api/v1/restaurant/**").permitAll()
                         .pathMatchers("/eureka/**").permitAll()
                         // Tất cả các request khác phải được xác thực
                         .anyExchange().authenticated())
@@ -42,8 +49,10 @@ public class SecurityConfig {
                 // KÍCH HOẠT "FILTER" XÁC THỰC TOKEN TẠI ĐÂY
                 // Nó sẽ tự động sử dụng Bean JwtDecoder ở dưới
                 .oauth2ResourceServer(
-                        oauth2 -> oauth2.jwt(
-                                jwtSpec -> jwtSpec.jwtDecoder(jwtDecoder())
+                        oauth2 -> oauth2
+                                .jwt(jwtSpec -> jwtSpec
+                                        .jwtDecoder(jwtDecoder())
+                                        .jwtAuthenticationConverter(reactiveJwtAuthenticationConverter())
                         )
                 ).build();
     }
@@ -57,5 +66,16 @@ public class SecurityConfig {
     public ReactiveJwtDecoder jwtDecoder() {
         SecretKey secretKey = new SecretKeySpec(SECRET_KEY.getBytes(), ALGORITHM);
         return NimbusReactiveJwtDecoder.withSecretKey(secretKey).build();
+    }
+
+    @Bean
+    public ReactiveJwtAuthenticationConverter reactiveJwtAuthenticationConverter() {
+        JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+        jwtGrantedAuthoritiesConverter.setAuthoritiesClaimName("scope");
+        jwtGrantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
+
+        ReactiveJwtAuthenticationConverter jwtAuthenticationConverter = new ReactiveJwtAuthenticationConverter();
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(new ReactiveJwtGrantedAuthoritiesConverterAdapter(jwtGrantedAuthoritiesConverter));
+        return jwtAuthenticationConverter;
     }
 }

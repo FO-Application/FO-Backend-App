@@ -109,7 +109,7 @@ public class AuthService implements IAuthService {
         Role role = roleRepository.findByName(pendingUser.getRole())
                 .orElseThrow(() -> new UserException(UserExceptionCode.ROLE_NOT_EXIST));
 
-        user.setRoles(Set.of(role));
+        user.setRole(role);
 
         User result = userRepository.save(user);
         pendingUserRepository.deleteById(email);

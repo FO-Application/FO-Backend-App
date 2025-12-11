@@ -4,7 +4,6 @@ import com.fo_product.merchant_service.exceptions.MinIOException;
 import com.fo_product.merchant_service.exceptions.codes.MinIOExceptionCode;
 import com.fo_product.merchant_service.services.interfaces.IMinIOService;
 import io.minio.*;
-import jakarta.annotation.PostConstruct;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -29,36 +28,40 @@ public class MinIOService implements IMinIOService {
     String bucketName;
 
     // Khởi tạo Bucket nếu chưa tồn tại
-    @PostConstruct
-    private void init() {
+    private void afterPropertiesSet() {
         try {
-            boolean found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
-            if (!found) {
-                minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
-
-                // Set Policy Public để xem được ảnh từ trình duyệt
-                String policy = """
-                        {
-                          "Version": "2012-10-17",
-                          "Statement": [
-                            {
-                              "Effect": "Allow",
-                              "Principal": {"AWS": ["*"]},
-                              "Action": ["s3:GetObject"],
-                              "Resource": ["arn:aws:s3:::%s/*"]
-                            }
-                          ]
-                        }
-                        """.formatted(bucketName);
-
-                minioClient.setBucketPolicy(
-                        SetBucketPolicyArgs.builder().bucket(bucketName).config(policy).build());
-
-                log.info("Bucket '{}' created successfully with public policy.", bucketName);
-            }
+            initBucket();
         } catch (Exception e) {
             log.error("Error initializing MinIO bucket: {}", e.getMessage());
             throw new MinIOException(MinIOExceptionCode.INITIALIZING_BUCKET_FAILED);
+        }
+    }
+
+    // Tách logic tạo bucket ra hàm riêng cho gọn
+    private void initBucket() throws Exception {
+        boolean found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
+        if (!found) {
+            minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
+
+            // Set Policy Public
+            String policy = """
+                    {
+                      "Version": "2012-10-17",
+                      "Statement": [
+                        {
+                          "Effect": "Allow",
+                          "Principal": {"AWS": ["*"]},
+                          "Action": ["s3:GetObject"],
+                          "Resource": ["arn:aws:s3:::%s/*"]
+                        }
+                      ]
+                    }
+                    """.formatted(bucketName);
+
+            minioClient.setBucketPolicy(
+                    SetBucketPolicyArgs.builder().bucket(bucketName).config(policy).build());
+
+            log.info("Bucket '{}' created successfully with public policy.", bucketName);
         }
     }
 
@@ -111,6 +114,6 @@ public class MinIOService implements IMinIOService {
     private String getPublicUrl(String fileName) {
         //Nơi đổi và viết domain thật cho front end dùng link để hiển thị hình ảnh
         // VD: http://localhost:9000/bucket-name/ten-file.jpg
-        return "http://localhost:8080/" + bucketName + "/" + fileName;
+        return "http://localhost:9000/" + bucketName + "/" + fileName;
     }
 }

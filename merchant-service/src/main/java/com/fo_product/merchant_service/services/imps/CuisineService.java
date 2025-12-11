@@ -18,6 +18,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -35,18 +36,18 @@ public class CuisineService implements ICuisineService {
     @Override
     @Transactional
     @CacheEvict(value = "cacheCuisines", allEntries = true)
-    public CuisineResponse createCuisine(CuisineRequest request) {
-        if (cuisineRepository.existsBySlug(request.slug()))
-            throw new MerchantException(MerchantExceptionCode.SLUG_EXIST);
+    public CuisineResponse createCuisine(CuisineRequest request, MultipartFile image) {
+        if (cuisineRepository.existsBySlug(request.slug()) || cuisineRepository.existsByName(request.name()))
+            throw new MerchantException(MerchantExceptionCode.CUISINE_EXIST);
 
         String imageUrl = null;
-        if (request.image() != null && !request.image().isEmpty())
-            imageUrl = minIOService.uploadFile(request.image());
+        if (image != null && !image.isEmpty())
+            imageUrl = minIOService.uploadFile(image);
 
         Cuisine cuisine = Cuisine.builder()
                 .name(request.name())
                 .slug(request.slug())
-                .imageFileName(imageUrl)
+                .imageFileUrl(imageUrl)
                 .build();
 
         Cuisine result = cuisineRepository.save(cuisine);
@@ -66,7 +67,7 @@ public class CuisineService implements ICuisineService {
                     @CacheEvict(value = "cuisine_details", key = "#id")
             }
     )
-    public CuisineResponse updateCuisineById(Long id, CuisinePatchRequest request) {
+    public CuisineResponse updateCuisineById(Long id, CuisinePatchRequest request, MultipartFile image) {
         Cuisine cuisine = cuisineRepository.findById(id)
                 .orElseThrow(() -> new MerchantException(MerchantExceptionCode.CUISINE_NOT_EXIST));
 
@@ -76,12 +77,12 @@ public class CuisineService implements ICuisineService {
         if (request.slug() != null)
             cuisine.setSlug(request.slug());
 
-        if (request.image() != null && !request.image().isEmpty()) {
-            if (cuisine.getImageFileName() != null && !cuisine.getImageFileName().isEmpty()) {
-                minIOService.deleteFile(cuisine.getImageFileName());
+        if (image != null && !image.isEmpty()) {
+            if (cuisine.getImageFileUrl() != null && !cuisine.getImageFileUrl().isEmpty()) {
+                minIOService.deleteFile(cuisine.getImageFileUrl());
             }
-            String newImageUrl = minIOService.uploadFile(request.image());
-            cuisine.setImageFileName(newImageUrl);
+            String newImageUrl = minIOService.uploadFile(image);
+            cuisine.setImageFileUrl(newImageUrl);
         }
 
         Cuisine result = cuisineRepository.save(cuisine);

@@ -7,7 +7,6 @@ public record CuisineRequest(
         @NotBlank(message = "NOT_BLANK")
         String name,
         @NotBlank(message = "NOT_BLANK")
-        String slug,
-        MultipartFile image
+        String slug
 ) {
 }

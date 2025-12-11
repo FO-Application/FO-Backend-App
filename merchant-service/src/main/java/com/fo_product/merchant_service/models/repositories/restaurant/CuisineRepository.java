@@ -7,4 +7,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface CuisineRepository extends JpaRepository<Cuisine, Long> {
     boolean existsBySlug(String slug);
+    boolean existsByName(String name);
 }

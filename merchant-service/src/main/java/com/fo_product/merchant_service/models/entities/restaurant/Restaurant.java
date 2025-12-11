@@ -75,8 +75,8 @@ public class Restaurant {
     @Column(name = "review_count")
     int reviewCount;
 
-    @Column(name = "image_file_name")
-    String imageFileName;
+    @Column(name = "image_file_url")
+    String imageFileUrl;
 
     @Column(columnDefinition = "TEXT")
     String description;

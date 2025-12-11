@@ -10,6 +10,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -21,8 +22,11 @@ public class CuisineController {
     ICuisineService cuisineService;
 
     @PostMapping
-    APIResponse<CuisineResponse> createCuisine(@RequestBody @Valid CuisineRequest request) {
-        CuisineResponse result = cuisineService.createCuisine(request);
+    APIResponse<CuisineResponse> createCuisine(
+            @RequestPart("data") @Valid CuisineRequest request,
+            @RequestPart("image") MultipartFile image
+    ) {
+        CuisineResponse result = cuisineService.createCuisine(request, image);
         return APIResponse.<CuisineResponse>builder()
                 .result(result)
                 .message("Create cuisine")
@@ -32,9 +36,10 @@ public class CuisineController {
     @PutMapping("/{cuisineId}")
     APIResponse<CuisineResponse> updateCuisine(
             @PathVariable("cuisineId") Long id,
-            @RequestBody CuisinePatchRequest request
+            @RequestPart("data") CuisinePatchRequest request,
+            @RequestPart(value = "image", required = false) MultipartFile image
     ) {
-        CuisineResponse result = cuisineService.updateCuisineById(id, request);
+        CuisineResponse result = cuisineService.updateCuisineById(id, request, image);
         return APIResponse.<CuisineResponse>builder()
                 .result(result)
                 .message("Update cuisine")

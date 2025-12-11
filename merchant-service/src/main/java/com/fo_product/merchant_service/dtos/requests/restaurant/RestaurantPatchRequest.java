@@ -20,8 +20,6 @@ public record RestaurantPatchRequest(
         Double longitude,
 
         @PhoneConstraint(length = 10, message = "INVALID_PHONE")
-        String phone,
-
-        MultipartFile image
+        String phone
 ) {
 }
