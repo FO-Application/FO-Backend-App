@@ -29,6 +29,19 @@ public class SecurityConfig {
     @Value("${spring.security.oauth2.resourceserver.jwt.jws-algorithms}")
     protected String ALGORITHM;
 
+    private static final String[] REQUEST_MATCHERS = {
+            "/api/v1/auth/**",
+            "/api/v1/user/**",
+            "/api/v1/cuisine/**",
+            "/api/v1/restaurant/**",
+            "/api/v1/restaurant-schedule/**",
+            "/v3/api-docs/**",      // Để Gateway lấy JSON từ các service con
+            "/swagger-ui.html",     // Trang giao diện chính
+            "/swagger-ui/**",       // Các file css, js của giao diện Swagger
+            "/webjars/**",          // Thư viện giao diện (nếu cần)
+            "/eureka/**"
+    };
+
     @Bean
     public SecurityWebFilterChain filterChain(ServerHttpSecurity http, CorsConfigurationSource corsConfigurationSource) {
         return http
@@ -37,17 +50,9 @@ public class SecurityConfig {
                 .cors(corsSpec -> corsSpec.configurationSource(corsConfigurationSource))
 
                 .authorizeExchange(exchange -> exchange
-                        // Cho phép các endpoint public của user-service
-                        .pathMatchers("/api/v1/auth/**").permitAll()
-                        .pathMatchers("/api/v1/user/**").permitAll()
-                        .pathMatchers("/api/v1/cuisine/**").permitAll()
-                        .pathMatchers("/api/v1/restaurant/**").permitAll()
-                        .pathMatchers("/eureka/**").permitAll()
-                        // Tất cả các request khác phải được xác thực
+                        .pathMatchers(REQUEST_MATCHERS).permitAll()
                         .anyExchange().authenticated())
 
-                // KÍCH HOẠT "FILTER" XÁC THỰC TOKEN TẠI ĐÂY
-                // Nó sẽ tự động sử dụng Bean JwtDecoder ở dưới
                 .oauth2ResourceServer(
                         oauth2 -> oauth2
                                 .jwt(jwtSpec -> jwtSpec

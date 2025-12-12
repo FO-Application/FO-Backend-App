@@ -22,8 +22,15 @@ import org.springframework.security.web.SecurityFilterChain;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class SecurityConfig {
     JwtDecoder jwtDecoder;
-
     JwtAuthenticationConverter jwtAuthenticationConverter;
+
+    String[] PUBLIC_MATCHERS = {
+            "/api/v1/auth/**",
+            "/api/v1/user/**",
+            "/v3/api-docs/**",
+            "/swagger-ui/**",
+            "/swagger-ui.html"
+    };
 
     @Bean
     public SecurityFilterChain filterChain (HttpSecurity http) throws Exception{
@@ -32,8 +39,7 @@ public class SecurityConfig {
                 .cors(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(request ->
                         request
-                                .requestMatchers("/api/v1/auth/**").permitAll()
-                                .requestMatchers("/api/v1/user/**").permitAll()
+                                .requestMatchers(PUBLIC_MATCHERS).permitAll()
                                 .anyRequest().authenticated()
                 )
 

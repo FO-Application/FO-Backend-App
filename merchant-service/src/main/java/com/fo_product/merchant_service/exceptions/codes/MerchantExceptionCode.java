@@ -16,6 +16,7 @@ public enum MerchantExceptionCode implements ErrorCode{
     RESTAURANT_EXIST(3003, "Restaurant exist", HttpStatus.CONFLICT),
     RESTAURANT_NOT_EXIST(3004, "Restaurant not exist", HttpStatus.NOT_FOUND),
     INVALID_MERCHANT_USER_ACCOUNT(3005, "Invalid merchant user account", HttpStatus.BAD_REQUEST),
+    RESTAURANT_SCHEDULE_NOT_EXIST(3006, "Restaurant schedule not exist", HttpStatus.NOT_FOUND),
 
     ;
     int code;

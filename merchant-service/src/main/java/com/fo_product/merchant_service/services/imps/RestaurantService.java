@@ -15,6 +15,8 @@ import com.fo_product.merchant_service.services.interfaces.IRestaurantService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,12 +35,13 @@ public class RestaurantService implements IRestaurantService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "restaurant_details", key = "#id")
     public RestaurantResponse createRestaurant(RestaurantRequest request, MultipartFile image) {
         if (restaurantRepository.existsByName(request.name()) ||  restaurantRepository.existsBySlug(request.slug()))
             throw new MerchantException(MerchantExceptionCode.RESTAURANT_EXIST);
 
         UserResponse user = userClient.getUserById(request.ownerId());
-        if (user == null || user.role() != "MERCHANT")
+        if (user == null || !"MERCHANT".equals(user.role()))
             throw new MerchantException(MerchantExceptionCode.INVALID_MERCHANT_USER_ACCOUNT);
 
         String imageUrl = null;
@@ -69,6 +72,7 @@ public class RestaurantService implements IRestaurantService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "restaurant_details", key = "#id")
     public RestaurantResponse updateRestaurantById(Long id, RestaurantPatchRequest request, MultipartFile image) {
         Restaurant restaurant = restaurantRepository.findById(id)
                 .orElseThrow(() -> new MerchantException(MerchantExceptionCode.RESTAURANT_NOT_EXIST));
@@ -90,7 +94,7 @@ public class RestaurantService implements IRestaurantService {
 
         if (request.ownerId() != null) {
             UserResponse user = userClient.getUserById(request.ownerId());
-            if (user == null || user.role() != "MERCHANT") {
+            if (user == null || !"MERCHANT".equals(user.role())) {
                 throw new MerchantException(MerchantExceptionCode.INVALID_MERCHANT_USER_ACCOUNT);
             }
             restaurant.setOwnerId(user.id());
@@ -109,6 +113,7 @@ public class RestaurantService implements IRestaurantService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "restaurant_details", key = "#id")
     public RestaurantResponse getRestaurantById(Long id) {
         Restaurant restaurant = restaurantRepository.findById(id)
                 .orElseThrow(() -> new MerchantException(MerchantExceptionCode.RESTAURANT_NOT_EXIST));
@@ -127,6 +132,7 @@ public class RestaurantService implements IRestaurantService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "restaurant_details", key = "#id")
     public void deleteRestaurantById(Long id) {
         Restaurant restaurant = restaurantRepository.findById(id)
                 .orElseThrow(() -> new MerchantException(MerchantExceptionCode.RESTAURANT_NOT_EXIST));

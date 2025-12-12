@@ -23,6 +23,12 @@ public class SecurityConfig {
     JwtDecoder jwtDecoder;
     JwtAuthenticationConverter jwtAuthenticationConverter;
 
+    String[] PUBLIC_MATCHERS = {
+            "/api/v1/cuisine/**",
+            "/api/v1/restaurant/**",
+            "/api/v1/restaurant-schedule/**"
+    };
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
@@ -31,7 +37,7 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(request ->
                         request
-                                .requestMatchers("/api/v1/cuisine/**").permitAll()
+                                .requestMatchers(PUBLIC_MATCHERS).permitAll()
                                 .anyRequest().authenticated()
                 )
 
