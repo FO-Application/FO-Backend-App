@@ -35,7 +35,6 @@ public class CuisineController {
             @ApiResponse(responseCode = "200", description = "Tạo thành công"),
             @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ hoặc file ảnh lỗi")
     })
-    // Quan trọng: Phải khai báo consumes để Swagger hiện nút upload file
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     APIResponse<CuisineResponse> createCuisine(
             @Parameter(description = "Thông tin Cuisine (JSON)", schema = @Schema(implementation = CuisineRequest.class))

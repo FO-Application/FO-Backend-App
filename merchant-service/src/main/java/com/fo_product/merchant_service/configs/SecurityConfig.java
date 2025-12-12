@@ -26,7 +26,10 @@ public class SecurityConfig {
     String[] PUBLIC_MATCHERS = {
             "/api/v1/cuisine/**",
             "/api/v1/restaurant/**",
-            "/api/v1/restaurant-schedule/**"
+            "/api/v1/restaurant-schedule/**",
+            "/v3/api-docs/**",
+            "/swagger-ui/**",
+            "/swagger-ui.html"
     };
 
     @Bean
