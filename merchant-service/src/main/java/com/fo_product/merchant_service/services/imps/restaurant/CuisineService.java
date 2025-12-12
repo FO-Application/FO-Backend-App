@@ -1,4 +1,4 @@
-package com.fo_product.merchant_service.services.imps;
+package com.fo_product.merchant_service.services.imps.restaurant;
 
 import com.fo_product.merchant_service.dtos.requests.cuisine.CuisinePatchRequest;
 import com.fo_product.merchant_service.dtos.requests.cuisine.CuisineRequest;

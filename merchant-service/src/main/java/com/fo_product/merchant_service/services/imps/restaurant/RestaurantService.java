@@ -1,4 +1,4 @@
-package com.fo_product.merchant_service.services.imps;
+package com.fo_product.merchant_service.services.imps.restaurant;
 
 import com.fo_product.merchant_service.client.UserClient;
 import com.fo_product.merchant_service.dtos.requests.restaurant.RestaurantPatchRequest;
@@ -105,6 +105,12 @@ public class RestaurantService implements IRestaurantService {
 
         if (request.longitude() != null)
             restaurant.setLongitude(request.longitude());
+
+        if (request.isActive() != null)
+            restaurant.setActive(request.isActive());
+
+        if (request.isOpen() != null)
+            restaurant.setOpen(request.isOpen());
 
         Restaurant result =  restaurantRepository.save(restaurant);
 

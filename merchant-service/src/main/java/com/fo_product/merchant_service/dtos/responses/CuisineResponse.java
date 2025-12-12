@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 @Builder
 public record CuisineResponse(
-        @Schema(description = "ID Cuisine", example = "10")
+        @Schema(description = "ID loại hình ẩm thực", example = "10")
         Long id,
 
         @Schema(description = "Tên Cuisine", example = "Món Hàn")

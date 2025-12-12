@@ -27,6 +27,12 @@ public record RestaurantPatchRequest(
 
         @Schema(description = "SĐT mới", example = "0912345678")
         @PhoneConstraint(length = 10, message = "INVALID_PHONE")
-        String phone
+        String phone,
+
+        @Schema(description = "Thay đổi trạng thái họat động hoặc ngừng hợp tác của nhà hàng với sàn thương mại FO", example = "false")
+        Boolean isActive,
+
+        @Schema(description = "Thay đổi trạng thái mở cửa/ đóng cửa tạm thời của chủ quán", example = "false")
+        Boolean isOpen
 ) {
 }
