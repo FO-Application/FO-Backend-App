@@ -8,7 +8,9 @@ import com.fo_product.merchant_service.dtos.responses.UserResponse;
 import com.fo_product.merchant_service.exceptions.MerchantException;
 import com.fo_product.merchant_service.exceptions.codes.MerchantExceptionCode;
 import com.fo_product.merchant_service.mappers.RestaurantMapper;
+import com.fo_product.merchant_service.models.entities.restaurant.Cuisine;
 import com.fo_product.merchant_service.models.entities.restaurant.Restaurant;
+import com.fo_product.merchant_service.models.repositories.restaurant.CuisineRepository;
 import com.fo_product.merchant_service.models.repositories.restaurant.RestaurantRepository;
 import com.fo_product.merchant_service.services.interfaces.IMinIOService;
 import com.fo_product.merchant_service.services.interfaces.IRestaurantService;
@@ -24,11 +26,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class RestaurantService implements IRestaurantService {
     RestaurantRepository restaurantRepository;
+    CuisineRepository cuisineRepository;
     IMinIOService minIOService;
     UserClient userClient;
     RestaurantMapper mapper;
@@ -49,6 +56,12 @@ public class RestaurantService implements IRestaurantService {
             imageUrl = minIOService.uploadFile(image);
         }
 
+        Set<Cuisine> cuisines = new HashSet<>();
+        if (!request.cuisinesId().isEmpty() && request.cuisinesId() != null) {
+            List<Cuisine> cuisinesResult = cuisineRepository.findAllById(request.cuisinesId());
+            cuisines.addAll(cuisinesResult);
+        }
+
         Restaurant restaurant = Restaurant.builder()
                 .name(request.name())
                 .ownerId(user.id())
@@ -63,6 +76,7 @@ public class RestaurantService implements IRestaurantService {
                 .reviewCount(0)
                 .isActive(true)
                 .isOpen(true)
+                .cuisines(cuisines)
                 .build();
 
         Restaurant result = restaurantRepository.save(restaurant);
@@ -111,6 +125,15 @@ public class RestaurantService implements IRestaurantService {
 
         if (request.isOpen() != null)
             restaurant.setOpen(request.isOpen());
+
+        if (request.cuisinesId() != null && !request.cuisinesId().isEmpty()) {
+            Set<Cuisine> cuisines = new HashSet<>();
+            if (!request.cuisinesId().isEmpty() && request.cuisinesId() != null) {
+                List<Cuisine> cuisinesResult = cuisineRepository.findAllById(request.cuisinesId());
+                cuisines.addAll(cuisinesResult);
+                restaurant.setCuisines(cuisines);
+            }
+        }
 
         Restaurant result =  restaurantRepository.save(restaurant);
 

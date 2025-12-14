@@ -1,13 +1,14 @@
 package com.fo_product.merchant_service.models.entities.restaurant;
 
 import com.fo_product.merchant_service.models.entities.product.Category;
-import com.fo_product.merchant_service.models.entities.product.Food;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * <pre>
@@ -87,14 +88,11 @@ public class Restaurant {
             joinColumns = @JoinColumn(name = "restaurant_id"),
             inverseJoinColumns = @JoinColumn(name = "cuisine_id")
     )
-    List<Cuisine> cuisines = new ArrayList<>();
+    Set<Cuisine> cuisines = new HashSet<>();
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true)
     List<RestaurantSchedule> restaurantSchedules = new ArrayList<>();
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
     List<Category> categories = new ArrayList<>();
-
-    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
-    List<Food> foods;
 }

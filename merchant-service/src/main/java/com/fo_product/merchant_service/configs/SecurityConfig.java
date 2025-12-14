@@ -27,6 +27,7 @@ public class SecurityConfig {
             "/api/v1/cuisine/**",
             "/api/v1/restaurant/**",
             "/api/v1/restaurant-schedule/**",
+            "/api/v1/category",
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html"

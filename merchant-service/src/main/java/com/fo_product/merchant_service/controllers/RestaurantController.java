@@ -82,11 +82,11 @@ public class RestaurantController {
     @Operation(summary = "Lấy danh sách nhà hàng (Phân trang)", description = "Lấy tất cả nhà hàng với phân trang.")
     @GetMapping
     APIResponse<Page<RestaurantResponse>> getAllRestaurants(
-            @Parameter(description = "Trang số mấy (bắt đầu từ 0)", example = "0")
-            @RequestParam int page,
+            @Parameter(description = "Số trang (bắt đầu từ 0)", example = "0")
+            @RequestParam(defaultValue = "0") int page,
 
-            @Parameter(description = "Số lượng bản ghi mỗi trang", example = "10")
-            @RequestParam int size
+            @Parameter(description = "Số lượng phần tử mỗi trang", example = "10")
+            @RequestParam(defaultValue = "10") int size
     ) {
         Page<RestaurantResponse> result = restaurantService.getAllRestaurants(page, size);
         return APIResponse.<Page<RestaurantResponse>>builder()

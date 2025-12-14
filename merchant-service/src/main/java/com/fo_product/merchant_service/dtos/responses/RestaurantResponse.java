@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
 import java.io.Serializable;
+import java.util.Set;
 
 @Builder
 public record RestaurantResponse(
@@ -44,6 +45,9 @@ public record RestaurantResponse(
         String imageFileUrl,
 
         @Schema(description = "Mô tả nhà hàng")
-        String description
+        String description,
+
+        @Schema(description = "Các tag danh mục nhà hàng", example = "Các dữ liệu trả về xem ở Cuisine response")
+        Set<CuisineResponse> cuisines
 ) implements Serializable {
 }

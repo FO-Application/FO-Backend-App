@@ -76,7 +76,7 @@ public class UserController {
             @RequestParam(defaultValue = "0") int page,
 
             @Parameter(description = "Số lượng phần tử mỗi trang", example = "10")
-            @RequestParam(defaultValue = "6") int size
+            @RequestParam(defaultValue = "10") int size
     ) {
         Page<UserResponse> responses = userService.getAllUsers(page, size);
         return APIResponse.<Page<UserResponse>>builder()

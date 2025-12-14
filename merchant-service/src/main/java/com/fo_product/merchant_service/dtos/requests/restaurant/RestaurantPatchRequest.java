@@ -2,6 +2,9 @@ package com.fo_product.merchant_service.dtos.requests.restaurant;
 
 import com.fo_product.common_lib.exceptions.validation.constraint.PhoneConstraint;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
+
+import java.util.Set;
 
 public record RestaurantPatchRequest(
         @Schema(description = "Tên mới", example = "Phở Cồ 2")
@@ -33,6 +36,9 @@ public record RestaurantPatchRequest(
         Boolean isActive,
 
         @Schema(description = "Thay đổi trạng thái mở cửa/ đóng cửa tạm thời của chủ quán", example = "false")
-        Boolean isOpen
+        Boolean isOpen,
+
+        @Schema(description = "Danh sách các thẻ tag mà nhà hàng cập nhập", example = "[1,2]")
+        Set<Long> cuisinesId
 ) {
 }

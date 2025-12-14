@@ -164,7 +164,6 @@ services:
       MERCHANT_DB_PASSWORD: ${MERCHANT_DB_PASSWORD}
       MERCHANT_DB_NAME: ${MERCHANT_DB_NAME}
       MERCHANT_SERVICE_PORT: ${MERCHANT_SERVICE_PORT}
-      # >>> QUAN TRỌNG: Sửa URL thành fo-minio (gạch ngang) <<<
       MINIO_URL: http://fo-minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
@@ -180,7 +179,6 @@ services:
   # --- 10. Minio ---
   minio:
     image: minio/minio:latest
-    # >>> QUAN TRỌNG: Tên container phải là fo-minio (gạch ngang) <<<
     container_name: fo-minio
     command: server /data --console-address ":9001"
     ports:
@@ -205,10 +203,8 @@ services:
       - fo-network
     # Lệnh này trỏ domain cố định vào API Gateway
     # Lưu ý: fo-api-gateway là tên container, ${GATEWAY_PORT} là cổng nội bộ
-
     command: http --domain=${NGROK_DOMAIN} fo-api-gateway:${GATEWAY_PORT}
     environment:
-      # Thay token của bạn vào đây
       - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
     depends_on:
       - api-gateway

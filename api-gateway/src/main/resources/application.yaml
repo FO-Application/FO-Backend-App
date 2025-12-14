@@ -57,6 +57,7 @@ spring:
                   - /api/v1/cuisine/**
                   - /api/v1/restaurant/**
                   - /api/v1/restaurant-schedule/**
+                  - /api/v1/category/**
           filters:
             - name: RequestRateLimiter
               args:

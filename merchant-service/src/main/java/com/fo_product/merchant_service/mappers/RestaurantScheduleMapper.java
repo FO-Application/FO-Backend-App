@@ -1,5 +1,6 @@
 package com.fo_product.merchant_service.mappers;
 
+import com.fo_product.merchant_service.dtos.responses.CuisineResponse;
 import com.fo_product.merchant_service.dtos.responses.RestaurantResponse;
 import com.fo_product.merchant_service.dtos.responses.RestaurantScheduleResponse;
 import com.fo_product.merchant_service.exceptions.MerchantException;
@@ -7,6 +8,8 @@ import com.fo_product.merchant_service.exceptions.codes.MerchantExceptionCode;
 import com.fo_product.merchant_service.models.entities.restaurant.Restaurant;
 import com.fo_product.merchant_service.models.entities.restaurant.RestaurantSchedule;
 import org.springframework.stereotype.Component;
+
+import java.util.stream.Collectors;
 
 @Component
 public class RestaurantScheduleMapper {
@@ -34,6 +37,14 @@ public class RestaurantScheduleMapper {
                         .reviewCount(restaurant.getReviewCount())
                         .imageFileUrl(restaurant.getImageFileUrl())
                         .description(restaurant.getDescription())
+                        .cuisines(restaurant.getCuisines().stream().map(
+                                cuisine -> CuisineResponse.builder()
+                                        .id(cuisine.getId())
+                                        .name(cuisine.getName())
+                                        .slug(cuisine.getSlug())
+                                        .imageFileUrl(cuisine.getImageFileUrl()
+                                        ).build()
+                        ).collect(Collectors.toSet()))
                         .build()
                 )
                 .build();

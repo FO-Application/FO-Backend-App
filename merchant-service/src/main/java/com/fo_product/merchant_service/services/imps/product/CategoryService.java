@@ -3,16 +3,24 @@ package com.fo_product.merchant_service.services.imps.product;
 import com.fo_product.merchant_service.dtos.requests.category.CategoryPatchRequest;
 import com.fo_product.merchant_service.dtos.requests.category.CategoryRequest;
 import com.fo_product.merchant_service.dtos.responses.CategoryResponse;
+import com.fo_product.merchant_service.exceptions.MerchantException;
+import com.fo_product.merchant_service.exceptions.codes.MerchantExceptionCode;
+import com.fo_product.merchant_service.mappers.CategoryMapper;
+import com.fo_product.merchant_service.models.entities.product.Category;
+import com.fo_product.merchant_service.models.entities.restaurant.Restaurant;
 import com.fo_product.merchant_service.models.repositories.product.CategoryRepository;
 import com.fo_product.merchant_service.models.repositories.restaurant.RestaurantRepository;
 import com.fo_product.merchant_service.services.interfaces.ICategoryService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -20,34 +28,81 @@ import java.util.List;
 public class CategoryService implements ICategoryService {
     CategoryRepository categoryRepository;
     RestaurantRepository restaurantRepository;
+    CategoryMapper mapper;
 
     @Override
     @Transactional
-    public CategoryResponse createCategory(CategoryRequest categoryRequest) {
-        return null;
+    @CacheEvict(value = "category_details", key = "#id")
+    public CategoryResponse createCategory(CategoryRequest request) {
+        Restaurant restaurant = restaurantRepository.findById(request.idRestaurant())
+                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.RESTAURANT_NOT_EXIST));
+
+        Category category = Category.builder()
+                .name(request.name())
+                .displayOrder(request.displayOrder())
+                .isActive(true)
+                .restaurant(restaurant)
+                .build();
+
+        Category result = categoryRepository.save(category);
+
+        return mapper.response(result);
     }
 
     @Override
     @Transactional
-    public CategoryResponse updateCategory(Long id, CategoryPatchRequest categoryRequest) {
-        return null;
+    @CacheEvict(value = "category_details", key = "#id")
+    public CategoryResponse updateCategory(Long id, CategoryPatchRequest request) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.CATEGORY_NOT_EXIST));
+
+        if (request.name() != null)
+            category.setName(request.name());
+
+        if (request.displayOrder() != null)
+            category.setDisplayOrder(request.displayOrder());
+
+        if (request.idRestaurant() != null) {
+            Restaurant restaurant = restaurantRepository.findById(request.idRestaurant())
+                    .orElseThrow(() -> new MerchantException(MerchantExceptionCode.RESTAURANT_NOT_EXIST));
+
+            category.setRestaurant(restaurant);
+        }
+
+        if (request.isActive() != null)
+            category.setActive(request.isActive());
+
+        Category result = categoryRepository.save(category);
+
+        return mapper.response(result);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<CategoryResponse> getAllCategories() {
-        return List.of();
+    public Page<CategoryResponse> getAllCategories(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Category> result = categoryRepository.findAll(pageable);
+
+        return result.map(category -> mapper.response(category));
     }
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "category_details", key = "#id")
     public CategoryResponse getCategoryById(Long id) {
-        return null;
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.CATEGORY_NOT_EXIST));
+
+        return mapper.response(category);
     }
 
     @Override
     @Transactional
+    @CacheEvict(value = "category_details", key = "#id")
     public void deleteCategoryById(Long id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.CATEGORY_NOT_EXIST));
 
+        categoryRepository.delete(category);
     }
 }
