@@ -194,7 +194,7 @@ services:
     networks:
       - fo-network
 
-  # --- 11. Ngrok Tunnel (NEW) ---
+  # --- 11. Ngrok Tunnel ---
   ngrok:
     image: ngrok/ngrok:latest
     container_name: fo-ngrok

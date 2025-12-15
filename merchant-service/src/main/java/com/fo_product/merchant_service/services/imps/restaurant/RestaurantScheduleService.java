@@ -10,7 +10,7 @@ import com.fo_product.merchant_service.models.entities.restaurant.Restaurant;
 import com.fo_product.merchant_service.models.entities.restaurant.RestaurantSchedule;
 import com.fo_product.merchant_service.models.repositories.restaurant.RestaurantRepository;
 import com.fo_product.merchant_service.models.repositories.restaurant.RestaurantScheduleRepository;
-import com.fo_product.merchant_service.services.interfaces.IRestaurantScheduleService;
+import com.fo_product.merchant_service.services.interfaces.restaurant.IRestaurantScheduleService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

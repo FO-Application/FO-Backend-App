@@ -1,4 +1,4 @@
-package com.fo_product.merchant_service.services.interfaces;
+package com.fo_product.merchant_service.services.interfaces.restaurant;
 
 import com.fo_product.merchant_service.dtos.requests.restaurant.RestaurantPatchRequest;
 import com.fo_product.merchant_service.dtos.requests.restaurant.RestaurantRequest;

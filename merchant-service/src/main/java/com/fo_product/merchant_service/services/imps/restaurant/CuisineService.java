@@ -8,7 +8,7 @@ import com.fo_product.merchant_service.exceptions.codes.MerchantExceptionCode;
 import com.fo_product.merchant_service.mappers.CuisineMapper;
 import com.fo_product.merchant_service.models.entities.restaurant.Cuisine;
 import com.fo_product.merchant_service.models.repositories.restaurant.CuisineRepository;
-import com.fo_product.merchant_service.services.interfaces.ICuisineService;
+import com.fo_product.merchant_service.services.interfaces.restaurant.ICuisineService;
 import com.fo_product.merchant_service.services.interfaces.IMinIOService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;

@@ -15,38 +15,12 @@ import java.util.stream.Collectors;
 public class RestaurantScheduleMapper {
 
     public RestaurantScheduleResponse response(RestaurantSchedule restaurantSchedule) {
-        Restaurant restaurant = restaurantSchedule.getRestaurant();
-        if (restaurant == null)
-            throw new MerchantException(MerchantExceptionCode.RESTAURANT_NOT_EXIST);
-
         return RestaurantScheduleResponse.builder()
                 .id(restaurantSchedule.getId())
                 .dayOfWeek(restaurantSchedule.getDayOfWeek())
                 .openTime(restaurantSchedule.getOpenTime())
                 .closeTime(restaurantSchedule.getCloseTime())
-                .restaurantResponse(RestaurantResponse.builder()
-                        .id(restaurant.getId())
-                        .name(restaurant.getName())
-                        .slug(restaurant.getSlug())
-                        .address(restaurant.getAddress())
-                        .latitude(restaurant.getLatitude())
-                        .longitude(restaurant.getLongitude())
-                        .phone(restaurant.getPhone())
-                        .isActive(restaurant.isActive())
-                        .ratingAverage(restaurant.getRatingAverage())
-                        .reviewCount(restaurant.getReviewCount())
-                        .imageFileUrl(restaurant.getImageFileUrl())
-                        .description(restaurant.getDescription())
-                        .cuisines(restaurant.getCuisines().stream().map(
-                                cuisine -> CuisineResponse.builder()
-                                        .id(cuisine.getId())
-                                        .name(cuisine.getName())
-                                        .slug(cuisine.getSlug())
-                                        .imageFileUrl(cuisine.getImageFileUrl()
-                                        ).build()
-                        ).collect(Collectors.toSet()))
-                        .build()
-                )
+                .restaurantName(restaurantSchedule.getRestaurant().getName())
                 .build();
     }
 }

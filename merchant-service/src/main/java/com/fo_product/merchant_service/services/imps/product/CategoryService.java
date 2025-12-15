@@ -10,7 +10,7 @@ import com.fo_product.merchant_service.models.entities.product.Category;
 import com.fo_product.merchant_service.models.entities.restaurant.Restaurant;
 import com.fo_product.merchant_service.models.repositories.product.CategoryRepository;
 import com.fo_product.merchant_service.models.repositories.restaurant.RestaurantRepository;
-import com.fo_product.merchant_service.services.interfaces.ICategoryService;
+import com.fo_product.merchant_service.services.interfaces.product.ICategoryService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -83,7 +83,7 @@ public class CategoryService implements ICategoryService {
         Pageable pageable = PageRequest.of(page, size);
         Page<Category> result = categoryRepository.findAll(pageable);
 
-        return result.map(category -> mapper.response(category));
+        return result.map(mapper::response);
     }
 
     @Override

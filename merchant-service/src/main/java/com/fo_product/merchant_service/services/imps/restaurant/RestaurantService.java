@@ -13,7 +13,7 @@ import com.fo_product.merchant_service.models.entities.restaurant.Restaurant;
 import com.fo_product.merchant_service.models.repositories.restaurant.CuisineRepository;
 import com.fo_product.merchant_service.models.repositories.restaurant.RestaurantRepository;
 import com.fo_product.merchant_service.services.interfaces.IMinIOService;
-import com.fo_product.merchant_service.services.interfaces.IRestaurantService;
+import com.fo_product.merchant_service.services.interfaces.restaurant.IRestaurantService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -156,7 +156,7 @@ public class RestaurantService implements IRestaurantService {
         Pageable pageable = PageRequest.of(page, size);
         Page<Restaurant> result = restaurantRepository.findAll(pageable);
 
-        return result.map(restaurant -> mapper.response(restaurant));
+        return result.map(mapper::response);
     }
 
     @Override

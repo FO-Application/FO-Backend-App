@@ -64,4 +64,4 @@ springdoc:
 
 openapi:
   service:
-    url: https://vanessa-unabsolved-buck.ngrok-free.dev
+    url: ${OPENAPI_SERVICE_URL}

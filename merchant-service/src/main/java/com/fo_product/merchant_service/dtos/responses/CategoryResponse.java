@@ -3,6 +3,8 @@ package com.fo_product.merchant_service.dtos.responses;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
+import java.io.Serializable;
+
 @Builder
 public record CategoryResponse(
         @Schema(description = "ID của phân loại thực đơn trong nhà hàng", example = "1")
@@ -17,7 +19,7 @@ public record CategoryResponse(
         @Schema(description = "Ẩn/ hiện danh mục này trên client", example = "true")
         boolean isActive,
 
-        @Schema(description = "Response trả về thông tin của nhà hàng", example = "{Bên trong này tự check API response của restaurant}")
-        RestaurantResponse restaurantResponse
-) {
+        @Schema(description = "Response trả về tên nhà hàng", example = "Lẩu Halidao")
+        String restaurantName
+) implements Serializable {
 }

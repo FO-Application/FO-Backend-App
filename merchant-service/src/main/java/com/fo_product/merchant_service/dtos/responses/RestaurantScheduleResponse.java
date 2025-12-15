@@ -20,7 +20,7 @@ public record RestaurantScheduleResponse(
         @Schema(description = "Giờ đóng cửa", example = "22:00:00")
         LocalTime closeTime,
 
-        @Schema(description = "Thông tin nhà hàng")
-        RestaurantResponse restaurantResponse
+        @Schema(description = "Tên nhà hàng", example = "Phở Anh Hai")
+        String restaurantName
 ) implements Serializable {
 }

@@ -2,6 +2,7 @@ package com.fo_product.merchant_service.mappers;
 
 import com.fo_product.merchant_service.dtos.responses.CuisineResponse;
 import com.fo_product.merchant_service.dtos.responses.RestaurantResponse;
+import com.fo_product.merchant_service.models.entities.restaurant.Cuisine;
 import com.fo_product.merchant_service.models.entities.restaurant.Restaurant;
 import org.springframework.stereotype.Component;
 
@@ -23,15 +24,10 @@ public class RestaurantMapper {
                 .reviewCount(restaurant.getReviewCount())
                 .imageFileUrl(restaurant.getImageFileUrl())
                 .description(restaurant.getDescription())
-                .cuisines(restaurant.getCuisines().stream().map(
-                        cuisine -> CuisineResponse.builder()
-                                .id(cuisine.getId())
-                                .name(cuisine.getName())
-                                .slug(cuisine.getSlug())
-                                .imageFileUrl(cuisine.getImageFileUrl())
-                                .build()
-                ).collect(Collectors.toSet()))
-                .build();
+                .cuisineNames(restaurant.getCuisines().stream()
+                        .map(Cuisine::getName)
+                        .collect(Collectors.toSet())
+                ).build();
 
     }
 }

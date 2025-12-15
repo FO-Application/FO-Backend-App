@@ -4,7 +4,7 @@ import com.fo_product.common_lib.dtos.APIResponse;
 import com.fo_product.merchant_service.dtos.requests.category.CategoryPatchRequest;
 import com.fo_product.merchant_service.dtos.requests.category.CategoryRequest;
 import com.fo_product.merchant_service.dtos.responses.CategoryResponse;
-import com.fo_product.merchant_service.services.interfaces.ICategoryService;
+import com.fo_product.merchant_service.services.interfaces.product.ICategoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

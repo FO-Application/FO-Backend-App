@@ -48,6 +48,6 @@ public record RestaurantResponse(
         String description,
 
         @Schema(description = "Các tag danh mục nhà hàng", example = "Các dữ liệu trả về xem ở Cuisine response")
-        Set<CuisineResponse> cuisines
+        Set<String> cuisineNames
 ) implements Serializable {
 }

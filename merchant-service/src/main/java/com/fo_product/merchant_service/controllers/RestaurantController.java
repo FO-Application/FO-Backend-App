@@ -4,7 +4,7 @@ import com.fo_product.common_lib.dtos.APIResponse;
 import com.fo_product.merchant_service.dtos.requests.restaurant.RestaurantPatchRequest;
 import com.fo_product.merchant_service.dtos.requests.restaurant.RestaurantRequest;
 import com.fo_product.merchant_service.dtos.responses.RestaurantResponse;
-import com.fo_product.merchant_service.services.interfaces.IRestaurantService;
+import com.fo_product.merchant_service.services.interfaces.restaurant.IRestaurantService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
