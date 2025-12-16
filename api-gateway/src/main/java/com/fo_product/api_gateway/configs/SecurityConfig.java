@@ -1,16 +1,14 @@
 package com.fo_product.api_gateway.configs;
 
 
+import com.fo_product.api_gateway.custom.ServerCookieBearerTokenConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtGrantedAuthoritiesConverterAdapter;
@@ -23,6 +21,8 @@ import javax.crypto.spec.SecretKeySpec;
 @Configuration
 @EnableWebFluxSecurity
 public class SecurityConfig {
+    private final ServerCookieBearerTokenConverter bearerTokenConverter;
+
     @Value("${jwt.secret}")
     protected String SECRET_KEY;
 
@@ -37,12 +37,17 @@ public class SecurityConfig {
             "/api/v1/restaurant-schedule/**",
             "/api/v1/category/**",
             "/api/v1/product/**",
+            "/api/v1/option-group/**",
             "/v3/api-docs/**",      // Để Gateway lấy JSON từ các service con
             "/swagger-ui.html",     // Trang giao diện chính
             "/swagger-ui/**",       // Các file css, js của giao diện Swagger
             "/webjars/**",          // Thư viện giao diện (nếu cần)
             "/eureka/**"
     };
+
+    public SecurityConfig(ServerCookieBearerTokenConverter bearerTokenConverter) {
+        this.bearerTokenConverter = bearerTokenConverter;
+    }
 
     @Bean
     public SecurityWebFilterChain filterChain(ServerHttpSecurity http, CorsConfigurationSource corsConfigurationSource) {
@@ -55,8 +60,9 @@ public class SecurityConfig {
                         .pathMatchers(REQUEST_MATCHERS).permitAll()
                         .anyExchange().authenticated())
 
-                .oauth2ResourceServer(
-                        oauth2 -> oauth2
+                .oauth2ResourceServer(oauth2 ->
+                        oauth2
+                                .bearerTokenConverter(bearerTokenConverter)
                                 .jwt(jwtSpec -> jwtSpec
                                         .jwtDecoder(jwtDecoder())
                                         .jwtAuthenticationConverter(reactiveJwtAuthenticationConverter())

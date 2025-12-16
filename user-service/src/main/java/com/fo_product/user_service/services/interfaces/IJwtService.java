@@ -6,10 +6,11 @@ import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
 
 import java.text.ParseException;
+import java.util.Map;
 
 public interface IJwtService {
     JwtService.TokenPair generateTokenPair(User user);
     SignedJWT verifyToken(String token, String type) throws JOSEException, ParseException;
-    JwtService.TokenPair refreshToken(String token) throws ParseException, JOSEException;
+    Map<String, Object> refreshToken(String token) throws ParseException, JOSEException;
     void invalidatedToken(SignedJWT signedJWT) throws ParseException;
 }

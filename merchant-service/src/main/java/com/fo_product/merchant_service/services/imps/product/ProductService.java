@@ -35,7 +35,6 @@ public class ProductService implements IProductService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "product_details", key = "#id")
     public ProductResponse createProduct(ProductRequest request, MultipartFile image) {
         Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new MerchantException(MerchantExceptionCode.CATEGORY_NOT_EXIST));

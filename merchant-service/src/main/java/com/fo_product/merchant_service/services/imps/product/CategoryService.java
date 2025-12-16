@@ -32,7 +32,6 @@ public class CategoryService implements ICategoryService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "category_details", key = "#id")
     public CategoryResponse createCategory(CategoryRequest request) {
         Restaurant restaurant = restaurantRepository.findById(request.idRestaurant())
                 .orElseThrow(() -> new MerchantException(MerchantExceptionCode.RESTAURANT_NOT_EXIST));
@@ -61,13 +60,6 @@ public class CategoryService implements ICategoryService {
 
         if (request.displayOrder() != null)
             category.setDisplayOrder(request.displayOrder());
-
-        if (request.idRestaurant() != null) {
-            Restaurant restaurant = restaurantRepository.findById(request.idRestaurant())
-                    .orElseThrow(() -> new MerchantException(MerchantExceptionCode.RESTAURANT_NOT_EXIST));
-
-            category.setRestaurant(restaurant);
-        }
 
         if (request.isActive() != null)
             category.setActive(request.isActive());

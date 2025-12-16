@@ -10,9 +10,6 @@ public record CategoryPatchRequest(
         @Schema(description = "Thứ tự hiển thị trên menu mới (nếu muốn đổi)", example = "2")
         Integer displayOrder,
 
-        @Schema(description = "Nhà hàng mới (nếu muốn đổi)", example = "2")
-        Long idRestaurant,
-
         @Schema(description = "Ẩn/ hiện danh mục này trên client (Nếu muốn đổi)", example = "false")
         Boolean isActive
 ) {

@@ -1,5 +1,6 @@
 package com.fo_product.merchant_service.configs;
 
+import com.fo_product.common_lib.custom.CookieBearerTokenResolver;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -22,6 +23,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
     JwtDecoder jwtDecoder;
     JwtAuthenticationConverter jwtAuthenticationConverter;
+    CookieBearerTokenResolver cookieBearerTokenResolver;
 
     String[] PUBLIC_MATCHERS = {
             "/api/v1/cuisine/**",
@@ -29,6 +31,7 @@ public class SecurityConfig {
             "/api/v1/restaurant-schedule/**",
             "/api/v1/category/**",
             "/api/v1/product/**",
+            "/api/v1/option-group/**",
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html"
@@ -47,7 +50,9 @@ public class SecurityConfig {
                 )
 
                 .oauth2ResourceServer(oauth2 ->
-                        oauth2.jwt(
+                        oauth2
+                                .bearerTokenResolver(cookieBearerTokenResolver)
+                                .jwt(
                                 jwtConfigurer -> jwtConfigurer
                                         .decoder(jwtDecoder)
                                         .jwtAuthenticationConverter(jwtAuthenticationConverter)

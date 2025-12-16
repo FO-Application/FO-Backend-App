@@ -1,5 +1,6 @@
 package com.fo_product.user_service.configs;
 
+import com.fo_product.common_lib.custom.CookieBearerTokenResolver;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -23,6 +24,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
     JwtDecoder jwtDecoder;
     JwtAuthenticationConverter jwtAuthenticationConverter;
+    CookieBearerTokenResolver cookieBearerTokenResolver;
 
     String[] PUBLIC_MATCHERS = {
             "/api/v1/auth/**",
@@ -43,8 +45,10 @@ public class SecurityConfig {
                                 .anyRequest().authenticated()
                 )
 
-                .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(
+                .oauth2ResourceServer(oauth2 ->
+                        oauth2
+                                .bearerTokenResolver(cookieBearerTokenResolver)
+                                .jwt(
                                 jwtConfigurer -> jwtConfigurer
                                         .decoder(jwtDecoder)
                                         .jwtAuthenticationConverter(jwtAuthenticationConverter)

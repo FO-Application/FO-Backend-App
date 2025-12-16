@@ -12,7 +12,7 @@ import com.fo_product.user_service.models.repositories.PendingUserRepository;
 import com.fo_product.user_service.models.repositories.RoleRepository;
 import com.fo_product.user_service.models.repositories.UserRepository;
 import com.fo_product.user_service.dtos.requests.*;
-import com.fo_product.user_service.dtos.responses.AuthResponse;
+import com.fo_product.user_service.dtos.responses.AuthenticationDTO;
 import com.fo_product.user_service.dtos.responses.PendingUserResponse;
 import com.fo_product.user_service.dtos.responses.UserResponse;
 import com.fo_product.user_service.services.interfaces.IAuthService;
@@ -32,7 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.text.ParseException;
 import java.time.LocalDateTime;
-import java.util.Set;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -131,35 +131,40 @@ public class AuthService implements IAuthService {
     }
 
     @Override
-    public AuthResponse authentication(AuthenticateRequest request) {
+    public AuthenticationDTO authentication(AuthenticateRequest request) {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new UserException(UserExceptionCode.USER_NOT_EXIST));
 
         boolean matches = passwordEncoder.matches(request.password(), user.getPassword());
         if (!matches) throw new UserException(UserExceptionCode.UNAUTHENTICATED);
 
+        String role = user.getRole().getName();
+
         JwtService.TokenPair token = jwtService.generateTokenPair(user);
-        return AuthResponse.builder()
+        return AuthenticationDTO.builder()
                 .accessToken(token.getAccessToken())
                 .refreshToken(token.getRefreshToken())
+                .role(role)
                 .build();
     }
 
     @Override
-    public AuthResponse refreshToken(TokenRequest request) throws ParseException, JOSEException {
-        if (request == null) throw new UserException(UserExceptionCode.UNAUTHENTICATED);
-        String rt = request.refreshToken();
+    public AuthenticationDTO refreshToken(String refreshToken) throws ParseException, JOSEException {
+        if (refreshToken == null) throw new UserException(UserExceptionCode.UNAUTHENTICATED);
 
-        JwtService.TokenPair tokenPair = jwtService.refreshToken(rt);
-        return new AuthResponse(tokenPair.getAccessToken(), tokenPair.getRefreshToken());
+        Map<String, Object> result = jwtService.refreshToken(refreshToken);
+        return AuthenticationDTO.builder()
+                .accessToken(result.get("accessToken").toString())
+                .refreshToken(result.get("refreshToken").toString())
+                .role(result.get("role").toString())
+                .build();
     }
 
     @Override
-    public void logout(TokenRequest request) throws ParseException, JOSEException {
-        if (request == null) throw new UserException(UserExceptionCode.UNAUTHENTICATED);
-        String rt = request.refreshToken();
+    public void logout(String refreshToken) throws ParseException, JOSEException {
+        if (refreshToken == null) throw new UserException(UserExceptionCode.UNAUTHENTICATED);
 
-        SignedJWT token = jwtService.verifyToken(rt, "refresh");
+        SignedJWT token = jwtService.verifyToken(refreshToken, "refresh");
         jwtService.invalidatedToken(token);
     }
 }

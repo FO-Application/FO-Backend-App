@@ -42,7 +42,6 @@ public class RestaurantService implements IRestaurantService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "restaurant_details", key = "#id")
     public RestaurantResponse createRestaurant(RestaurantRequest request, MultipartFile image) {
         if (restaurantRepository.existsByName(request.name()) ||  restaurantRepository.existsBySlug(request.slug()))
             throw new MerchantException(MerchantExceptionCode.RESTAURANT_EXIST);
@@ -128,11 +127,16 @@ public class RestaurantService implements IRestaurantService {
 
         if (request.cuisinesId() != null && !request.cuisinesId().isEmpty()) {
             Set<Cuisine> cuisines = new HashSet<>();
-            if (!request.cuisinesId().isEmpty() && request.cuisinesId() != null) {
+            if (request.cuisinesId() != null && !request.cuisinesId().isEmpty()) {
                 List<Cuisine> cuisinesResult = cuisineRepository.findAllById(request.cuisinesId());
                 cuisines.addAll(cuisinesResult);
                 restaurant.setCuisines(cuisines);
             }
+        }
+
+        if (image != null && !image.isEmpty()) {
+            String newImageUrl = minIOService.uploadFile(image);
+            restaurant.setImageFileUrl(newImageUrl);
         }
 
         Restaurant result =  restaurantRepository.save(restaurant);

@@ -24,9 +24,7 @@ import org.springframework.util.CollectionUtils;
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.StringJoiner;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -123,7 +121,7 @@ public class JwtService implements IJwtService {
     }
 
     @Override
-    public TokenPair refreshToken(String token) throws ParseException, JOSEException {
+    public Map<String, Object> refreshToken(String token) throws ParseException, JOSEException {
         SignedJWT jwt = verifyToken(token, "refresh");
         invalidatedToken(jwt);
 
@@ -131,7 +129,15 @@ public class JwtService implements IJwtService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserException(UserExceptionCode.USER_NOT_EXIST));
 
-        return generateTokenPair(user);
+        String role = user.getRole().getName();
+        TokenPair tokenPair = generateTokenPair(user);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("accessToken", tokenPair.getAccessToken());
+        result.put("refreshToken", tokenPair.getRefreshToken());
+        result.put("role", role);
+
+        return result;
     }
 
     @Override
