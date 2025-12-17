@@ -20,6 +20,7 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -36,6 +37,15 @@ public class RestaurantScheduleService implements IRestaurantScheduleService {
     public RestaurantScheduleResponse createRestaurantSchedule(RestaurantScheduleRequest request) {
         Restaurant restaurant = restaurantRepository.findById(request.restaurantId())
                 .orElseThrow(() -> new MerchantException(MerchantExceptionCode.RESTAURANT_NOT_EXIST));
+
+        if (restaurantScheduleRepository.existsByRestaurantAndDayOfWeek(restaurant, request.dayOfWeek())) {
+            throw new MerchantException(MerchantExceptionCode.RESTAURANT_SCHEDULE_EXIST);
+        }
+
+        boolean validatedTime = validateTime(request.openTime(), request.closeTime());
+        if (!validatedTime) {
+            throw new MerchantException(MerchantExceptionCode.SCHEDULE_TIME_NOT_VALID);
+        }
 
         RestaurantSchedule restaurantSchedule = RestaurantSchedule.builder()
                 .dayOfWeek(request.dayOfWeek())
@@ -58,22 +68,30 @@ public class RestaurantScheduleService implements IRestaurantScheduleService {
             }
     )
     public RestaurantScheduleResponse updateRestaurantScheduleById(Long id, RestaurantSchedulePatchRequest request) {
-        Restaurant restaurant = restaurantRepository.findById(request.restaurantId())
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.RESTAURANT_NOT_EXIST));
-
         RestaurantSchedule restaurantSchedule = restaurantScheduleRepository.findById(id)
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.RESTAURANT_NOT_EXIST));
+                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.RESTAURANT_SCHEDULE_NOT_EXIST));
 
-        if (request.dayOfWeek() != null)
+        if (request.dayOfWeek() != null && !request.dayOfWeek().equals(restaurantSchedule.getDayOfWeek())) {
+            Restaurant restaurant = restaurantSchedule.getRestaurant();
+            if (restaurantScheduleRepository.existsByRestaurantAndDayOfWeek(restaurant, request.dayOfWeek())) {
+                throw new MerchantException(MerchantExceptionCode.RESTAURANT_SCHEDULE_EXIST);
+            }
             restaurantSchedule.setDayOfWeek(request.dayOfWeek());
+        }
+
+        LocalTime newOpenTime = request.openTime() != null ? request.openTime() : restaurantSchedule.getOpenTime();
+        LocalTime newCloseTime = request.closeTime() != null ? request.closeTime() : restaurantSchedule.getCloseTime();
+
+        boolean validatedTime = validateTime(newOpenTime, newCloseTime);
+        if (!validatedTime) {
+            throw new  MerchantException(MerchantExceptionCode.SCHEDULE_TIME_NOT_VALID);
+        }
 
         if (request.openTime() != null)
             restaurantSchedule.setOpenTime(request.openTime());
 
         if (request.closeTime() != null)
             restaurantSchedule.setCloseTime(request.closeTime());
-
-        restaurantSchedule.setRestaurant(restaurant);
 
         RestaurantSchedule result = restaurantScheduleRepository.save(restaurantSchedule);
 
@@ -92,9 +110,12 @@ public class RestaurantScheduleService implements IRestaurantScheduleService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "cacheRestaurantSchedules")
-    public List<RestaurantScheduleResponse> getAllRestaurantSchedules() {
-        List<RestaurantSchedule> result = restaurantScheduleRepository.findAll();
+    @Cacheable(value = "cacheRestaurantSchedules", key = "#restaurantSlug")
+    public List<RestaurantScheduleResponse> getAllRestaurantSchedulesByRestaurant(String restaurantSlug) {
+        Restaurant restaurant = restaurantRepository.findBySlug(restaurantSlug)
+                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.RESTAURANT_NOT_EXIST));
+
+        List<RestaurantSchedule> result = restaurantScheduleRepository.findAllByRestaurant(restaurant);
 
         return result.stream().map(mapper::response).toList();
     }
@@ -110,5 +131,12 @@ public class RestaurantScheduleService implements IRestaurantScheduleService {
                 .orElseThrow(() -> new MerchantException(MerchantExceptionCode.RESTAURANT_SCHEDULE_NOT_EXIST));
 
         restaurantScheduleRepository.delete(restaurantSchedule);
+    }
+
+    private boolean validateTime(LocalTime openTime, LocalTime closeTime) {
+        if  (openTime == null || closeTime == null) {
+            return false;
+        }
+        return !openTime.isAfter(closeTime);
     }
 }

@@ -20,6 +20,12 @@ public enum MerchantExceptionCode implements ErrorCode{
     CATEGORY_NOT_EXIST(3007, "Category not exist", HttpStatus.NOT_FOUND),
     PRODUCT_NOT_EXIST(3008, "Product not exist", HttpStatus.NOT_FOUND),
     OPTION_GROUP_NOT_EXIST(3009, "Option group not exist", HttpStatus.NOT_FOUND),
+    SLUG_EXIST(4001, "Slug exist", HttpStatus.CONFLICT),
+    SCHEDULE_TIME_NOT_VALID(4002, "Schedule time not valid", HttpStatus.BAD_REQUEST),
+    RESTAURANT_SCHEDULE_EXIST(4003, "Restaurant schedule exist", HttpStatus.CONFLICT),
+    CATEGORY_EXIST(4004, "Category exist", HttpStatus.CONFLICT),
+    PRODUCT_EXIST(4005, "Product exist", HttpStatus.CONFLICT),
+    INVALID_PRICE(4006, "Invalid price", HttpStatus.BAD_REQUEST),
 
     ;
     int code;

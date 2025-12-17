@@ -15,10 +15,11 @@ import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/product")
@@ -57,7 +58,7 @@ public class ProductController {
             @Parameter(description = "Dữ liệu cần sửa (JSON)")
             @RequestPart("data") ProductPatchRequest request,
 
-            @Parameter(description = "File ảnh mới (Để trống nếu không đổi ảnh)")
+            @Parameter(description = "File ảnh mới")
             @RequestPart(value = "image", required = false) MultipartFile image
     ) {
         ProductResponse result = productService.updateProduct(id, request, image);
@@ -80,17 +81,14 @@ public class ProductController {
                 .build();
     }
 
-    @Operation(summary = "Lấy danh sách sản phẩm", description = "Lấy toàn bộ món ăn (có phân trang).")
-    @GetMapping
-    APIResponse<Page<ProductResponse>> getProducts(
-            @Parameter(description = "Số trang (bắt đầu từ 0)", example = "0")
-            @RequestParam(defaultValue = "0") int page,
-
-            @Parameter(description = "Số lượng phần tử mỗi trang", example = "10")
-            @RequestParam(defaultValue = "10") int size
+    @Operation(summary = "Lấy danh sách sản phẩm", description = "Lấy toàn bộ món ăn.")
+    @GetMapping("/category/{categoryId}")
+    APIResponse<List<ProductResponse>> getProducts(
+            @Parameter(description = "Id của phân loại thực đơn", example = "1")
+            @PathVariable("categoryId") Long categoryId
     ) {
-        Page<ProductResponse> result = productService.getAllProducts(page, size);
-        return APIResponse.<Page<ProductResponse>>builder()
+        List<ProductResponse> result = productService.getAllProductsByCategory(categoryId);
+        return APIResponse.<List<ProductResponse>>builder()
                 .result(result)
                 .message("Product successfully retrieved")
                 .build();

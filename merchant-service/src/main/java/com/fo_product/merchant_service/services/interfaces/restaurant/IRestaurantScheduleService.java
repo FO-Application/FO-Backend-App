@@ -10,6 +10,6 @@ public interface IRestaurantScheduleService {
     RestaurantScheduleResponse createRestaurantSchedule(RestaurantScheduleRequest request);
     RestaurantScheduleResponse updateRestaurantScheduleById(Long id, RestaurantSchedulePatchRequest request);
     RestaurantScheduleResponse getRestaurantScheduleById(Long id);
-    List<RestaurantScheduleResponse> getAllRestaurantSchedules();
+    List<RestaurantScheduleResponse> getAllRestaurantSchedulesByRestaurant(String restaurantSlug);
     void deleteRestaurantScheduleById(Long id);
 }

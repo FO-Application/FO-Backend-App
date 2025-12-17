@@ -56,7 +56,7 @@ public class RestaurantService implements IRestaurantService {
         }
 
         Set<Cuisine> cuisines = new HashSet<>();
-        if (!request.cuisinesId().isEmpty() && request.cuisinesId() != null) {
+        if (request.cuisinesId() != null && !request.cuisinesId().isEmpty()) {
             List<Cuisine> cuisinesResult = cuisineRepository.findAllById(request.cuisinesId());
             cuisines.addAll(cuisinesResult);
         }
@@ -90,11 +90,19 @@ public class RestaurantService implements IRestaurantService {
         Restaurant restaurant = restaurantRepository.findById(id)
                 .orElseThrow(() -> new MerchantException(MerchantExceptionCode.RESTAURANT_NOT_EXIST));
 
-        if (request.name() != null)
+        if (request.name() != null && !request.name().equals(restaurant.getName())) {
+            if (restaurantRepository.existsByName(request.name())) {
+                throw new MerchantException(MerchantExceptionCode.RESTAURANT_EXIST);
+            }
             restaurant.setName(request.name());
+        }
 
-        if (request.slug() != null)
+        if (request.slug() != null &&  !request.slug().equals(restaurant.getSlug())) {
+            if (restaurantRepository.existsBySlug(request.slug())) {
+                throw new MerchantException(MerchantExceptionCode.SLUG_EXIST);
+            }
             restaurant.setSlug(request.slug());
+        }
 
         if (request.address() != null)
             restaurant.setAddress(request.address());
@@ -126,15 +134,14 @@ public class RestaurantService implements IRestaurantService {
             restaurant.setOpen(request.isOpen());
 
         if (request.cuisinesId() != null && !request.cuisinesId().isEmpty()) {
-            Set<Cuisine> cuisines = new HashSet<>();
-            if (request.cuisinesId() != null && !request.cuisinesId().isEmpty()) {
-                List<Cuisine> cuisinesResult = cuisineRepository.findAllById(request.cuisinesId());
-                cuisines.addAll(cuisinesResult);
-                restaurant.setCuisines(cuisines);
-            }
+            List<Cuisine> cuisinesResult = cuisineRepository.findAllById(request.cuisinesId());
+            restaurant.setCuisines(new HashSet<>(cuisinesResult));
         }
 
         if (image != null && !image.isEmpty()) {
+            if (restaurant.getImageFileUrl() != null && !restaurant.getImageFileUrl().isEmpty()) {
+                minIOService.deleteFile(restaurant.getImageFileUrl());
+            }
             String newImageUrl = minIOService.uploadFile(image);
             restaurant.setImageFileUrl(newImageUrl);
         }
@@ -164,11 +171,28 @@ public class RestaurantService implements IRestaurantService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<RestaurantResponse> getAllRestaurantsByCuisine(int page, int size, String cuisineSlug) {
+        Cuisine cuisine = cuisineRepository.findBySlug(cuisineSlug)
+                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.CUISINE_NOT_EXIST));
+
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Restaurant> restaurants = restaurantRepository.findByCuisinesContaining(cuisine, pageable);
+
+        return restaurants.map(mapper::response);
+    }
+
+    @Override
     @Transactional
     @CacheEvict(value = "restaurant_details", key = "#id")
     public void deleteRestaurantById(Long id) {
         Restaurant restaurant = restaurantRepository.findById(id)
                 .orElseThrow(() -> new MerchantException(MerchantExceptionCode.RESTAURANT_NOT_EXIST));
+
+        if (restaurant.getImageFileUrl() != null && !restaurant.getImageFileUrl().isEmpty()) {
+            minIOService.deleteFile(restaurant.getImageFileUrl());
+        }
 
         restaurantRepository.delete(restaurant);
     }

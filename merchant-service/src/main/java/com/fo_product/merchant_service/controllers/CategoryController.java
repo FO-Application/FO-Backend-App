@@ -17,6 +17,8 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/category")
 @RequiredArgsConstructor
@@ -59,24 +61,21 @@ public class CategoryController {
             @Parameter(description = "ID của danh mục", example = "10")
             @PathVariable("categoryId") Long id
     ) {
-        CategoryResponse result = categoryService.getCategoryById(id);
+        CategoryResponse result = categoryService.getCategoryByRestaurant(id);
         return APIResponse.<CategoryResponse>builder()
                 .result(result)
                 .message("Category get successfully")
                 .build();
     }
 
-    @Operation(summary = "Lấy danh sách danh mục", description = "Lấy tất cả danh mục (có phân trang).")
-    @GetMapping
-    APIResponse<Page<CategoryResponse>> getAllCategories(
-            @Parameter(description = "Số trang (bắt đầu từ 0)", example = "0")
-            @RequestParam(defaultValue = "0") int page,
-
-            @Parameter(description = "Số lượng phần tử mỗi trang", example = "10")
-            @RequestParam(defaultValue = "10") int size
+    @Operation(summary = "Lấy danh sách danh mục", description = "Lấy tất cả danh mục theo nhà hàng")
+    @GetMapping("/restaurant/{slug}")
+    APIResponse<List<CategoryResponse>> getAllCategories(
+            @Parameter(description = "Slug của nhà hàng", example = "pho-anh-hai")
+            @PathVariable("slug") String restaurantSlug
     ) {
-        Page<CategoryResponse> result = categoryService.getAllCategories(page, size);
-        return APIResponse.<Page<CategoryResponse>>builder()
+        List<CategoryResponse> result = categoryService.getAllCategories(restaurantSlug);
+        return APIResponse.<List<CategoryResponse>>builder()
                 .result(result)
                 .message("Category gets successfully")
                 .build();
@@ -90,7 +89,7 @@ public class CategoryController {
     ) {
         categoryService.deleteCategoryById(id);
         return APIResponse.builder()
-                .result("Category deleted successfully")
+                .message("Category deleted successfully")
                 .build();
     }
 }

@@ -10,6 +10,7 @@ public interface IRestaurantService {
     RestaurantResponse createRestaurant(RestaurantRequest request,  MultipartFile image);
     RestaurantResponse updateRestaurantById(Long id, RestaurantPatchRequest request, MultipartFile image);
     RestaurantResponse getRestaurantById(Long id);
-    Page<RestaurantResponse> getAllRestaurants(int  page, int size);
+    Page<RestaurantResponse> getAllRestaurants(int page, int size);
+    Page<RestaurantResponse> getAllRestaurantsByCuisine(int page, int size, String cuisineSlug);
     void deleteRestaurantById(Long id);
 }

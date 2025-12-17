@@ -6,10 +6,12 @@ import com.fo_product.merchant_service.dtos.responses.ProductResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 public interface IProductService {
     ProductResponse createProduct(ProductRequest request, MultipartFile image);
     ProductResponse updateProduct(Long id, ProductPatchRequest request, MultipartFile image);
     ProductResponse getById(Long id);
-    Page<ProductResponse> getAllProducts(int page, int size);
+    List<ProductResponse> getAllProductsByCategory(Long categoryId);
     void deleteProduct(Long id);
 }

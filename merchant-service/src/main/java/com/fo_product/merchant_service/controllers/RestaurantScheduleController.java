@@ -44,7 +44,7 @@ public class RestaurantScheduleController {
     @PutMapping("/{scheduleId}")
     APIResponse<RestaurantScheduleResponse> updateRestaurantSchedule(
             @Parameter(description = "ID của lịch trình", example = "1")
-            @PathVariable("scheduleId") Long id, // Đã sửa lỗi typo "shceduleId" ở đây
+            @PathVariable("scheduleId") Long id,
             @RequestBody RestaurantSchedulePatchRequest request
     ) {
         RestaurantScheduleResponse result = restaurantScheduleService.updateRestaurantScheduleById(id, request);
@@ -67,10 +67,13 @@ public class RestaurantScheduleController {
                 .build();
     }
 
-    @Operation(summary = "Lấy tất cả lịch", description = "Lấy danh sách toàn bộ lịch hoạt động (thường dùng cho Admin hoặc debug).")
-    @GetMapping
-    APIResponse<List<RestaurantScheduleResponse>> getAllRestaurantSchedules(){
-        List<RestaurantScheduleResponse> result = restaurantScheduleService.getAllRestaurantSchedules();
+    @Operation(summary = "Lấy tất cả lịch theo nhà hàng", description = "Lấy danh sách toàn bộ lịch hoạt động theo nhà hàng")
+    @GetMapping("/restaurant/{slug}")
+    APIResponse<List<RestaurantScheduleResponse>> getAllRestaurantSchedules(
+            @Parameter(description = "Slug của nhà hàng", example = "pho-anh-hai")
+            @PathVariable("slug") String restaurantSlug
+    ){
+        List<RestaurantScheduleResponse> result = restaurantScheduleService.getAllRestaurantSchedulesByRestaurant(restaurantSlug);
         return APIResponse.<List<RestaurantScheduleResponse>>builder()
                 .result(result)
                 .message("Get all restaurant schedules")
@@ -85,7 +88,6 @@ public class RestaurantScheduleController {
     ){
         restaurantScheduleService.deleteRestaurantScheduleById(id);
         return APIResponse.builder()
-                .result("Delete restaurant schedule successfully") // Lưu ý: result thường trả về Object, message trả về String
                 .message("Delete successfully")
                 .build();
     }

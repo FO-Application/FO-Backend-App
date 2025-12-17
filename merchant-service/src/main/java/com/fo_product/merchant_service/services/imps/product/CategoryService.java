@@ -16,11 +16,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -32,9 +32,14 @@ public class CategoryService implements ICategoryService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "cacheCategories", allEntries = true)
     public CategoryResponse createCategory(CategoryRequest request) {
         Restaurant restaurant = restaurantRepository.findById(request.idRestaurant())
                 .orElseThrow(() -> new MerchantException(MerchantExceptionCode.RESTAURANT_NOT_EXIST));
+
+        if (categoryRepository.existsByNameAndRestaurant(request.name(), restaurant)) {
+            throw new MerchantException(MerchantExceptionCode.CATEGORY_EXIST);
+        }
 
         Category category = Category.builder()
                 .name(request.name())
@@ -50,13 +55,23 @@ public class CategoryService implements ICategoryService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "category_details", key = "#id")
+    @Caching(evict =
+            {
+                    @CacheEvict(value = "cacheCategories",  allEntries = true),
+                    @CacheEvict(value = "category_details", key = "#id")
+            }
+    )
     public CategoryResponse updateCategory(Long id, CategoryPatchRequest request) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new MerchantException(MerchantExceptionCode.CATEGORY_NOT_EXIST));
 
-        if (request.name() != null)
+        if (request.name() != null && !request.name().equals(category.getName())) {
+            Restaurant restaurant = category.getRestaurant();
+            if (categoryRepository.existsByNameAndRestaurant(request.name(), restaurant)) {
+                throw new MerchantException(MerchantExceptionCode.CATEGORY_EXIST);
+            }
             category.setName(request.name());
+        }
 
         if (request.displayOrder() != null)
             category.setDisplayOrder(request.displayOrder());
@@ -71,17 +86,20 @@ public class CategoryService implements ICategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<CategoryResponse> getAllCategories(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Category> result = categoryRepository.findAll(pageable);
+    @Cacheable(value = "cacheCategories", key = "#restaurantSlug")
+    public List<CategoryResponse> getAllCategories(String restaurantSlug) {
+        Restaurant restaurant = restaurantRepository.findBySlug(restaurantSlug)
+                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.RESTAURANT_NOT_EXIST));
 
-        return result.map(mapper::response);
+        List<Category> result = categoryRepository.findAllByRestaurantOrderByDisplayOrderAsc(restaurant);
+
+        return result.stream().map(mapper::response).toList();
     }
 
     @Override
     @Transactional(readOnly = true)
     @Cacheable(value = "category_details", key = "#id")
-    public CategoryResponse getCategoryById(Long id) {
+    public CategoryResponse getCategoryByRestaurant(Long id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new MerchantException(MerchantExceptionCode.CATEGORY_NOT_EXIST));
 
@@ -90,7 +108,12 @@ public class CategoryService implements ICategoryService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "category_details", key = "#id")
+    @Caching(evict =
+            {
+                    @CacheEvict(value = "cacheCategories",  allEntries = true),
+                    @CacheEvict(value = "category_details", key = "#id")
+            }
+    )
     public void deleteCategoryById(Long id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new MerchantException(MerchantExceptionCode.CATEGORY_NOT_EXIST));

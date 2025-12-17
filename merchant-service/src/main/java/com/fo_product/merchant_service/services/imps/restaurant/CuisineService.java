@@ -71,11 +71,19 @@ public class CuisineService implements ICuisineService {
         Cuisine cuisine = cuisineRepository.findById(id)
                 .orElseThrow(() -> new MerchantException(MerchantExceptionCode.CUISINE_NOT_EXIST));
 
-        if (request.name() != null)
+        if (request.name() != null && !request.name().equals(cuisine.getName())) {
+            if (cuisineRepository.existsByName(request.name())) {
+                throw new MerchantException(MerchantExceptionCode.CUISINE_EXIST);
+            }
             cuisine.setName(request.name());
+        }
 
-        if (request.slug() != null)
+        if (request.slug() != null  && !request.slug().equals(cuisine.getSlug())) {
+            if (cuisineRepository.existsBySlug(request.slug())) {
+                throw new MerchantException(MerchantExceptionCode.SLUG_EXIST);
+            }
             cuisine.setSlug(request.slug());
+        }
 
         if (image != null && !image.isEmpty()) {
             if (cuisine.getImageFileUrl() != null && !cuisine.getImageFileUrl().isEmpty()) {
@@ -117,6 +125,10 @@ public class CuisineService implements ICuisineService {
     public void deleteCuisineById(Long id) {
         Cuisine cuisine = cuisineRepository.findById(id)
                 .orElseThrow(() -> new MerchantException(MerchantExceptionCode.CUISINE_NOT_EXIST));
+
+        if (cuisine.getImageFileUrl() != null && !cuisine.getImageFileUrl().isEmpty()) {
+            minIOService.deleteFile(cuisine.getImageFileUrl());
+        }
 
         cuisineRepository.delete(cuisine);
     }

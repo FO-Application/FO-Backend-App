@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -35,7 +36,7 @@ public class RestaurantController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     APIResponse<RestaurantResponse> createRestaurant(
             @Parameter(description = "Thông tin nhà hàng (JSON)", schema = @Schema(implementation = RestaurantRequest.class))
-            @RequestPart("data") RestaurantRequest restaurantRequest,
+            @RequestPart("data") @Valid  RestaurantRequest restaurantRequest,
 
             @Parameter(description = "Ảnh đại diện nhà hàng (.jpg, .png)")
             @RequestPart("image") MultipartFile image
@@ -56,8 +57,8 @@ public class RestaurantController {
             @Parameter(description = "Dữ liệu cập nhật (JSON)", schema = @Schema(implementation = RestaurantPatchRequest.class))
             @RequestPart("data") RestaurantPatchRequest restaurantRequest,
 
-            @Parameter(description = "File ảnh mới (Bắt buộc trong code hiện tại)")
-            @RequestPart("image") MultipartFile image
+            @Parameter(description = "File ảnh mới")
+            @RequestPart(value = "image", required = false) MultipartFile image
     ) {
         RestaurantResponse result = restaurantService.updateRestaurantById(id, restaurantRequest, image);
         return APIResponse.<RestaurantResponse>builder()
@@ -89,6 +90,25 @@ public class RestaurantController {
             @RequestParam(defaultValue = "10") int size
     ) {
         Page<RestaurantResponse> result = restaurantService.getAllRestaurants(page, size);
+        return APIResponse.<Page<RestaurantResponse>>builder()
+                .result(result)
+                .message("Get all restaurants")
+                .build();
+    }
+
+    @Operation(summary = "Lấy danh sách nhà hàng theo loại hình ẩm thực (Phân trang)", description = "Lấy tất cả nhà hàng với phân trang")
+    @GetMapping("/cuisine/{slug}")
+    APIResponse<Page<RestaurantResponse>> getAllRestaurantsByCuisine(
+            @Parameter(description = "Số trang (bắt đầu từ 0)", example = "0")
+            @RequestParam(defaultValue = "0") int page,
+
+            @Parameter(description = "Số lượng phần tử mỗi trang", example = "10")
+            @RequestParam(defaultValue = "10") int size,
+
+            @Parameter(description = "Tên slug của loại hình ẩm thực", example = "bun-bo-hue")
+            @PathVariable("slug") String slug
+    ) {
+        Page<RestaurantResponse> result = restaurantService.getAllRestaurantsByCuisine(page, size, slug);
         return APIResponse.<Page<RestaurantResponse>>builder()
                 .result(result)
                 .message("Get all restaurants")
