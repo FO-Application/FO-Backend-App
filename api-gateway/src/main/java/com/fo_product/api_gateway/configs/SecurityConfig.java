@@ -38,6 +38,7 @@ public class SecurityConfig {
             "/api/v1/category/**",
             "/api/v1/product/**",
             "/api/v1/option-group/**",
+            "/api/v1/option-item/**",
             "/v3/api-docs/**",      // Để Gateway lấy JSON từ các service con
             "/swagger-ui.html",     // Trang giao diện chính
             "/swagger-ui/**",       // Các file css, js của giao diện Swagger

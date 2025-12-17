@@ -18,6 +18,8 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/option-group")
 @RequiredArgsConstructor
@@ -70,16 +72,13 @@ public class OptionGroupController {
     }
 
     @Operation(summary = "Lấy danh sách nhóm", description = "Lấy tất cả các nhóm tùy chọn (có phân trang).")
-    @GetMapping
-    APIResponse<Page<OptionGroupResponse>> getAllOptionGroups(
-            @Parameter(description = "Số trang (bắt đầu từ 0)", example = "0")
-            @RequestParam(defaultValue = "0") int page,
-
-            @Parameter(description = "Số lượng phần tử mỗi trang", example = "10")
-            @RequestParam(defaultValue = "10") int size
+    @GetMapping("/product/{productId}")
+    APIResponse<List<OptionGroupResponse>> getAllOptionGroups(
+            @Parameter(description = "ID của món ăn", example = "1")
+            @PathVariable("productId") Long productId
     ) {
-        Page<OptionGroupResponse> result = optionGroupService.getOptionGroups(page, size);
-        return APIResponse.<Page<OptionGroupResponse>>builder()
+        List<OptionGroupResponse> result = optionGroupService.getOptionGroupsByProduct(productId);
+        return APIResponse.<List<OptionGroupResponse>>builder()
                 .result(result)
                 .message("All Option Groups Found")
                 .build();

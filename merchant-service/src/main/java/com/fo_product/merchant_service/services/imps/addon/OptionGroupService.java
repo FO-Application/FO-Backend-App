@@ -17,9 +17,6 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,10 +32,20 @@ public class OptionGroupService implements IOptionGroupService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "cacheOptionGroups", allEntries = true)
+    // Cache: Xóa theo productId để tối ưu (hoặc allEntries cũng tạm chấp nhận)
+    @CacheEvict(value = "cacheOptionGroups", key = "#request.productId()")
     public OptionGroupResponse createOptionGroup(OptionGroupRequest request) {
         Product product = productRepository.findById(request.productId())
                 .orElseThrow(() -> new MerchantException(MerchantExceptionCode.PRODUCT_NOT_EXIST));
+
+        // FIX 1: Check trùng theo Product
+        if (optionGroupRepository.existsByNameAndProduct(request.name(), product)) {
+            throw new MerchantException(MerchantExceptionCode.OPTION_GROUP_EXIST);
+        }
+
+        if (!validateSelection(request.minSelection(), request.maxSelection())) {
+            throw new MerchantException(MerchantExceptionCode.INVALID_SELECTION_RANGE);
+        }
 
         OptionGroup optionGroup = OptionGroup.builder()
                 .name(request.name())
@@ -65,8 +72,23 @@ public class OptionGroupService implements IOptionGroupService {
         OptionGroup optionGroup = optionGroupRepository.findById(id)
                 .orElseThrow(() -> new MerchantException(MerchantExceptionCode.OPTION_GROUP_NOT_EXIST));
 
-        if (request.name() != null)
+        // Check trùng tên khi update
+        if (request.name() != null && !request.name().equals(optionGroup.getName())) {
+            // FIX: Check trùng theo Product
+            if (optionGroupRepository.existsByNameAndProduct(request.name(), optionGroup.getProduct())) {
+                throw new MerchantException(MerchantExceptionCode.OPTION_GROUP_EXIST);
+            }
             optionGroup.setName(request.name());
+        }
+
+        Integer newMin = request.minSelection() != null ? request.minSelection() : optionGroup.getMinSelection();
+        Integer newMax = request.maxSelection() != null ? request.maxSelection() : optionGroup.getMaxSelection();
+
+        if (!validateSelection(newMin, newMax)) {
+            throw new MerchantException(MerchantExceptionCode.INVALID_SELECTION_RANGE);
+        }
+
+        // FIX 3: Xóa đoạn set Name thừa thãi ở đây đi
 
         if (request.isMandatory() != null)
             optionGroup.setMandatory(request.isMandatory());
@@ -94,9 +116,12 @@ public class OptionGroupService implements IOptionGroupService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "cacheOptionGroups")
-    public List<OptionGroupResponse> getOptionGroups() {
-        List<OptionGroup> result = optionGroupRepository.findAll();
+    @Cacheable(value = "cacheOptionGroups", key = "#productId")
+    public List<OptionGroupResponse> getOptionGroupsByProduct(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.PRODUCT_NOT_EXIST));
+
+        List<OptionGroup> result = optionGroupRepository.findAllByProduct(product);
 
         return result.stream().map(mapper::response).toList();
     }
@@ -114,5 +139,14 @@ public class OptionGroupService implements IOptionGroupService {
                 .orElseThrow(() -> new MerchantException(MerchantExceptionCode.OPTION_GROUP_NOT_EXIST));
 
         optionGroupRepository.delete(optionGroup);
+    }
+
+    private boolean validateSelection(Integer min, Integer max) {
+        if (min != null && max != null) {
+            if (min > max) return false;
+            if (min < 0) return false;
+            if (max < 0) return false;
+        }
+        return true;
     }
 }

@@ -11,6 +11,6 @@ public interface IOptionGroupService {
     OptionGroupResponse createOptionGroup(OptionGroupRequest request);
     OptionGroupResponse updateOptionGroup(Long id, OptionGroupPatchRequest request);
     OptionGroupResponse getOptionGroup(Long id);
-    List<OptionGroupResponse> getOptionGroups();
+    List<OptionGroupResponse> getOptionGroupsByProduct(Long productId);
     void deleteOptionGroup(Long id);
 }

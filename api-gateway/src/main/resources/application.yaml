@@ -60,6 +60,7 @@ spring:
                   - /api/v1/category/**
                   - /api/v1/product/**
                   - /api/v1/option-group/**
+                  - /api/v1/option-item/**
           filters:
             - name: RequestRateLimiter
               args:

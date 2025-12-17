@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
+
 /**
  * <pre>
  * ============================================================================
@@ -42,8 +44,8 @@ public class OptionItem {
 
     String name;
 
-    @Column(name = "price_adjustment")
-    Long priceAdjustment;
+    @Column(name = "price_adjustment", precision = 19, scale = 2)
+    BigDecimal priceAdjustment;
 
     @Column(name = "is_available")
     boolean isAvailable;

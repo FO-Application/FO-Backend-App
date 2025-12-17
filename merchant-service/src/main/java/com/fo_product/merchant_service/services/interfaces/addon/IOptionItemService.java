@@ -10,6 +10,6 @@ public interface IOptionItemService {
     OptionItemResponse createOptionItem(OptionItemRequest optionItemRequest);
     OptionItemResponse updateOptionItem(Long id, OptionItemPatchRequest optionItemRequest);
     OptionItemResponse getOptionItem(Long id);
-    List<OptionItemResponse> getOptionItems();
+    List<OptionItemResponse> getOptionItemsByGroupId(Long groupId);
     void deleteOptionItem(Long id);
 }
