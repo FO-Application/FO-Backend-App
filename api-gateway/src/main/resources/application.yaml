@@ -75,6 +75,27 @@ spring:
           filters:
             - RewritePath=/v3/api-docs/merchant-service, /v3/api-docs
 
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - name: Path
+              args:
+                patterns:
+
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 3
+                redis-rate-limiter.burstCapacity: 5
+                key-resolver: "#{@userKeyResolver}"
+
+        - id: order-service-docs
+          uri: lb://order-service
+          predicates:
+            - Path=/v3/api-docs/order-service
+          filters:
+            - RewritePath=/v3/api-docs/order-service, /v3/api-docs
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html

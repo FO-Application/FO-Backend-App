@@ -1,11 +1,11 @@
 spring:
   application:
-    name: merchant-service
+    name: order-service
 
   datasource:
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MERCHANT_DB_NAME}
-    username: ${MERCHANT_DB_USERNAME}
-    password: ${MERCHANT_DB_PASSWORD}
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${ORDER_DB_NAME}
+    username: ${ORDER_DB_USERNAME}
+    password: ${ORDER_DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   cache:
@@ -29,16 +29,11 @@ spring:
         jwt:
           jws-algorithms: HS512
 
-  servlet:
-    multipart:
-      max-file-size: 10MB
-      max-request-size: 10MB
-
 server:
-  port: ${MERCHANT_SERVICE_PORT}
+  port: ${ORDER_SERVICE_PORT}
   error:
     include-message: always
-    include-binding-error: always
+    include-binding-errors: always
 
 eureka:
   instance:
@@ -48,12 +43,6 @@ eureka:
     fetch-registry: true
     service-url:
       defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
-
-minio:
-  url: ${MINIO_URL:http://localhost:9000}
-  access-key: ${MINIO_ACCESS_KEY}
-  secret-key: ${MINIO_SECRET_KEY}
-  bucket-name: ${MINIO_BUCKET:merchant-images}
 
 springdoc:
   api-docs:
@@ -65,3 +54,5 @@ springdoc:
 openapi:
   service:
     url: ${OPENAPI_SERVICE_URL}
+
+

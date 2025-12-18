@@ -71,11 +71,6 @@ public class SecurityConfig {
                 ).build();
     }
 
-    /**
-     * Bean này là TRÁI TIM của việc xác thực.
-     * Nó nói cho Spring Security biết cách giải mã token
-     * dùng secret_key và thuật toán HS512 của bạn.
-     */
     @Bean
     public ReactiveJwtDecoder jwtDecoder() {
         SecretKey secretKey = new SecretKeySpec(SECRET_KEY.getBytes(), ALGORITHM);

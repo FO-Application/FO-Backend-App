@@ -13,6 +13,7 @@ public record OptionItemPatchRequest(
         String name,
 
         @Schema(description = "Giá tiền cộng thêm mới (VND) (Để null nếu không đổi)", example = "7000")
+        @Min(value = 0, message = "PRICE_ADJUSTMENT_INVALID")
         BigDecimal priceAdjustment,
 
         @Schema(description = "Trạng thái hiển thị mới (true: Còn hàng, false: Hết hàng). Để null nếu không đổi", example = "true")

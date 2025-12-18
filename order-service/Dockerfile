@@ -7,16 +7,16 @@ COPY common-lib/pom.xml common-lib/pom.xml
 COPY common-lib/src common-lib/src
 RUN mvn -f common-lib/pom.xml clean install -DskipTests
 
-# 2. Build API Gateway
-COPY api-gateway/pom.xml api-gateway/pom.xml
-WORKDIR /app/api-gateway
+# 2. Build Order Service
+COPY order-service/pom.xml order-service/pom.xml
+WORKDIR /app/order-service
 RUN mvn dependency:go-offline
 
-COPY api-gateway/src src
+COPY order-service/src src
 RUN mvn clean package -DskipTests -Dfile.encoding=UTF-8
 
 # --- GIAI ĐOẠN 2: RUN ---
 FROM eclipse-temurin:21-jdk-alpine
 WORKDIR /app
-COPY --from=build /app/api-gateway/target/*.jar app.jar
+COPY --from=build /app/order-service/target/*.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]

@@ -176,7 +176,36 @@ services:
     networks:
       - fo-network
 
-  # --- 10. Minio ---
+  # --- 9. Order service ---
+  order-service:
+    image: order-service:latest
+    build:
+      context: .
+      dockerfile: order-service/Dockerfile
+    container_name: fo-order-service
+    ports:
+      - "${ORDER_SERVICE_PORT}:${ORDER_SERVICE_PORT}"
+    env_file:
+      - .env
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://fo-discovery-server:8761/eureka/
+      MYSQL_HOST: fo-mysql
+      MYSQL_PORT: 3306
+      REDIS_HOST: fo-redis
+      REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: fo-kafka:9092
+      ORDER_DB_USERNAME: ${ORDER_DB_USERNAME}
+      ORDER_DB_PASSWORD: ${ORDER_DB_PASSWORD}
+      ORDER_DB_NAME: ${ORDER_DB_NAME}
+      ORDER_SERVICE_PORT: ${ORDER_SERVICE_PORT}
+    depends_on:
+      - mysql-db
+      - discovery-service
+      - redis-cache
+    networks:
+      - fo-network
+
+  # --- 11. Minio ---
   minio:
     image: minio/minio:latest
     container_name: fo-minio
@@ -194,7 +223,7 @@ services:
     networks:
       - fo-network
 
-  # --- 11. Ngrok Tunnel ---
+  # --- 12. Ngrok Tunnel ---
   ngrok:
     image: ngrok/ngrok:latest
     container_name: fo-ngrok
