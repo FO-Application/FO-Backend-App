@@ -1,6 +1,6 @@
 package com.fo_product.user_service.services.imps;
 
-import com.fo_product.user_service.exceptions.code.UserExceptionCode;
+import com.fo_product.user_service.exceptions.code.UserErrorCode;
 import com.fo_product.user_service.exceptions.UserException;
 import com.fo_product.user_service.models.entities.Role;
 import com.fo_product.user_service.models.entities.User;
@@ -76,14 +76,14 @@ public class JwtService implements IJwtService {
             jwsObject.sign(new MACSigner(SECRET_KEY.getBytes()));
             return jwsObject.serialize();
         } catch (JOSEException e) {
-            throw new UserException(UserExceptionCode.CREATE_TOKEN_ERROR);
+            throw new UserException(UserErrorCode.CREATE_TOKEN_ERROR);
         }
     }
 
     @Override
     public SignedJWT verifyToken(String token, String type) throws JOSEException, ParseException {
         if (token == null || token.trim().isEmpty()) {
-            throw new UserException(UserExceptionCode.UNAUTHENTICATED);
+            throw new UserException(UserErrorCode.UNAUTHENTICATED);
         }
 
         //Kí với chữ kí bảo mật của hệ thống
@@ -95,25 +95,25 @@ public class JwtService implements IJwtService {
 
         //Token không hợp lệ => invalid
         if (!verified) {
-            throw new UserException(UserExceptionCode.UNAUTHENTICATED);
+            throw new UserException(UserErrorCode.UNAUTHENTICATED);
         }
 
         //Kiểm tra ngày hạn có nằm sau bây giờ không
         Date expiredTime = signedJWT.getJWTClaimsSet().getExpirationTime();
         if (expiredTime.before(new Date())) {
-            throw new UserException(UserExceptionCode.UNAUTHENTICATED);
+            throw new UserException(UserErrorCode.UNAUTHENTICATED);
         }
 
         //Kiểm tra thể loại token có hợp lệ không
         String tokenType = signedJWT.getJWTClaimsSet().getStringClaim("token-type");
         if (!type.equals(tokenType)) {
-            throw new UserException(UserExceptionCode.UNAUTHENTICATED);
+            throw new UserException(UserErrorCode.UNAUTHENTICATED);
         }
 
         //Kiểm tra token này đã bị đánh dấu vào black list chưa
         String jwtId = signedJWT.getJWTClaimsSet().getJWTID();
         if (invalidatedTokenRepository.existsById(jwtId)) {
-            throw new UserException(UserExceptionCode.UNAUTHENTICATED);
+            throw new UserException(UserErrorCode.UNAUTHENTICATED);
         }
 
         //Trả về token nếu hợp lệ, không thì sẽ bị ném ngoại lệ
@@ -127,7 +127,7 @@ public class JwtService implements IJwtService {
 
         String email = jwt.getJWTClaimsSet().getSubject();
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UserException(UserExceptionCode.USER_NOT_EXIST));
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_EXIST));
 
         String role = user.getRole().getName();
         TokenPair tokenPair = generateTokenPair(user);

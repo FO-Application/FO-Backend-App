@@ -4,7 +4,7 @@ import com.fo_product.merchant_service.dtos.requests.option_group.OptionGroupPat
 import com.fo_product.merchant_service.dtos.requests.option_group.OptionGroupRequest;
 import com.fo_product.merchant_service.dtos.responses.OptionGroupResponse;
 import com.fo_product.merchant_service.exceptions.MerchantException;
-import com.fo_product.merchant_service.exceptions.codes.MerchantExceptionCode;
+import com.fo_product.merchant_service.exceptions.codes.MerchantErrorCode;
 import com.fo_product.merchant_service.mappers.OptionGroupMapper;
 import com.fo_product.merchant_service.models.entities.addon.OptionGroup;
 import com.fo_product.merchant_service.models.entities.product.Product;
@@ -36,15 +36,15 @@ public class OptionGroupService implements IOptionGroupService {
     @CacheEvict(value = "cacheOptionGroups", key = "#request.productId()")
     public OptionGroupResponse createOptionGroup(OptionGroupRequest request) {
         Product product = productRepository.findById(request.productId())
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.PRODUCT_NOT_EXIST));
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.PRODUCT_NOT_EXIST));
 
         // FIX 1: Check trùng theo Product
         if (optionGroupRepository.existsByNameAndProduct(request.name(), product)) {
-            throw new MerchantException(MerchantExceptionCode.OPTION_GROUP_EXIST);
+            throw new MerchantException(MerchantErrorCode.OPTION_GROUP_EXIST);
         }
 
         if (!validateSelection(request.minSelection(), request.maxSelection())) {
-            throw new MerchantException(MerchantExceptionCode.INVALID_SELECTION_RANGE);
+            throw new MerchantException(MerchantErrorCode.INVALID_SELECTION_RANGE);
         }
 
         OptionGroup optionGroup = OptionGroup.builder()
@@ -70,13 +70,13 @@ public class OptionGroupService implements IOptionGroupService {
     )
     public OptionGroupResponse updateOptionGroup(Long id, OptionGroupPatchRequest request) {
         OptionGroup optionGroup = optionGroupRepository.findById(id)
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.OPTION_GROUP_NOT_EXIST));
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.OPTION_GROUP_NOT_EXIST));
 
         // Check trùng tên khi update
         if (request.name() != null && !request.name().equals(optionGroup.getName())) {
             // FIX: Check trùng theo Product
             if (optionGroupRepository.existsByNameAndProduct(request.name(), optionGroup.getProduct())) {
-                throw new MerchantException(MerchantExceptionCode.OPTION_GROUP_EXIST);
+                throw new MerchantException(MerchantErrorCode.OPTION_GROUP_EXIST);
             }
             optionGroup.setName(request.name());
         }
@@ -85,7 +85,7 @@ public class OptionGroupService implements IOptionGroupService {
         Integer newMax = request.maxSelection() != null ? request.maxSelection() : optionGroup.getMaxSelection();
 
         if (!validateSelection(newMin, newMax)) {
-            throw new MerchantException(MerchantExceptionCode.INVALID_SELECTION_RANGE);
+            throw new MerchantException(MerchantErrorCode.INVALID_SELECTION_RANGE);
         }
 
         // FIX 3: Xóa đoạn set Name thừa thãi ở đây đi
@@ -109,7 +109,7 @@ public class OptionGroupService implements IOptionGroupService {
     @Cacheable(value = "optionGroup_details", key = "#id")
     public OptionGroupResponse getOptionGroup(Long id) {
         OptionGroup optionGroup = optionGroupRepository.findById(id)
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.OPTION_GROUP_NOT_EXIST));
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.OPTION_GROUP_NOT_EXIST));
 
         return mapper.response(optionGroup);
     }
@@ -119,7 +119,7 @@ public class OptionGroupService implements IOptionGroupService {
     @Cacheable(value = "cacheOptionGroups", key = "#productId")
     public List<OptionGroupResponse> getOptionGroupsByProduct(Long productId) {
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.PRODUCT_NOT_EXIST));
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.PRODUCT_NOT_EXIST));
 
         List<OptionGroup> result = optionGroupRepository.findAllByProduct(product);
 
@@ -136,7 +136,7 @@ public class OptionGroupService implements IOptionGroupService {
     )
     public void deleteOptionGroup(Long id) {
         OptionGroup optionGroup = optionGroupRepository.findById(id)
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.OPTION_GROUP_NOT_EXIST));
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.OPTION_GROUP_NOT_EXIST));
 
         optionGroupRepository.delete(optionGroup);
     }

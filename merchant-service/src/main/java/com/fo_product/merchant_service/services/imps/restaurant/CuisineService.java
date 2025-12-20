@@ -4,7 +4,7 @@ import com.fo_product.merchant_service.dtos.requests.cuisine.CuisinePatchRequest
 import com.fo_product.merchant_service.dtos.requests.cuisine.CuisineRequest;
 import com.fo_product.merchant_service.dtos.responses.CuisineResponse;
 import com.fo_product.merchant_service.exceptions.MerchantException;
-import com.fo_product.merchant_service.exceptions.codes.MerchantExceptionCode;
+import com.fo_product.merchant_service.exceptions.codes.MerchantErrorCode;
 import com.fo_product.merchant_service.mappers.CuisineMapper;
 import com.fo_product.merchant_service.models.entities.restaurant.Cuisine;
 import com.fo_product.merchant_service.models.repositories.restaurant.CuisineRepository;
@@ -38,7 +38,7 @@ public class CuisineService implements ICuisineService {
     @CacheEvict(value = "cacheCuisines", allEntries = true)
     public CuisineResponse createCuisine(CuisineRequest request, MultipartFile image) {
         if (cuisineRepository.existsBySlug(request.slug()) || cuisineRepository.existsByName(request.name()))
-            throw new MerchantException(MerchantExceptionCode.CUISINE_EXIST);
+            throw new MerchantException(MerchantErrorCode.CUISINE_EXIST);
 
         String imageUrl = null;
         if (image != null && !image.isEmpty())
@@ -69,18 +69,18 @@ public class CuisineService implements ICuisineService {
     )
     public CuisineResponse updateCuisineById(Long id, CuisinePatchRequest request, MultipartFile image) {
         Cuisine cuisine = cuisineRepository.findById(id)
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.CUISINE_NOT_EXIST));
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.CUISINE_NOT_EXIST));
 
         if (request.name() != null && !request.name().equals(cuisine.getName())) {
             if (cuisineRepository.existsByName(request.name())) {
-                throw new MerchantException(MerchantExceptionCode.CUISINE_EXIST);
+                throw new MerchantException(MerchantErrorCode.CUISINE_EXIST);
             }
             cuisine.setName(request.name());
         }
 
         if (request.slug() != null  && !request.slug().equals(cuisine.getSlug())) {
             if (cuisineRepository.existsBySlug(request.slug())) {
-                throw new MerchantException(MerchantExceptionCode.SLUG_EXIST);
+                throw new MerchantException(MerchantErrorCode.SLUG_EXIST);
             }
             cuisine.setSlug(request.slug());
         }
@@ -103,7 +103,7 @@ public class CuisineService implements ICuisineService {
     @Cacheable(value = "cuisine_details", key = "#id")
     public CuisineResponse getCuisineById(Long id) {
         Cuisine cuisine = cuisineRepository.findById(id)
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.CUISINE_NOT_EXIST));
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.CUISINE_NOT_EXIST));
         return mapper.response(cuisine);
     }
 
@@ -124,7 +124,7 @@ public class CuisineService implements ICuisineService {
     })
     public void deleteCuisineById(Long id) {
         Cuisine cuisine = cuisineRepository.findById(id)
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.CUISINE_NOT_EXIST));
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.CUISINE_NOT_EXIST));
 
         if (cuisine.getImageFileUrl() != null && !cuisine.getImageFileUrl().isEmpty()) {
             minIOService.deleteFile(cuisine.getImageFileUrl());

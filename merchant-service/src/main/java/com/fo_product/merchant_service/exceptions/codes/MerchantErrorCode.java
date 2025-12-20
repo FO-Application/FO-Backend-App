@@ -10,7 +10,7 @@ import org.springframework.http.HttpStatus;
 @Getter
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public enum MerchantExceptionCode implements ErrorCode{
+public enum MerchantErrorCode implements ErrorCode{
     CUISINE_EXIST(3001, "Cuisine exist", HttpStatus.CONFLICT),
     CUISINE_NOT_EXIST(3002, "Cuisine not exist", HttpStatus.NOT_FOUND),
     RESTAURANT_EXIST(3003, "Restaurant exist", HttpStatus.CONFLICT),

@@ -1,4 +1,4 @@
-package com.fo_product.merchant_service.configs;
+package com.fo_product.order_service.configs;
 
 import com.fo_product.common_lib.custom.CookieBearerTokenResolver;
 import lombok.AccessLevel;
@@ -26,20 +26,13 @@ public class SecurityConfig {
     CookieBearerTokenResolver cookieBearerTokenResolver;
 
     String[] PUBLIC_MATCHERS = {
-            "/api/v1/cuisine/**",
-            "/api/v1/restaurant/**",
-            "/api/v1/restaurant-schedule/**",
-            "/api/v1/category/**",
-            "/api/v1/product/**",
-            "/api/v1/option-group/**",
-            "/api/v1/option-item/**",
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html"
     };
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain (HttpSecurity http) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(AbstractHttpConfigurer::disable)
@@ -57,11 +50,12 @@ public class SecurityConfig {
                                         jwtConfigurer
                                                 .decoder(jwtDecoder)
                                                 .jwtAuthenticationConverter(jwtAuthenticationConverter)
-                        )
+                                )
                 )
 
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                ).build();
+                )
+                .build();
     }
 }

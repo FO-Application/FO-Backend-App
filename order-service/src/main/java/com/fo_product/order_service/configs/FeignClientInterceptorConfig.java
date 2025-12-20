@@ -1,4 +1,4 @@
-package com.fo_product.merchant_service.configs;
+package com.fo_product.order_service.configs;
 
 import feign.RequestInterceptor;
 import org.springframework.context.annotation.Bean;
@@ -9,7 +9,6 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 
 @Configuration
 public class FeignClientInterceptorConfig {
-    //Cấu hình này sẽ giúp cho việc giao tiếp giữa các service sẽ không bị chặn bơi các filter của security do đã gắn token lên header authoriation
     @Bean
     public RequestInterceptor requestInterceptor() {
         return requestTemplate -> {

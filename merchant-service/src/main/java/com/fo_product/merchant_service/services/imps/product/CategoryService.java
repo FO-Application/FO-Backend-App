@@ -4,7 +4,7 @@ import com.fo_product.merchant_service.dtos.requests.category.CategoryPatchReque
 import com.fo_product.merchant_service.dtos.requests.category.CategoryRequest;
 import com.fo_product.merchant_service.dtos.responses.CategoryResponse;
 import com.fo_product.merchant_service.exceptions.MerchantException;
-import com.fo_product.merchant_service.exceptions.codes.MerchantExceptionCode;
+import com.fo_product.merchant_service.exceptions.codes.MerchantErrorCode;
 import com.fo_product.merchant_service.mappers.CategoryMapper;
 import com.fo_product.merchant_service.models.entities.product.Category;
 import com.fo_product.merchant_service.models.entities.restaurant.Restaurant;
@@ -35,10 +35,10 @@ public class CategoryService implements ICategoryService {
     @CacheEvict(value = "cacheCategories", allEntries = true)
     public CategoryResponse createCategory(CategoryRequest request) {
         Restaurant restaurant = restaurantRepository.findById(request.idRestaurant())
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.RESTAURANT_NOT_EXIST));
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.RESTAURANT_NOT_EXIST));
 
         if (categoryRepository.existsByNameAndRestaurant(request.name(), restaurant)) {
-            throw new MerchantException(MerchantExceptionCode.CATEGORY_EXIST);
+            throw new MerchantException(MerchantErrorCode.CATEGORY_EXIST);
         }
 
         Category category = Category.builder()
@@ -63,12 +63,12 @@ public class CategoryService implements ICategoryService {
     )
     public CategoryResponse updateCategory(Long id, CategoryPatchRequest request) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.CATEGORY_NOT_EXIST));
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.CATEGORY_NOT_EXIST));
 
         if (request.name() != null && !request.name().equals(category.getName())) {
             Restaurant restaurant = category.getRestaurant();
             if (categoryRepository.existsByNameAndRestaurant(request.name(), restaurant)) {
-                throw new MerchantException(MerchantExceptionCode.CATEGORY_EXIST);
+                throw new MerchantException(MerchantErrorCode.CATEGORY_EXIST);
             }
             category.setName(request.name());
         }
@@ -89,7 +89,7 @@ public class CategoryService implements ICategoryService {
     @Cacheable(value = "cacheCategories", key = "#restaurantSlug")
     public List<CategoryResponse> getAllCategories(String restaurantSlug) {
         Restaurant restaurant = restaurantRepository.findBySlug(restaurantSlug)
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.RESTAURANT_NOT_EXIST));
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.RESTAURANT_NOT_EXIST));
 
         List<Category> result = categoryRepository.findAllByRestaurantOrderByDisplayOrderAsc(restaurant);
 
@@ -101,7 +101,7 @@ public class CategoryService implements ICategoryService {
     @Cacheable(value = "category_details", key = "#id")
     public CategoryResponse getCategoryByRestaurant(Long id) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.CATEGORY_NOT_EXIST));
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.CATEGORY_NOT_EXIST));
 
         return mapper.response(category);
     }
@@ -116,7 +116,7 @@ public class CategoryService implements ICategoryService {
     )
     public void deleteCategoryById(Long id) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.CATEGORY_NOT_EXIST));
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.CATEGORY_NOT_EXIST));
 
         categoryRepository.delete(category);
     }

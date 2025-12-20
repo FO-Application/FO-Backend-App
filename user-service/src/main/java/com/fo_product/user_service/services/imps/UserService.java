@@ -1,6 +1,6 @@
 package com.fo_product.user_service.services.imps;
 
-import com.fo_product.user_service.exceptions.code.UserExceptionCode;
+import com.fo_product.user_service.exceptions.code.UserErrorCode;
 import com.fo_product.user_service.exceptions.UserException;
 import com.fo_product.user_service.mappers.UserMapper;
 import com.fo_product.user_service.models.entities.User;
@@ -34,11 +34,11 @@ public class UserService implements IUserService {
     @CacheEvict(value = "user_details", key = "#id")      // Xóa cache của RIÊNG user này để lần sau getById nó load cái mới
     public UserResponse updateUserById(Long id, UserPatchRequest request) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new UserException(UserExceptionCode.USER_NOT_EXIST));
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_EXIST));
 
         if (request.email() != null && !request.email().equals(user.getEmail())) {
             if (userRepository.existsByEmail(request.email())) {
-                throw new UserException(UserExceptionCode.EMAIL_EXIST);
+                throw new UserException(UserErrorCode.EMAIL_EXIST);
             }
 
             user.setEmail(request.email());
@@ -70,7 +70,7 @@ public class UserService implements IUserService {
     @Cacheable(value = "user_details", key = "#id")
     public UserResponse getUserById(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new UserException(UserExceptionCode.USER_NOT_EXIST));
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_EXIST));
 
         return mapper.response(user);
     }
@@ -81,7 +81,7 @@ public class UserService implements IUserService {
         String email = authentication.getAuthentication().getName();
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UserException(UserExceptionCode.USER_NOT_EXIST));
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_EXIST));
 
         return mapper.response(user);
     }
@@ -100,7 +100,7 @@ public class UserService implements IUserService {
     @CacheEvict(value = "user_details", key = "#id")      // Xóa cache của RIÊNG user này để lần sau getById nó load cái mới
     public void deleteUserById(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new UserException(UserExceptionCode.USER_NOT_EXIST));
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_EXIST));
 
         userRepository.delete(user);
     }

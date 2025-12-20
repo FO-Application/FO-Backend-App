@@ -10,7 +10,7 @@ import org.springframework.http.HttpStatus;
 @Getter
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public enum MinIOExceptionCode implements ErrorCode {
+public enum MinIOErrorCode implements ErrorCode {
         INITIALIZING_BUCKET_FAILED(3001, "Error initializing MinIO bucket", HttpStatus.INTERNAL_SERVER_ERROR),
         UPLOAD_FILE_FAILED(3002, "Error uploading file to MinIO", HttpStatus.INTERNAL_SERVER_ERROR),
         DELETE_FILE_FAILED(3003, "Error deleting file from MinIO", HttpStatus.INTERNAL_SERVER_ERROR),

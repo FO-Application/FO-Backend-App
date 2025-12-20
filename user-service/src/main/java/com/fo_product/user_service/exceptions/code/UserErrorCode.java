@@ -10,7 +10,7 @@ import org.springframework.http.HttpStatus;
 @Getter
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public enum UserExceptionCode implements ErrorCode {
+public enum UserErrorCode implements ErrorCode {
     UNAUTHENTICATED(1001, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     ACCESS_DENIED(1002, "You do not have permission to access this resource", HttpStatus.FORBIDDEN),
     REQUEST_NULL(1003, "Request is null", HttpStatus.BAD_REQUEST),

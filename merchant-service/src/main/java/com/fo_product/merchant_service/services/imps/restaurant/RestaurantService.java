@@ -6,7 +6,7 @@ import com.fo_product.merchant_service.dtos.requests.restaurant.RestaurantReques
 import com.fo_product.merchant_service.dtos.responses.RestaurantResponse;
 import com.fo_product.merchant_service.dtos.responses.UserResponse;
 import com.fo_product.merchant_service.exceptions.MerchantException;
-import com.fo_product.merchant_service.exceptions.codes.MerchantExceptionCode;
+import com.fo_product.merchant_service.exceptions.codes.MerchantErrorCode;
 import com.fo_product.merchant_service.mappers.RestaurantMapper;
 import com.fo_product.merchant_service.models.entities.restaurant.Cuisine;
 import com.fo_product.merchant_service.models.entities.restaurant.Restaurant;
@@ -44,11 +44,11 @@ public class RestaurantService implements IRestaurantService {
     @Transactional
     public RestaurantResponse createRestaurant(RestaurantRequest request, MultipartFile image) {
         if (restaurantRepository.existsByName(request.name()) ||  restaurantRepository.existsBySlug(request.slug()))
-            throw new MerchantException(MerchantExceptionCode.RESTAURANT_EXIST);
+            throw new MerchantException(MerchantErrorCode.RESTAURANT_EXIST);
 
         UserResponse user = userClient.getUserById(request.ownerId());
         if (user == null || !"MERCHANT".equals(user.role()))
-            throw new MerchantException(MerchantExceptionCode.INVALID_MERCHANT_USER_ACCOUNT);
+            throw new MerchantException(MerchantErrorCode.INVALID_MERCHANT_USER_ACCOUNT);
 
         String imageUrl = null;
         if (image != null && !image.isEmpty()) {
@@ -88,18 +88,18 @@ public class RestaurantService implements IRestaurantService {
     @CacheEvict(value = "restaurant_details", key = "#id")
     public RestaurantResponse updateRestaurantById(Long id, RestaurantPatchRequest request, MultipartFile image) {
         Restaurant restaurant = restaurantRepository.findById(id)
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.RESTAURANT_NOT_EXIST));
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.RESTAURANT_NOT_EXIST));
 
         if (request.name() != null && !request.name().equals(restaurant.getName())) {
             if (restaurantRepository.existsByName(request.name())) {
-                throw new MerchantException(MerchantExceptionCode.RESTAURANT_EXIST);
+                throw new MerchantException(MerchantErrorCode.RESTAURANT_EXIST);
             }
             restaurant.setName(request.name());
         }
 
         if (request.slug() != null &&  !request.slug().equals(restaurant.getSlug())) {
             if (restaurantRepository.existsBySlug(request.slug())) {
-                throw new MerchantException(MerchantExceptionCode.SLUG_EXIST);
+                throw new MerchantException(MerchantErrorCode.SLUG_EXIST);
             }
             restaurant.setSlug(request.slug());
         }
@@ -116,7 +116,7 @@ public class RestaurantService implements IRestaurantService {
         if (request.ownerId() != null) {
             UserResponse user = userClient.getUserById(request.ownerId());
             if (user == null || !"MERCHANT".equals(user.role())) {
-                throw new MerchantException(MerchantExceptionCode.INVALID_MERCHANT_USER_ACCOUNT);
+                throw new MerchantException(MerchantErrorCode.INVALID_MERCHANT_USER_ACCOUNT);
             }
             restaurant.setOwnerId(user.id());
         }
@@ -156,7 +156,7 @@ public class RestaurantService implements IRestaurantService {
     @Cacheable(value = "restaurant_details", key = "#id")
     public RestaurantResponse getRestaurantById(Long id) {
         Restaurant restaurant = restaurantRepository.findById(id)
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.RESTAURANT_NOT_EXIST));
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.RESTAURANT_NOT_EXIST));
 
         return mapper.response(restaurant);
     }
@@ -174,7 +174,7 @@ public class RestaurantService implements IRestaurantService {
     @Transactional(readOnly = true)
     public Page<RestaurantResponse> getAllRestaurantsByCuisine(int page, int size, String cuisineSlug) {
         Cuisine cuisine = cuisineRepository.findBySlug(cuisineSlug)
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.CUISINE_NOT_EXIST));
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.CUISINE_NOT_EXIST));
 
 
         Pageable pageable = PageRequest.of(page, size);
@@ -188,7 +188,7 @@ public class RestaurantService implements IRestaurantService {
     @CacheEvict(value = "restaurant_details", key = "#id")
     public void deleteRestaurantById(Long id) {
         Restaurant restaurant = restaurantRepository.findById(id)
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.RESTAURANT_NOT_EXIST));
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.RESTAURANT_NOT_EXIST));
 
         if (restaurant.getImageFileUrl() != null && !restaurant.getImageFileUrl().isEmpty()) {
             minIOService.deleteFile(restaurant.getImageFileUrl());

@@ -10,10 +10,10 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public abstract class BaseException extends RuntimeException{
-    ErrorCode errorCode;
+    ErrorCode code;
 
-    protected BaseException(ErrorCode errorCode) {
-        super(errorCode.getMessage());
-        this.errorCode = errorCode;
+    protected BaseException(ErrorCode code) {
+        super(code.getMessage());
+        this.code = code;
     }
 }

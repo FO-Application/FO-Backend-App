@@ -1,7 +1,7 @@
 package com.fo_product.merchant_service.services.imps;
 
 import com.fo_product.merchant_service.exceptions.MinIOException;
-import com.fo_product.merchant_service.exceptions.codes.MinIOExceptionCode;
+import com.fo_product.merchant_service.exceptions.codes.MinIOErrorCode;
 import com.fo_product.merchant_service.services.interfaces.IMinIOService;
 import io.minio.*;
 import lombok.AccessLevel;
@@ -33,7 +33,7 @@ public class MinIOService implements IMinIOService {
             initBucket();
         } catch (Exception e) {
             log.error("Error initializing MinIO bucket: {}", e.getMessage());
-            throw new MinIOException(MinIOExceptionCode.INITIALIZING_BUCKET_FAILED);
+            throw new MinIOException(MinIOErrorCode.INITIALIZING_BUCKET_FAILED);
         }
     }
 
@@ -92,7 +92,7 @@ public class MinIOService implements IMinIOService {
             );
             return getPublicUrl(newFileName);
         } catch (Exception e) {
-            throw new MinIOException(MinIOExceptionCode.UPLOAD_FILE_FAILED);
+            throw new MinIOException(MinIOErrorCode.UPLOAD_FILE_FAILED);
         }
     }
 
@@ -107,7 +107,7 @@ public class MinIOService implements IMinIOService {
         );
         } catch (Exception e) {
             log.error("Delete failed: {}", e.getMessage());
-            throw new MinIOException(MinIOExceptionCode.DELETE_FILE_FAILED);
+            throw new MinIOException(MinIOErrorCode.DELETE_FILE_FAILED);
         }
     }
 

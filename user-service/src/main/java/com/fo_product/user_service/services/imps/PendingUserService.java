@@ -1,6 +1,6 @@
 package com.fo_product.user_service.services.imps;
 
-import com.fo_product.user_service.exceptions.code.UserExceptionCode;
+import com.fo_product.user_service.exceptions.code.UserErrorCode;
 import com.fo_product.user_service.exceptions.UserException;
 import com.fo_product.user_service.models.hashes.PendingUser;
 import com.fo_product.user_service.models.repositories.PendingUserRepository;
@@ -37,6 +37,6 @@ public class PendingUserService implements IPendingUserService {
     @Override
     public PendingUser getPendingUser(String email) {
         return pendingUserRepository.findById(email)
-                .orElseThrow(() -> new UserException(UserExceptionCode.PENDING_USER_NOT_FOUND));
+                .orElseThrow(() -> new UserException(UserErrorCode.PENDING_USER_NOT_FOUND));
     }
 }

@@ -4,7 +4,7 @@ import com.fo_product.merchant_service.dtos.requests.option_item.OptionItemPatch
 import com.fo_product.merchant_service.dtos.requests.option_item.OptionItemRequest;
 import com.fo_product.merchant_service.dtos.responses.OptionItemResponse;
 import com.fo_product.merchant_service.exceptions.MerchantException;
-import com.fo_product.merchant_service.exceptions.codes.MerchantExceptionCode;
+import com.fo_product.merchant_service.exceptions.codes.MerchantErrorCode;
 import com.fo_product.merchant_service.mappers.OptionItemMapper;
 import com.fo_product.merchant_service.models.entities.addon.OptionGroup;
 import com.fo_product.merchant_service.models.entities.addon.OptionItem;
@@ -35,10 +35,10 @@ public class OptionItemService implements IOptionItemService {
     @CacheEvict(value = "cacheOptionItems", allEntries = true)
     public OptionItemResponse createOptionItem(OptionItemRequest request) {
         OptionGroup optionGroup = optionGroupRepository.findById(request.optionGroupId())
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.OPTION_GROUP_NOT_EXIST));
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.OPTION_GROUP_NOT_EXIST));
 
         if (optionItemRepository.existsByNameAndOptionGroup(request.name(), optionGroup)) {
-            throw new MerchantException(MerchantExceptionCode.OPTION_ITEM_EXIST);
+            throw new MerchantException(MerchantErrorCode.OPTION_ITEM_EXIST);
         }
 
         OptionItem optionItem = OptionItem.builder()
@@ -63,11 +63,11 @@ public class OptionItemService implements IOptionItemService {
     )
     public OptionItemResponse updateOptionItem(Long id, OptionItemPatchRequest request) {
         OptionItem optionItem = optionItemRepository.findById(id)
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.OPTION_ITEM_NOT_EXIST));
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.OPTION_ITEM_NOT_EXIST));
 
         if (request.name() != null && !request.name().equals(optionItem.getName())) {
             if (optionItemRepository.existsByNameAndOptionGroup(request.name(), optionItem.getOptionGroup())) {
-                throw new MerchantException(MerchantExceptionCode.OPTION_ITEM_EXIST);
+                throw new MerchantException(MerchantErrorCode.OPTION_ITEM_EXIST);
             }
             optionItem.setName(request.name());
         }
@@ -87,7 +87,7 @@ public class OptionItemService implements IOptionItemService {
     @Cacheable(value = "optionItem_details", key = "#id")
     public OptionItemResponse getOptionItem(Long id) {
         OptionItem optionItem = optionItemRepository.findById(id)
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.OPTION_ITEM_NOT_EXIST));
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.OPTION_ITEM_NOT_EXIST));
 
         return optionItemMapper.response(optionItem);
     }
@@ -97,7 +97,7 @@ public class OptionItemService implements IOptionItemService {
     @Cacheable(value = "cacheOptionItems", key = "#groupId")
     public List<OptionItemResponse> getOptionItemsByGroupId(Long groupId) {
         OptionGroup optionGroup = optionGroupRepository.findById(groupId)
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.OPTION_GROUP_NOT_EXIST));
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.OPTION_GROUP_NOT_EXIST));
 
         List<OptionItem> result = optionItemRepository.findAllByOptionGroup(optionGroup);
 
@@ -114,7 +114,7 @@ public class OptionItemService implements IOptionItemService {
     )
     public void deleteOptionItem(Long id) {
         OptionItem optionItem = optionItemRepository.findById(id)
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.OPTION_ITEM_NOT_EXIST));
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.OPTION_ITEM_NOT_EXIST));
 
         optionItemRepository.delete(optionItem);
     }

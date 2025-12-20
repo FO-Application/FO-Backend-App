@@ -4,7 +4,7 @@ import com.fo_product.merchant_service.dtos.requests.product.ProductPatchRequest
 import com.fo_product.merchant_service.dtos.requests.product.ProductRequest;
 import com.fo_product.merchant_service.dtos.responses.ProductResponse;
 import com.fo_product.merchant_service.exceptions.MerchantException;
-import com.fo_product.merchant_service.exceptions.codes.MerchantExceptionCode;
+import com.fo_product.merchant_service.exceptions.codes.MerchantErrorCode;
 import com.fo_product.merchant_service.mappers.ProductMapper;
 import com.fo_product.merchant_service.models.entities.product.Category;
 import com.fo_product.merchant_service.models.entities.product.Product;
@@ -40,10 +40,10 @@ public class ProductService implements IProductService {
     @CacheEvict(value = "cacheProducts",  allEntries = true)
     public ProductResponse createProduct(ProductRequest request, MultipartFile image) {
         Category category = categoryRepository.findById(request.categoryId())
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.CATEGORY_NOT_EXIST));
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.CATEGORY_NOT_EXIST));
 
         if (productRepository.existsByNameAndCategory_Restaurant(request.name(), category.getRestaurant())) {
-            throw new MerchantException(MerchantExceptionCode.PRODUCT_EXIST);
+            throw new MerchantException(MerchantErrorCode.PRODUCT_EXIST);
         }
 
         String imageUrl = null;
@@ -52,7 +52,7 @@ public class ProductService implements IProductService {
         }
 
         if (!validatePrice(request.price(), request.originalPrice())) {
-            throw new MerchantException(MerchantExceptionCode.INVALID_PRICE);
+            throw new MerchantException(MerchantErrorCode.INVALID_PRICE);
         }
 
         Product product = Product.builder()
@@ -80,20 +80,20 @@ public class ProductService implements IProductService {
     )
     public ProductResponse updateProduct(Long id, ProductPatchRequest request, MultipartFile image) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.PRODUCT_NOT_EXIST));
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.PRODUCT_NOT_EXIST));
 
         BigDecimal newPrice = request.price() != null ? request.price() : product.getPrice();
         BigDecimal newOriginalPrice = request.originalPrice() != null ? request.originalPrice() : product.getOriginalPrice();
 
         if (!validatePrice(newPrice, newOriginalPrice)) {
-            throw new MerchantException(MerchantExceptionCode.INVALID_PRICE);
+            throw new MerchantException(MerchantErrorCode.INVALID_PRICE);
         }
 
         if (request.name() != null && !request.name().equals(product.getName())) {
             Restaurant restaurant = product.getCategory().getRestaurant();
 
             if (productRepository.existsByNameAndCategory_Restaurant(request.name(), restaurant)) {
-                throw new MerchantException(MerchantExceptionCode.PRODUCT_EXIST);
+                throw new MerchantException(MerchantErrorCode.PRODUCT_EXIST);
             }
             product.setName(request.name());
         }
@@ -113,7 +113,7 @@ public class ProductService implements IProductService {
 
         if (request.categoryId() != null) {
             Category category = categoryRepository.findById(request.categoryId())
-                    .orElseThrow(() -> new MerchantException(MerchantExceptionCode.CATEGORY_NOT_EXIST));
+                    .orElseThrow(() -> new MerchantException(MerchantErrorCode.CATEGORY_NOT_EXIST));
 
             product.setCategory(category);
         }
@@ -136,7 +136,7 @@ public class ProductService implements IProductService {
     @Cacheable(value = "product_details", key = "#id")
     public ProductResponse getById(Long id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.PRODUCT_NOT_EXIST));
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.PRODUCT_NOT_EXIST));
 
         return mapper.response(product);
     }
@@ -146,7 +146,7 @@ public class ProductService implements IProductService {
     @Cacheable(value = "cacheProducts", key = "#categoryId")
     public List<ProductResponse> getAllProductsByCategory(Long categoryId) {
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.CATEGORY_NOT_EXIST));
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.CATEGORY_NOT_EXIST));
 
         List<Product> products = productRepository.findAllByCategory(category);
 
@@ -163,7 +163,7 @@ public class ProductService implements IProductService {
     )
     public void deleteProduct(Long id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new MerchantException(MerchantExceptionCode.PRODUCT_NOT_EXIST));
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.PRODUCT_NOT_EXIST));
 
         if (product.getImageUrl() != null && !product.getImageUrl().isEmpty()) {
             minioService.deleteFile(product.getImageUrl());
