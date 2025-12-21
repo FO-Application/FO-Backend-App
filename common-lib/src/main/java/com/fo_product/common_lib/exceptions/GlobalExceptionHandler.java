@@ -23,7 +23,7 @@ public class GlobalExceptionHandler {
     // 1. Handle Custom Business Exception (AppException, ProductException...)
     @ExceptionHandler(value = BaseException.class)
     public ResponseEntity<APIResponse<Object>> handlingAppException(BaseException baseException) {
-        ErrorCode errorCode = baseException.getErrorCode();
+        ErrorCode errorCode = baseException.getCode();
 
         APIResponse<Object> apiResponse = new APIResponse<>();
         apiResponse.setCode(errorCode.getCode());

@@ -113,11 +113,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.fo-product</groupId>
-            <artifactId>common-lib</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-        <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
