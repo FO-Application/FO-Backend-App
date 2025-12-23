@@ -11,12 +11,21 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 @Component
 public class AuthCookieToHeaderFilter implements GlobalFilter, Ordered {
+
+    private final List<String> REFRESH_TOKEN_PATHS = List.of(
+            "/auth/logout",
+            "/auth/refresh"
+    );
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
+
+        boolean isRefreshPath = REFRESH_TOKEN_PATHS.stream().anyMatch(path::endsWith);
 
         HttpCookie accessCookie = exchange.getRequest().getCookies().getFirst("access_token");
         HttpCookie refreshCookie = exchange.getRequest().getCookies().getFirst("refresh_token");
@@ -31,7 +40,7 @@ public class AuthCookieToHeaderFilter implements GlobalFilter, Ordered {
                 String rt = (refreshCookie != null) ? refreshCookie.getValue() : null;
 
                 // LOGIC HOÁN ĐỔI:
-                if (path.contains("/auth/logout") || path.contains("/auth/refresh")) {
+                if (isRefreshPath) {
                     // Với Logout/Refresh: Ưu tiên Refresh Token vào Authorization
                     if (rt != null) {
                         writableHeaders.set(HttpHeaders.AUTHORIZATION, "Bearer " + rt);
