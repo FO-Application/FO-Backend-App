@@ -9,13 +9,13 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import java.util.List;
 
 @Configuration
-public class MultipartJacksonConfig extends MappingJackson2HttpMessageConverter {
+public class MultipartJacksonConfig {
     @Bean
     public MappingJackson2HttpMessageConverter octetStreamConverter(ObjectMapper objectMapper) {
         MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter(objectMapper);
         converter.setSupportedMediaTypes(List.of(
                 MediaType.APPLICATION_JSON,
-                new MediaType("application", "octet-stream")
+                new MediaType("application", "octet-stream") // Cho phép đọc JSON từ octet-stream
         ));
         return converter;
     }
