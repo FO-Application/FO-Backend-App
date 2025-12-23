@@ -22,10 +22,10 @@ public class AuthCookieService implements IAuthCookieService {
     public ResponseCookie setAccessToken(String accessToken) {
         return ResponseCookie.from("access_token", accessToken)
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .path("/")
                 .maxAge(ACCESS_EXPIRATION_TIME)
-                .sameSite("Lax")
+                .sameSite("None")
                 .build();
     }
 
@@ -33,10 +33,10 @@ public class AuthCookieService implements IAuthCookieService {
     public ResponseCookie setRefreshToken(String refreshToken) {
         return ResponseCookie.from("refresh_token", refreshToken)
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .path("/")
                 .maxAge(REFRESH_TOKEN_EXPIRATION_TIME)
-                .sameSite("Lax")
+                .sameSite("None")
                 .build();
     }
 
@@ -44,10 +44,10 @@ public class AuthCookieService implements IAuthCookieService {
     public ResponseCookie clearCookie(String cookieName) {
         return ResponseCookie.from(cookieName, "")
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .path("/")
                 .maxAge(0)
-                .sameSite("Lax")
+                .sameSite("None")
                 .build();
     }
 

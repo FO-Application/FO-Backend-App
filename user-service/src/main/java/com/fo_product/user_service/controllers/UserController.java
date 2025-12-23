@@ -9,10 +9,15 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -61,8 +66,10 @@ public class UserController {
 
     @Operation(summary = "Lấy thông tin bản thân (My Info)", description = "Lấy thông tin của người dùng hiện tại dựa trên Token đăng nhập.")
     @GetMapping("/me")
-    APIResponse<UserResponse> getMe() {
-        UserResponse response = userService.getMe();
+    APIResponse<UserResponse> getMe(@AuthenticationPrincipal Jwt jwt) {
+        Long userId = jwt.getClaim("user-id");
+
+        UserResponse response = userService.getMe(userId);
         return APIResponse.<UserResponse>builder()
                 .result(response)
                 .message("Get me successfully")

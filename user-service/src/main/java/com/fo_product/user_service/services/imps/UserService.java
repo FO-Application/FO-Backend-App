@@ -31,7 +31,7 @@ public class UserService implements IUserService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "user_details", key = "#id")      // Xóa cache của RIÊNG user này để lần sau getById nó load cái mới
+    @CacheEvict(value = "user_details", key = "#id")
     public UserResponse updateUserById(Long id, UserPatchRequest request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_EXIST));
@@ -76,11 +76,8 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public UserResponse getMe() {
-        SecurityContext authentication = SecurityContextHolder.getContext();
-        String email = authentication.getAuthentication().getName();
-
-        User user = userRepository.findByEmail(email)
+    public UserResponse getMe(Long userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_EXIST));
 
         return mapper.response(user);
@@ -97,7 +94,7 @@ public class UserService implements IUserService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "user_details", key = "#id")      // Xóa cache của RIÊNG user này để lần sau getById nó load cái mới
+    @CacheEvict(value = "user_details", key = "#id")
     public void deleteUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_EXIST));

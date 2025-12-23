@@ -55,4 +55,10 @@ openapi:
   service:
     url: ${OPENAPI_SERVICE_URL}
 
+jwt:
+  secret: ${JWT_SECRET}
+
+logging:
+  level:
+    org.springframework.security: DEBUG
 

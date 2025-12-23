@@ -2,6 +2,7 @@ package com.fo_product.user_service.controllers;
 
 import com.fo_product.common_lib.dtos.APIResponse;
 import com.fo_product.user_service.dtos.requests.*;
+import com.fo_product.user_service.dtos.responses.AuthenticationDTO;
 import com.fo_product.user_service.dtos.responses.AuthenticationResponse;
 import com.fo_product.user_service.dtos.responses.PendingUserResponse;
 import com.fo_product.user_service.dtos.responses.UserResponse;
@@ -96,7 +97,7 @@ public class AuthController {
     })
     @PostMapping("/login")
     APIResponse<AuthenticationResponse> login (@RequestBody AuthenticateRequest request, HttpServletResponse httpServletResponse) throws JOSEException, ParseException {
-        var result = authService.authentication(request);
+        AuthenticationDTO result = authService.authentication(request);
         ResponseCookie accessToken = authCookieService.setAccessToken(result.accessToken());
         ResponseCookie refreshToken = authCookieService.setRefreshToken(result.refreshToken());
 
@@ -104,6 +105,8 @@ public class AuthController {
         httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, refreshToken.toString());
 
         AuthenticationResponse response = AuthenticationResponse.builder()
+                .accessToken(result.accessToken())
+                .refreshToken(result.refreshToken())
                 .role(result.role())
                 .authenticated(true)
                 .build();
@@ -125,17 +128,18 @@ public class AuthController {
     })
     @PostMapping("/refresh")
     APIResponse<AuthenticationResponse> refreshToken(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws ParseException, JOSEException {
-        String refreshToken = authCookieService.getCookieValue(httpServletRequest, "refresh_token");
+        String refreshToken = resolveToken(httpServletRequest, "refresh_token");
 
-        var result = authService.refreshToken(refreshToken);
+        AuthenticationDTO result = authService.refreshToken(refreshToken);
 
         ResponseCookie at = authCookieService.setAccessToken(result.accessToken());
         ResponseCookie rt = authCookieService.setRefreshToken(result.refreshToken());
-
         httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, at.toString());
         httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, rt.toString());
 
         AuthenticationResponse response = AuthenticationResponse.builder()
+                .accessToken(result.accessToken())
+                .refreshToken(result.refreshToken())
                 .role(result.role())
                 .authenticated(true)
                 .build();
@@ -152,7 +156,7 @@ public class AuthController {
     )
     @PostMapping("/logout")
     APIResponse<?> logout(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws ParseException, JOSEException {
-        String refreshToken = authCookieService.getCookieValue(httpServletRequest, "refresh_token");
+        String refreshToken = resolveToken(httpServletRequest, "refresh_token");
 
         ResponseCookie clearAccessCookie = authCookieService.clearCookie("access_token");
         ResponseCookie clearRefreshCookie = authCookieService.clearCookie("refresh_token");
@@ -164,5 +168,13 @@ public class AuthController {
         return APIResponse.builder()
                 .message("Log out successfully")
                 .build();
+    }
+
+    private String resolveToken(HttpServletRequest request, String cookieName) {
+        String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return authCookieService.getCookieValue(request, cookieName);
     }
 }

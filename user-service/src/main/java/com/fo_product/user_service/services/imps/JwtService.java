@@ -55,6 +55,7 @@ public class JwtService implements IJwtService {
                 .subject(user.getEmail())
                 .jwtID(UUID.randomUUID().toString())
                 .claim("token-type", tokenType)
+                .claim("user-id", user.getId())
                 .issueTime(new Date())
                 .expirationTime(new Date(
                         Instant.now().plus(expiration, ChronoUnit.SECONDS).toEpochMilli()
