@@ -2,7 +2,7 @@ package com.fo_product.merchant_service.services.interfaces.restaurant;
 
 import com.fo_product.merchant_service.dtos.requests.restaurant.RestaurantSchedulePatchRequest;
 import com.fo_product.merchant_service.dtos.requests.restaurant.RestaurantScheduleRequest;
-import com.fo_product.merchant_service.dtos.responses.RestaurantScheduleResponse;
+import com.fo_product.merchant_service.dtos.responses.restaurant.RestaurantScheduleResponse;
 
 import java.util.List;
 

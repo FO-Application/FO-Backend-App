@@ -2,10 +2,10 @@ package com.fo_product.merchant_service.services.imps.product;
 
 import com.fo_product.merchant_service.dtos.requests.product.ProductPatchRequest;
 import com.fo_product.merchant_service.dtos.requests.product.ProductRequest;
-import com.fo_product.merchant_service.dtos.responses.ProductResponse;
+import com.fo_product.merchant_service.dtos.responses.product.ProductResponse;
 import com.fo_product.merchant_service.exceptions.MerchantException;
 import com.fo_product.merchant_service.exceptions.codes.MerchantErrorCode;
-import com.fo_product.merchant_service.mappers.ProductMapper;
+import com.fo_product.merchant_service.mappers.product.ProductMapper;
 import com.fo_product.merchant_service.models.entities.product.Category;
 import com.fo_product.merchant_service.models.entities.product.Product;
 import com.fo_product.merchant_service.models.entities.restaurant.Restaurant;
@@ -149,6 +149,14 @@ public class ProductService implements IProductService {
                 .orElseThrow(() -> new MerchantException(MerchantErrorCode.CATEGORY_NOT_EXIST));
 
         List<Product> products = productRepository.findAllByCategory(category);
+
+        return products.stream().map(mapper::response).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductResponse> getProductsByIds(List<Long> productids) {
+        List<Product> products = productRepository.findAllById(productids);
 
         return products.stream().map(mapper::response).toList();
     }

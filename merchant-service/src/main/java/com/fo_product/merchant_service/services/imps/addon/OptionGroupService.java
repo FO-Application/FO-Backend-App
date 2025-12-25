@@ -2,10 +2,10 @@ package com.fo_product.merchant_service.services.imps.addon;
 
 import com.fo_product.merchant_service.dtos.requests.option_group.OptionGroupPatchRequest;
 import com.fo_product.merchant_service.dtos.requests.option_group.OptionGroupRequest;
-import com.fo_product.merchant_service.dtos.responses.OptionGroupResponse;
+import com.fo_product.merchant_service.dtos.responses.addon.OptionGroupResponse;
 import com.fo_product.merchant_service.exceptions.MerchantException;
 import com.fo_product.merchant_service.exceptions.codes.MerchantErrorCode;
-import com.fo_product.merchant_service.mappers.OptionGroupMapper;
+import com.fo_product.merchant_service.mappers.addon.OptionGroupMapper;
 import com.fo_product.merchant_service.models.entities.addon.OptionGroup;
 import com.fo_product.merchant_service.models.entities.product.Product;
 import com.fo_product.merchant_service.models.repositories.addon.OptionGroupRepository;

@@ -102,7 +102,6 @@ public class AuthService implements IAuthService {
                 .lastName(pendingUser.getLastName())
                 .phone(pendingUser.getPhone())
                 .dob(pendingUser.getDob())
-                .createdAt(LocalDateTime.now())
                 .userStatus(UserStatus.ACTIVE)
                 .build();
 

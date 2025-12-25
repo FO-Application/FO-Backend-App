@@ -2,10 +2,10 @@ package com.fo_product.merchant_service.services.imps.product;
 
 import com.fo_product.merchant_service.dtos.requests.category.CategoryPatchRequest;
 import com.fo_product.merchant_service.dtos.requests.category.CategoryRequest;
-import com.fo_product.merchant_service.dtos.responses.CategoryResponse;
+import com.fo_product.merchant_service.dtos.responses.product.CategoryResponse;
 import com.fo_product.merchant_service.exceptions.MerchantException;
 import com.fo_product.merchant_service.exceptions.codes.MerchantErrorCode;
-import com.fo_product.merchant_service.mappers.CategoryMapper;
+import com.fo_product.merchant_service.mappers.product.CategoryMapper;
 import com.fo_product.merchant_service.models.entities.product.Category;
 import com.fo_product.merchant_service.models.entities.restaurant.Restaurant;
 import com.fo_product.merchant_service.models.repositories.product.CategoryRepository;

@@ -27,22 +27,6 @@ public class SecurityConfig {
     @Value("${spring.security.oauth2.resourceserver.jwt.jws-algorithms}")
     private String ALGORITHM;
 
-//    private static final String[] REQUEST_MATCHERS = {
-//            "/api/v1/auth/**",
-//            "/api/v1/cuisine/**",
-//            "/api/v1/restaurant/**",
-//            "/api/v1/restaurant-schedule/**",
-//            "/api/v1/category/**",
-//            "/api/v1/product/**",
-//            "/api/v1/option-group/**",
-//            "/api/v1/option-item/**",
-//            "/v3/api-docs/**",      // Để Gateway lấy JSON từ các service con
-//            "/swagger-ui.html",     // Trang giao diện chính
-//            "/swagger-ui/**",       // Các file css, js của giao diện Swagger
-//            "/webjars/**",          // Thư viện giao diện (nếu cần)
-//            "/eureka/**"
-//    };
-
     @Bean
     public SecurityWebFilterChain filterChain(ServerHttpSecurity http, CorsConfigurationSource corsConfigurationSource) {
         return http

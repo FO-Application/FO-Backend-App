@@ -9,7 +9,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 		scanBasePackages = "com.fo_product"
 )
 @EnableCaching
-@EnableJpaAuditing
 public class UserServiceApplication {
 
 	public static void main(String[] args) {

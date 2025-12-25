@@ -2,10 +2,10 @@ package com.fo_product.merchant_service.services.imps.restaurant;
 
 import com.fo_product.merchant_service.dtos.requests.restaurant.RestaurantSchedulePatchRequest;
 import com.fo_product.merchant_service.dtos.requests.restaurant.RestaurantScheduleRequest;
-import com.fo_product.merchant_service.dtos.responses.RestaurantScheduleResponse;
+import com.fo_product.merchant_service.dtos.responses.restaurant.RestaurantScheduleResponse;
 import com.fo_product.merchant_service.exceptions.MerchantException;
 import com.fo_product.merchant_service.exceptions.codes.MerchantErrorCode;
-import com.fo_product.merchant_service.mappers.RestaurantScheduleMapper;
+import com.fo_product.merchant_service.mappers.restaurant.RestaurantScheduleMapper;
 import com.fo_product.merchant_service.models.entities.restaurant.Restaurant;
 import com.fo_product.merchant_service.models.entities.restaurant.RestaurantSchedule;
 import com.fo_product.merchant_service.models.repositories.restaurant.RestaurantRepository;

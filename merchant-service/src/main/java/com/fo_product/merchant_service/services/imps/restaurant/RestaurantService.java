@@ -3,11 +3,11 @@ package com.fo_product.merchant_service.services.imps.restaurant;
 import com.fo_product.merchant_service.client.UserClient;
 import com.fo_product.merchant_service.dtos.requests.restaurant.RestaurantPatchRequest;
 import com.fo_product.merchant_service.dtos.requests.restaurant.RestaurantRequest;
-import com.fo_product.merchant_service.dtos.responses.RestaurantResponse;
-import com.fo_product.merchant_service.dtos.responses.UserResponse;
+import com.fo_product.merchant_service.dtos.responses.restaurant.RestaurantResponse;
+import com.fo_product.merchant_service.dtos.feigns.UserDTO;
 import com.fo_product.merchant_service.exceptions.MerchantException;
 import com.fo_product.merchant_service.exceptions.codes.MerchantErrorCode;
-import com.fo_product.merchant_service.mappers.RestaurantMapper;
+import com.fo_product.merchant_service.mappers.restaurant.RestaurantMapper;
 import com.fo_product.merchant_service.models.entities.restaurant.Cuisine;
 import com.fo_product.merchant_service.models.entities.restaurant.Restaurant;
 import com.fo_product.merchant_service.models.repositories.restaurant.CuisineRepository;
@@ -46,7 +46,7 @@ public class RestaurantService implements IRestaurantService {
         if (restaurantRepository.existsByName(request.name()) ||  restaurantRepository.existsBySlug(request.slug()))
             throw new MerchantException(MerchantErrorCode.RESTAURANT_EXIST);
 
-        UserResponse user = userClient.getUserById(request.ownerId());
+        UserDTO user = userClient.getUserById(request.ownerId());
         if (user == null || !"MERCHANT".equals(user.role()))
             throw new MerchantException(MerchantErrorCode.INVALID_MERCHANT_USER_ACCOUNT);
 
@@ -114,7 +114,7 @@ public class RestaurantService implements IRestaurantService {
             restaurant.setDescription(request.description());
 
         if (request.ownerId() != null) {
-            UserResponse user = userClient.getUserById(request.ownerId());
+            UserDTO user = userClient.getUserById(request.ownerId());
             if (user == null || !"MERCHANT".equals(user.role())) {
                 throw new MerchantException(MerchantErrorCode.INVALID_MERCHANT_USER_ACCOUNT);
             }

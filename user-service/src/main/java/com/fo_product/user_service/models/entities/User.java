@@ -4,6 +4,8 @@ import com.fo_product.user_service.models.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -32,9 +34,11 @@ public class User {
     String lastName;
     LocalDate dob;
     String phone;
+
+    @CreationTimestamp
     LocalDateTime createdAt;
 
-    @LastModifiedDate
+    @UpdateTimestamp
     LocalDateTime updatedAt;
 
     @Enumerated(EnumType.STRING)

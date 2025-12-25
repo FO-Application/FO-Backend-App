@@ -2,7 +2,7 @@ package com.fo_product.merchant_service.services.interfaces.restaurant;
 
 import com.fo_product.merchant_service.dtos.requests.restaurant.RestaurantPatchRequest;
 import com.fo_product.merchant_service.dtos.requests.restaurant.RestaurantRequest;
-import com.fo_product.merchant_service.dtos.responses.RestaurantResponse;
+import com.fo_product.merchant_service.dtos.responses.restaurant.RestaurantResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 

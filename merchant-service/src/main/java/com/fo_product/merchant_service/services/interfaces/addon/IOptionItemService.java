@@ -2,7 +2,7 @@ package com.fo_product.merchant_service.services.interfaces.addon;
 
 import com.fo_product.merchant_service.dtos.requests.option_item.OptionItemPatchRequest;
 import com.fo_product.merchant_service.dtos.requests.option_item.OptionItemRequest;
-import com.fo_product.merchant_service.dtos.responses.OptionItemResponse;
+import com.fo_product.merchant_service.dtos.responses.addon.OptionItemResponse;
 
 import java.util.List;
 

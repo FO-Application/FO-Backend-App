@@ -2,8 +2,7 @@ package com.fo_product.merchant_service.services.interfaces.addon;
 
 import com.fo_product.merchant_service.dtos.requests.option_group.OptionGroupPatchRequest;
 import com.fo_product.merchant_service.dtos.requests.option_group.OptionGroupRequest;
-import com.fo_product.merchant_service.dtos.responses.OptionGroupResponse;
-import org.springframework.data.domain.Page;
+import com.fo_product.merchant_service.dtos.responses.addon.OptionGroupResponse;
 
 import java.util.List;
 

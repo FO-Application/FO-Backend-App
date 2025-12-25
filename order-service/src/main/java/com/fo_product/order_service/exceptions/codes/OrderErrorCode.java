@@ -11,7 +11,12 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public enum OrderErrorCode implements ErrorCode {
-
+    PRODUCT_NOT_EXIST(2001, "Product not exist", HttpStatus.UNPROCESSABLE_ENTITY),
+    TOPPING_OUT_OF_STOCK(2002, "Topping out of stock", HttpStatus.UNPROCESSABLE_ENTITY),
+    INVALID_OPTION_ID(2003, "Invalid option id", HttpStatus.BAD_REQUEST),
+    ORDER_NOT_EXIST(2004, "Order not exist", HttpStatus.UNPROCESSABLE_ENTITY),
+    ORDER_INVALID(2005, "Order invalid", HttpStatus.BAD_REQUEST),
+    CANNOT_CANCEL_ORDER(2006, "Cannot cancel order", HttpStatus.BAD_REQUEST),
     ;
 
     int code;
