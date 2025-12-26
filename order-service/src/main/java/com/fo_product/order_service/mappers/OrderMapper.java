@@ -3,6 +3,7 @@ package com.fo_product.order_service.mappers;
 import com.fo_product.order_service.dtos.responses.OrderItemOptionResponse;
 import com.fo_product.order_service.dtos.responses.OrderItemResponse;
 import com.fo_product.order_service.dtos.responses.OrderResponse;
+import com.fo_product.order_service.dtos.responses.ReviewResponse;
 import com.fo_product.order_service.models.entities.Order;
 import org.springframework.stereotype.Component;
 
@@ -48,6 +49,15 @@ public class OrderMapper {
                                         )
                                         .build()
                         ).toList()
+                )
+                .review(order.getReview() != null ?
+                        ReviewResponse.builder()
+                                .id(order.getReview().getId())
+                                .rating(order.getReview().getRating())
+                                .comment(order.getReview().getComment())
+                                .createdAt(order.getReview().getCreatedAt())
+                                .build()
+                        : null
                 )
                 .build();
     }

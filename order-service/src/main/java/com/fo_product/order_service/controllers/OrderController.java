@@ -17,7 +17,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/order") // Lưu ý: Em vẫn đang để số ít, lúc nào rảnh nhớ sửa thành /orders nhé
+@RequestMapping("/api/v1/order")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Tag(name = "Order Controller", description = "Các API liên quan đến quản lý đơn hàng của Khách hàng")

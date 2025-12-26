@@ -19,6 +19,10 @@ public enum ValidationCode implements ErrorCode {
     PRICE_ADJUSTMENT_INVALID(105, "PRICE_ADJUSTMENT_INVALID", HttpStatus.BAD_REQUEST),
     NOT_EMPTY(106, "This field must not be empty", HttpStatus.BAD_REQUEST),
     QUANTITY_MIN_1(107, "Quantity atleast 1 item",  HttpStatus.BAD_REQUEST),
+    INVALID_STATUS(108, "Invalid status", HttpStatus.BAD_REQUEST),
+    STATUS_REQUIRED(109, "Status required", HttpStatus.BAD_REQUEST),
+    RATING_MIN_1(110, "Rating at least 1 star",  HttpStatus.BAD_REQUEST),
+    RATING_MAX_5(111, "Rating at least 5 stars",  HttpStatus.BAD_REQUEST),
 
     ;
 

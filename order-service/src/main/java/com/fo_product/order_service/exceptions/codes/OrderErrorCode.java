@@ -17,6 +17,9 @@ public enum OrderErrorCode implements ErrorCode {
     ORDER_NOT_EXIST(2004, "Order not exist", HttpStatus.UNPROCESSABLE_ENTITY),
     ORDER_INVALID(2005, "Order invalid", HttpStatus.BAD_REQUEST),
     CANNOT_CANCEL_ORDER(2006, "Cannot cancel order", HttpStatus.BAD_REQUEST),
+    INVALID_ORDER_STATUS(2007, "Invalid order status", HttpStatus.BAD_REQUEST),
+    UNFINISHED_ORDER(2008, "Unfinished order", HttpStatus.BAD_REQUEST),
+    INVALID_OWNER(2009, "Invalid owner id", HttpStatus.BAD_REQUEST),
     ;
 
     int code;

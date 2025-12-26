@@ -8,6 +8,7 @@ import com.fo_product.order_service.dtos.feigns.RestaurantDTO;
 import com.fo_product.order_service.dtos.feigns.UserDTO;
 import com.fo_product.order_service.dtos.requests.OrderItemRequest;
 import com.fo_product.order_service.dtos.requests.OrderRequest;
+import com.fo_product.order_service.dtos.requests.UpdateOrderStatusRequest;
 import com.fo_product.order_service.dtos.responses.OrderResponse;
 import com.fo_product.order_service.exceptions.OrderException;
 import com.fo_product.order_service.exceptions.codes.OrderErrorCode;
@@ -26,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -156,7 +158,7 @@ public class OrderService implements IOrderService {
     @Override
     @Transactional(readOnly = true)
     public Page<OrderResponse> getMyOrders(Long userId, int page, int size) {
-        Pageable pageable =  PageRequest.of(page, size);
+        Pageable pageable =  PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<Order> result = orderRepository.findByUserId(userId, pageable);
 
         return result.map(mapper::response);
@@ -190,5 +192,106 @@ public class OrderService implements IOrderService {
         Order result = orderRepository.save(order);
 
         return mapper.response(result);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<OrderResponse> getOrdersByMerchant(Long userId, Long merchantId, String status, int page, int size) {
+        boolean isUserValid = checkMerchantOwnership(userId, merchantId);
+        if (!isUserValid)
+            throw new  OrderException(OrderErrorCode.INVALID_OWNER);
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+        Page<Order> result;
+        if (status != null && !status.isEmpty()) {
+            result = orderRepository.findByMerchantIdAndOrderStatus(merchantId, OrderStatus.valueOf(status), pageable);
+        } else {
+            result = orderRepository.findByMerchantId(merchantId, pageable);
+        }
+
+        return result.map(mapper::response);
+    }
+
+    @Override
+    @Transactional
+    public OrderResponse updateOrderStatus(Long userId, Long orderId, UpdateOrderStatusRequest request) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderException(OrderErrorCode.ORDER_NOT_EXIST));
+
+        long merchantId = order.getMerchantId();
+
+        boolean isUserValid = checkMerchantOwnership(userId, merchantId);
+        if (!isUserValid)
+            throw new  OrderException(OrderErrorCode.INVALID_OWNER);
+
+        OrderStatus newStatus = OrderStatus.valueOf(request.status());
+        OrderStatus oldStatus = order.getOrderStatus();
+
+        boolean isValidTransition = false;
+
+        switch (oldStatus) {
+            case CREATED:
+                //Đơn hàng mới đặt chỉ có thể nhận hoặc hủy
+                if (newStatus == OrderStatus.CONFIRMED || newStatus == OrderStatus.CANCELED)
+                    isValidTransition = true;
+                break;
+
+            case CONFIRMED:
+                //Đơn hàng đã nhận chỉ có thể chuẩn bị đồ ăn hoặc hủy
+                if (newStatus == OrderStatus.PREPARING || newStatus == OrderStatus.CANCELED)
+                    isValidTransition = true;
+                break;
+
+            case PREPARING:
+                //Đơn hàng đã chuẩn bị chỉ có thể vận chuyển
+                if (newStatus == OrderStatus.DELIVERING)
+                    isValidTransition = true;
+                break;
+
+            case DELIVERING:
+                //Đơn hàng đang vận chuyển chỉ có thể là hoàn thành vận chuyển hoặc bom hàng
+                if (newStatus == OrderStatus.COMPLETED || newStatus == OrderStatus.BOMB)
+                    isValidTransition = true;
+                break;
+
+            case COMPLETED:
+            case CANCELED:
+            case BOMB:
+                isValidTransition = false;
+
+            default:
+                isValidTransition = false;
+        }
+
+        if (!isValidTransition)
+            throw new OrderException(OrderErrorCode.INVALID_ORDER_STATUS);
+
+        if (newStatus == OrderStatus.DELIVERING) {
+            //Làm logic vận hàng gửi thông báo sau
+            log.info("Đang vận chuyển ...");
+        }
+
+        if (newStatus == OrderStatus.COMPLETED) {
+            //Xuử lý gửi thông báo thành công ở đây
+            log.info("Đã vận hàng thành công ...");
+        }
+
+        order.setOrderStatus(newStatus);
+        Order result = orderRepository.save(order);
+
+        return mapper.response(result);
+    }
+
+    private boolean checkMerchantOwnership(Long userId, Long merchantId) {
+        RestaurantDTO restaurant = merchantClient.getRestaurant(merchantId);
+
+        if (restaurant == null)
+            return false;
+
+        if (restaurant.user() == null || !restaurant.user().id().equals(userId))
+            return false;
+
+        return true;
     }
 }

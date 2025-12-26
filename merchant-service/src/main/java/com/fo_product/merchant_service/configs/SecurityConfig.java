@@ -41,6 +41,7 @@ public class SecurityConfig {
             "/api/v1/option-group/**",
             "/api/v1/option-item/**",
             "/merchant-images/**",
+            "/api/v1/review/**",
             "/*/*.png",
             "/*/*.jpg",
             "/v3/api-docs/**",

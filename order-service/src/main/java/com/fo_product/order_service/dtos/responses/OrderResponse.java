@@ -65,6 +65,9 @@ public record OrderResponse(
         LocalDateTime updatedAt,
 
         @Schema(description = "Danh sách món ăn trong đơn")
-        List<OrderItemResponse> orderItems
+        List<OrderItemResponse> orderItems,
+
+        @Schema(description = "Thông tin đánh giá (Null nếu chưa đánh giá)")
+        ReviewResponse review
 ) {
 }
