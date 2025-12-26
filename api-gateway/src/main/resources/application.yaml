@@ -61,6 +61,7 @@ spring:
                   - /api/v1/product/**
                   - /api/v1/option-group/**
                   - /api/v1/option-item/**
+                  - /merchant-images/**
           filters:
             - name: RequestRateLimiter
               args:

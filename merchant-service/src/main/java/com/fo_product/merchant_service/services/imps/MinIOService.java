@@ -114,6 +114,6 @@ public class MinIOService implements IMinIOService {
     private String getPublicUrl(String fileName) {
         //Nơi đổi và viết domain thật cho front end dùng link để hiển thị hình ảnh
         // VD: http://localhost:9000/bucket-name/ten-file.jpg
-        return "http://vanessa-unabsolved-buck.ngrok-free.dev/" + bucketName + "/" + fileName;
+        return "https://vanessa-unabsolved-buck.ngrok-free.dev/" + bucketName + "/" + fileName;
     }
 }

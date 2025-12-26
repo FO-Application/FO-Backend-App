@@ -40,6 +40,9 @@ public class SecurityConfig {
             "/api/v1/product/**",
             "/api/v1/option-group/**",
             "/api/v1/option-item/**",
+            "/merchant-images/**",
+            "/*/*.png",
+            "/*/*.jpg",
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html"
