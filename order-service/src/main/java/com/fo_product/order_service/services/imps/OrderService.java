@@ -12,6 +12,8 @@ import com.fo_product.order_service.dtos.requests.UpdateOrderStatusRequest;
 import com.fo_product.order_service.dtos.responses.OrderResponse;
 import com.fo_product.order_service.exceptions.OrderException;
 import com.fo_product.order_service.exceptions.codes.OrderErrorCode;
+import com.fo_product.order_service.kafka.KafkaProducerService;
+import com.fo_product.order_service.kafka.events.OrderCompletedEvent;
 import com.fo_product.order_service.mappers.OrderMapper;
 import com.fo_product.order_service.models.entities.Order;
 import com.fo_product.order_service.models.entities.OrderItem;
@@ -47,6 +49,7 @@ public class OrderService implements IOrderService {
     UserClient userClient;
     MerchantClient merchantClient;
     OrderMapper mapper;
+    KafkaProducerService kafkaProducerService;
 
     @Override
     @Transactional
@@ -273,7 +276,12 @@ public class OrderService implements IOrderService {
         }
 
         if (newStatus == OrderStatus.COMPLETED) {
-            //Xuử lý gửi thông báo thành công ở đây
+            OrderCompletedEvent orderCompletedEvent = OrderCompletedEvent.builder()
+                    .orderId(order.getId())
+                    .merchantId(order.getMerchantId())
+                    .orderAmount(order.getGrandTotal())
+                    .build();
+            kafkaProducerService.sendOrderCompletedEvent(orderCompletedEvent);
             log.info("Đã vận hàng thành công ...");
         }
 

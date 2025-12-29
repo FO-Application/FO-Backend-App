@@ -1,5 +1,6 @@
 package com.fo_product.merchant_service.models.entities.restaurant;
 
+import com.fo_product.merchant_service.models.entities.wallet.Wallet;
 import com.fo_product.merchant_service.models.entities.product.Category;
 import jakarta.persistence.*;
 import lombok.*;
@@ -95,4 +96,7 @@ public class Restaurant {
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
     List<Category> categories = new ArrayList<>();
+
+    @OneToOne(mappedBy = "restaurant", cascade = CascadeType.ALL)
+    Wallet wallet;
 }

@@ -173,6 +173,7 @@ services:
       - discovery-service
       - redis-cache
       - minio
+      - kafka
     networks:
       - fo-network
 
@@ -202,6 +203,7 @@ services:
       - mysql-db
       - discovery-service
       - redis-cache
+      - kafka
     networks:
       - fo-network
 
