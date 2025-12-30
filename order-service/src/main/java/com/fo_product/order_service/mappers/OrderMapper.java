@@ -18,6 +18,7 @@ public class OrderMapper {
                 .merchantLogo(order.getMerchantLogo())
                 .customerName(order.getCustomerName())
                 .customerPhone(order.getCustomerPhone())
+                .customerEmail(order.getCustomerEmail())
                 .deliveryAddress(order.getDeliveryAddress())
                 .subTotal(order.getSubTotal())
                 .shippingFee(order.getShippingFee())

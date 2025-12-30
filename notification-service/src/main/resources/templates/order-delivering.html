@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đơn Hàng Đang Giao - GrabFood</title>
+    <style>
+        /* =========================================
+           STYLE CƠ BẢN
+           ========================================= */
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; /* Font style Grab */
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 0;
+            color: #333333;
+            line-height: 1.6;
+        }
+
+        .email-wrapper {
+            width: 100%;
+            background-color: #f7f7f7;
+            padding: 40px 0;
+        }
+
+        .email-container {
+            max-width: 550px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px; /* Grab bo góc ít hơn */
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        /* =========================================
+           HEADER - MÀU XANH GRAB
+           ========================================= */
+        .header {
+            background-color: #00B14F; /* Xanh Grab chuẩn */
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .logo-container {
+            display: inline-block;
+        }
+
+        .logo-img {
+            height: 120px; /* Chiều cao logo Grab */
+            display: block;
+        }
+
+        .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        /* =========================================
+           CONTENT
+           ========================================= */
+        .content {
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .welcome-text {
+            font-size: 16px;
+            color: #363a45;
+            margin-bottom: 25px;
+        }
+
+        /* CARD ĐƠN HÀNG */
+        .order-card {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 0;
+            margin: 20px 0;
+            text-align: left;
+            overflow: hidden;
+        }
+
+        .order-header {
+            background-color: #f0fcf4; /* Xanh rất nhạt */
+            padding: 15px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: bold;
+            color: #00B14F;
+        }
+
+        .order-body {
+            padding: 20px;
+        }
+
+        .order-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            border-bottom: 1px dashed #eeeeee;
+            padding-bottom: 8px;
+        }
+
+        .order-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .label { font-size: 13px; color: #888; }
+        .value { font-size: 14px; color: #333; font-weight: 600; text-align: right; }
+
+        .total-row {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 2px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .highlight-price {
+            color: #00B14F; /* Giá tiền màu xanh Grab */
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        /* ĐỊA CHỈ */
+        .address-box {
+            font-size: 14px;
+            color: #555;
+            background: #f9f9f9;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 15px;
+            border-left: 4px solid #00B14F;
+        }
+
+        /* NOTE */
+        .shipper-note {
+            background-color: #e5f7ed; /* Nền xanh nhạt */
+            color: #00602b; /* Chữ xanh đậm */
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-top: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            text-align: left;
+        }
+
+        /* =========================================
+           FOOTER
+           ========================================= */
+        .footer {
+            background-color: #363a45;
+            padding: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #999999;
+        }
+    </style>
+</head>
+<body>
+
+<div class="email-wrapper">
+    <div class="email-container">
+        <div class="header">
+            <div class="logo-container">
+                <img src="https://images.icon-icons.com/2699/PNG/512/grab_logo_icon_169071.png"
+                     alt="GrabFood" class="logo-img">
+            </div>
+            <h1>ĐƠN HÀNG ĐANG ĐẾN!</h1>
+        </div>
+
+        <div class="content">
+
+            <p class="welcome-text">
+                Xin chào <strong th:text="${customerName}">Bạn</strong>,<br>
+                Tài xế đã nhận món từ <strong style="color:#00B14F" th:text="${merchantName}">Nhà hàng</strong>
+                và đang di chuyển đến chỗ bạn.
+            </p>
+
+            <div class="order-card">
+                <div class="order-header">
+                    Chi tiết đơn hàng <span th:text="'#' + ${orderId}">#0000</span>
+                </div>
+                <div class="order-body">
+                    <div class="order-row">
+                        <span class="label">Món ăn</span>
+                        <span class="value" th:text="${productName}">Loading...</span>
+                    </div>
+
+                    <div class="total-row">
+                        <span class="label" style="font-size: 15px; font-weight: bold;">Tổng cộng</span>
+                        <span class="highlight-price" th:text="${amount}">0 đ</span>
+                    </div>
+
+                    <div class="address-box">
+                        <div style="font-weight: bold; margin-bottom: 4px; color:#333">Giao đến:</div>
+                        <div th:text="${deliveryAddress}">Địa chỉ nhận hàng</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="shipper-note">
+                <div style="font-size: 24px;">📱</div>
+                <div>
+                    <strong>Bác tài sắp gọi!</strong><br>
+                    Vui lòng để ý điện thoại để nhận món ngon nóng hổi nhé.
+                </div>
+            </div>
+
+            <div style="margin-top: 30px; font-size: 13px; color: #888;">
+                Cảm ơn bạn đã sử dụng dịch vụ GrabFood! 💚
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2025 Grab. All rights reserved.</p>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,6 +1,7 @@
 package com.fo_product.notification_service.consumer;
 
 import com.fo_product.notification_service.events.MailSenderEvent;
+import com.fo_product.notification_service.events.OrderDeliveringEvent;
 import com.fo_product.notification_service.services.interfaces.IMailSenderService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +18,7 @@ public class NotificationConsumer {
     IMailSenderService mailSenderService;
 
     @KafkaListener(topics = "notification_topic", groupId = "notification-service-group")
-    public void listen(MailSenderEvent event) {
+    public void sendAuthMail(MailSenderEvent event) {
         log.info("Received message: {}", event);
 
         if ("REGISTER".equals(event.eventType())) {
@@ -27,5 +28,12 @@ public class NotificationConsumer {
         } else {
             log.error("event type not valid");
         }
+    }
+
+    @KafkaListener(topics = "notification_topic", groupId = "notification-service-group")
+    public void sendOrderDeliverMail(OrderDeliveringEvent event) {
+        log.info("Received message: {}", event);
+
+        mailSenderService.sendDeliverMail(event);
     }
 }

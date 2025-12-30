@@ -14,6 +14,8 @@ import com.fo_product.order_service.exceptions.OrderException;
 import com.fo_product.order_service.exceptions.codes.OrderErrorCode;
 import com.fo_product.order_service.kafka.KafkaProducerService;
 import com.fo_product.order_service.kafka.events.OrderCompletedEvent;
+import com.fo_product.order_service.kafka.events.OrderConfirmedEvent;
+import com.fo_product.order_service.kafka.events.OrderDeliveringEvent;
 import com.fo_product.order_service.mappers.OrderMapper;
 import com.fo_product.order_service.models.entities.Order;
 import com.fo_product.order_service.models.entities.OrderItem;
@@ -68,6 +70,7 @@ public class OrderService implements IOrderService {
                 .userId(userId)
                 .customerName(user.firstName() + " " + user.lastName())
                 .customerPhone(user.phone())
+                .customerEmail(user.email())
                 .deliveryAddress(request.deliveryAddress())
                 .merchantId(request.merchantId())
                 .merchantName(restaurant.name())
@@ -236,15 +239,15 @@ public class OrderService implements IOrderService {
         switch (oldStatus) {
             case CREATED:
                 //Đơn hàng mới đặt chỉ có thể nhận hoặc hủy
-                if (newStatus == OrderStatus.CONFIRMED || newStatus == OrderStatus.CANCELED)
-                    isValidTransition = true;
-                break;
-
-            case CONFIRMED:
-                //Đơn hàng đã nhận chỉ có thể chuẩn bị đồ ăn hoặc hủy
                 if (newStatus == OrderStatus.PREPARING || newStatus == OrderStatus.CANCELED)
                     isValidTransition = true;
                 break;
+
+//            case CONFIRMED:
+//                //Đơn hàng đã nhận chỉ có thể chuẩn bị đồ ăn hoặc hủy
+//                if (newStatus == OrderStatus.PREPARING || newStatus == OrderStatus.CANCELED)
+//                    isValidTransition = true;
+//                break;
 
             case PREPARING:
                 //Đơn hàng đã chuẩn bị chỉ có thể vận chuyển
@@ -270,9 +273,34 @@ public class OrderService implements IOrderService {
         if (!isValidTransition)
             throw new OrderException(OrderErrorCode.INVALID_ORDER_STATUS);
 
+        if (newStatus == OrderStatus.PREPARING) {
+            log.info("Chủ quán đã xác nhận nấu đơn {}. Gọi Shipper ngay!", orderId);
+
+            OrderConfirmedEvent orderConfirmedEvent = OrderConfirmedEvent.builder()
+                    .orderId(order.getId())
+                    .merchantId(order.getMerchantId())
+                    .customerName(order.getCustomerName())
+                    .customerPhone(order.getCustomerPhone())
+                    .deliveryAddress(order.getDeliveryAddress())
+                    .build();
+
+            kafkaProducerService.sendOrderConfirmedEvent(orderConfirmedEvent);
+        }
+
         if (newStatus == OrderStatus.DELIVERING) {
-            //Làm logic vận hàng gửi thông báo sau
             log.info("Đang vận chuyển ...");
+            OrderDeliveringEvent orderDeliveringEvent = OrderDeliveringEvent.builder()
+                    .orderId(order.getId())
+                    .customerName(order.getCustomerName())
+                    .customerEmail(order.getCustomerEmail())
+                    .deliveryAddress(order.getDeliveryAddress())
+                    .merchantName(order.getMerchantName())
+                    .productName(order.getOrderItems().stream().map(OrderItem::getProductName).collect(Collectors.joining(",")))
+                    .descriptionOrder(order.getDescriptionOrder())
+                    .amount(order.getGrandTotal())
+                    .build();
+
+            kafkaProducerService.sendOrderDeliveringEvent(orderDeliveringEvent);
         }
 
         if (newStatus == OrderStatus.COMPLETED) {

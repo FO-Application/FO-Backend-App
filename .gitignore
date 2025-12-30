@@ -27,3 +27,6 @@ target/
 
 ### Databases ###
 ./mysql-init/init.sql
+
+### Minio ###
+minio_data/

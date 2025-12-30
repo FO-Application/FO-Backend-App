@@ -32,6 +32,9 @@ public record OrderResponse(
         @Schema(description = "SĐT người nhận", example = "0987654321")
         String customerPhone,
 
+        @Schema(description = "Email người nhận", example = "abcxyznhmasad=))@gmal.com")
+        String customerEmail,
+
         @Schema(description = "Địa chỉ giao hàng", example = "144 Xuân Thủy, Cầu Giấy")
         String deliveryAddress,
 
