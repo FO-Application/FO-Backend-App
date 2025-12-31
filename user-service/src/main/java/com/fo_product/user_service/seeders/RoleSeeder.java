@@ -32,6 +32,11 @@ public class RoleSeeder implements CommandLineRunner {
                 Role.builder()
                     .name("MERCHANT")
                     .description("A role designed to administer business operations and serve customers on the application.")
+                    .build(),
+
+                Role.builder()
+                    .name("SHIPPER")
+                    .description("A role designed to ship orders and serve customers on the application.")
                     .build()
             );
             roleRepository.saveAll(roles);
