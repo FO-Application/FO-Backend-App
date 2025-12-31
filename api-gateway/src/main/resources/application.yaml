@@ -99,6 +99,27 @@ spring:
           filters:
             - RewritePath=/v3/api-docs/order-service, /v3/api-docs
 
+        - id: delivery-service
+          uri: lb://delivery-service
+          predicates:
+            - name: Path
+              args:
+                patterns:
+                  -
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 2
+                redis-rate-limiter.burstCapacity: 5
+                key-resolver: "#{@userKeyResolver}"
+
+        - id: delivery-service-docs
+          uri: lb://delivery-service
+          predicates:
+            - Path=/v3/api-docs/delivery-service
+          filters:
+            - RewritePath=/v3/api-docs/delivery-serice, /v3/api-docs
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
@@ -109,6 +130,8 @@ springdoc:
         url: /v3/api-docs/user-service
       - name: order-service
         url: /v3/api-docs/order-service
+      - name: delivery-service
+        url: /v3/api-docs/delivery-service
   api-docs:
     enabled: true
 

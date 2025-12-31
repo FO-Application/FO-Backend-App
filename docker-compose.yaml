@@ -18,12 +18,16 @@ services:
     image: confluentinc/cp-kafka:7.4.4
     container_name: fo-kafka
     ports:
-      - "9092:9092"
+      - "9092:9092" # Cổng 9092 lộ ra ngoài cho IntelliJ
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: fo-zookeeper:2181
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://fo-kafka:9092
+      # Định nghĩa 2 luồng: INTERNAL (Docker) và EXTERNAL (Máy thật)
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:29092
+      # Quảng bá địa chỉ: Bên ngoài thấy localhost:9092, Bên trong thấy fo-kafka:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://fo-kafka:29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     depends_on:
       - zookeeper
@@ -83,7 +87,8 @@ services:
       MYSQL_PORT: 3306
       REDIS_HOST: fo-redis
       REDIS_PORT: 6379
-      KAFKA_BOOTSTRAP_SERVERS: fo-kafka:9092
+      # Sửa cổng Kafka thành 29092 (Cổng nội bộ)
+      KAFKA_BOOTSTRAP_SERVERS: fo-kafka:29092
       USER_DB_USERNAME: ${USER_DB_USERNAME}
       USER_DB_PASSWORD: ${USER_DB_PASSWORD}
       USER_DB_NAME: ${USER_DB_NAME}
@@ -130,7 +135,7 @@ services:
       - .env
     environment:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://fo-discovery-server:8761/eureka/
-      KAFKA_BOOTSTRAP_SERVERS: fo-kafka:9092
+      KAFKA_BOOTSTRAP_SERVERS: fo-kafka:29092
       NOTIFICATION_SERVICE_PORT: ${NOTIFICATION_SERVICE_PORT}
       MAIL_HOST: ${MAIL_HOST}
       MAIL_PORT: ${MAIL_PORT}
@@ -159,7 +164,7 @@ services:
       MYSQL_PORT: 3306
       REDIS_HOST: fo-redis
       REDIS_PORT: 6379
-      KAFKA_BOOTSTRAP_SERVERS: fo-kafka:9092
+      KAFKA_BOOTSTRAP_SERVERS: fo-kafka:29092
       MERCHANT_DB_USERNAME: ${MERCHANT_DB_USERNAME}
       MERCHANT_DB_PASSWORD: ${MERCHANT_DB_PASSWORD}
       MERCHANT_DB_NAME: ${MERCHANT_DB_NAME}
@@ -177,7 +182,7 @@ services:
     networks:
       - fo-network
 
-  # --- 9. Order service ---
+  # --- 10. Order service ---
   order-service:
     image: order-service:latest
     build:
@@ -194,7 +199,7 @@ services:
       MYSQL_PORT: 3306
       REDIS_HOST: fo-redis
       REDIS_PORT: 6379
-      KAFKA_BOOTSTRAP_SERVERS: fo-kafka:9092
+      KAFKA_BOOTSTRAP_SERVERS: fo-kafka:29092
       ORDER_DB_USERNAME: ${ORDER_DB_USERNAME}
       ORDER_DB_PASSWORD: ${ORDER_DB_PASSWORD}
       ORDER_DB_NAME: ${ORDER_DB_NAME}
@@ -207,7 +212,37 @@ services:
     networks:
       - fo-network
 
-  # --- 11. Minio ---
+  # --- 11. Delivery-service ---
+  delivery-service:
+    image: delivery-service:latest
+    build:
+      context: .
+      dockerfile: delivery-service/Dockerfile
+    container_name: fo-delivery-service
+    ports:
+      - "${DELIVERY_SERVICE_PORT}:${DELIVERY_SERVICE_PORT}"
+    env_file:
+      - .env
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://fo-discovery-server:8761/eureka/
+      MYSQL_HOST: fo-mysql
+      MYSQL_PORT: 3306
+      REDIS_HOST: fo-redis
+      REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: fo-kafka:29092
+      DELIVERY_DB_USERNAME: ${DELIVERY_DB_USERNAME}
+      DELIVERY_DB_PASSWORD: ${DELIVERY_DB_PASSWORD}
+      DELIVERY_DB_NAME: ${DELIVERY_DB_NAME}
+      DELIVERY_SERVICE_PORT: ${DELIVERY_SERVICE_PORT}
+    depends_on:
+      - mysql-db
+      - discovery-service
+      - redis-cache
+      - kafka
+    networks:
+      - fo-network
+
+  # --- 12. Minio ---
   minio:
     image: minio/minio:latest
     container_name: fo-minio
@@ -225,15 +260,13 @@ services:
     networks:
       - fo-network
 
-  # --- 12. Ngrok Tunnel ---
+  # --- 13. Ngrok Tunnel ---
   ngrok:
     image: ngrok/ngrok:latest
     container_name: fo-ngrok
     restart: unless-stopped
     networks:
       - fo-network
-    # Lệnh này trỏ domain cố định vào API Gateway
-    # Lưu ý: fo-api-gateway là tên container, ${GATEWAY_PORT} là cổng nội bộ
     command: http --domain=${NGROK_DOMAIN} fo-api-gateway:${GATEWAY_PORT}
     environment:
       - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}

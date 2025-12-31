@@ -42,7 +42,7 @@ public class KafkaProducerService {
     }
 
     public void sendOrderDeliveringEvent(OrderDeliveringEvent event) {
-        log.info("Order Service: Bắn tin thông báo Giao Hàng cho user {}", event.userId());
+        log.info("Order Service: Bắn tin thông báo Giao Hàng cho user {}", event.customerName());
 
         Message<OrderDeliveringEvent> message = MessageBuilder
                 .withPayload(event)

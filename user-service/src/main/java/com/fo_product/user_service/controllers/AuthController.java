@@ -60,6 +60,16 @@ public class AuthController {
                 .build();
     }
 
+    @Operation(summary = "Đăng ký chạy ship", description = "Bước 1: Tạo tài khoản cho shipper. Hệ thống sẽ lưu tạm và gửi OTP về email.")
+    @PostMapping("/sign-up/shipper")
+    APIResponse<PendingUserResponse> signUpShipper(@Valid @RequestBody UserRequest request) {
+        PendingUserResponse response = authService.createPendingUser(request, "SHIPPER");
+        return APIResponse.<PendingUserResponse>builder()
+                .result(response)
+                .message("Create user success, waiting for verification")
+                .build();
+    }
+
     @Operation(summary = "Xác thực OTP & Kích hoạt", description = "Bước 2: Nhập mã OTP nhận được từ email để kích hoạt tài khoản chính thức.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Xác thực thành công, tài khoản đã được tạo"),

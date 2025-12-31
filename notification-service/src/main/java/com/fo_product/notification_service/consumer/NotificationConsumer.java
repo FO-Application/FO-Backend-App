@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 public class NotificationConsumer {
     IMailSenderService mailSenderService;
 
-    @KafkaListener(topics = "notification_topic", groupId = "notification-service-group")
+    @KafkaListener(topics = "otp-mail-sender-topic", groupId = "notification-service-group")
     public void sendAuthMail(MailSenderEvent event) {
         log.info("Received message: {}", event);
 
@@ -30,7 +30,7 @@ public class NotificationConsumer {
         }
     }
 
-    @KafkaListener(topics = "notification_topic", groupId = "notification-service-group")
+    @KafkaListener(topics = "order-delivering-topic", groupId = "notification-service-group")
     public void sendOrderDeliverMail(OrderDeliveringEvent event) {
         log.info("Received message: {}", event);
 

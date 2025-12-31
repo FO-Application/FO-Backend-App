@@ -29,7 +29,7 @@ public class WalletConsumer {
     RestaurantRepository restaurantRepository;
     WalletTransactionRepository walletTransactionRepository;
 
-    @KafkaListener(topics = "order-completed-topic", groupId = "merchant-wallet-group")
+    @KafkaListener(topics = "order-completed-topic", groupId = "merchant-service-group")
     @Transactional
     public void handleOrderCompleted(OrderCompletedEvent event) {
         log.info("Merchant Service: Nhận tiền từ đơn hàng {}", event.orderId());

@@ -44,7 +44,7 @@ public class OtpService implements IOtpService {
                 .eventType(type.name())
                 .build();
 
-        kafkaProducerService.sendEvent("notification_topic", event);
+        kafkaProducerService.sendMailOTP(event);
     }
 
     @Override
