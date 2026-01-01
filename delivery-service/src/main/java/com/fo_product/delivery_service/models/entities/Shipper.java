@@ -30,9 +30,11 @@ public class Shipper {
     String vehicleType;
 
     @Builder.Default
+    @Column(name = "is_online")
     boolean isOnline = false;
 
     @Builder.Default
+    @Column(name = "is_available")
     boolean isAvailable = true;
 
     @OneToMany(mappedBy = "shipper", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -81,3 +81,6 @@ openapi:
 logging:
   level:
     org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+    org.springdoc: DEBUG
+    io.swagger.v3: DEBUG

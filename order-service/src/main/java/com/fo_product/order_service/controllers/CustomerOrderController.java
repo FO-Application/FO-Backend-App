@@ -3,7 +3,7 @@ package com.fo_product.order_service.controllers;
 import com.fo_product.common_lib.dtos.APIResponse;
 import com.fo_product.order_service.dtos.requests.OrderRequest;
 import com.fo_product.order_service.dtos.responses.OrderResponse;
-import com.fo_product.order_service.services.interfaces.IOrderService;
+import com.fo_product.order_service.services.interfaces.ICustomerOrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,9 +20,9 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/order")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@Tag(name = "Order Controller", description = "Các API liên quan đến quản lý đơn hàng của Khách hàng")
-public class OrderController {
-    IOrderService orderService;
+@Tag(name = "Customer Order Controller", description = "Các API liên quan đến quản lý đơn hàng của Khách hàng")
+public class CustomerOrderController {
+    ICustomerOrderService orderService;
 
     @Operation(
             summary = "Tạo đơn hàng mới (Checkout)",

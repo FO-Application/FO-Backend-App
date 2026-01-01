@@ -1,5 +1,7 @@
 package com.fo_product.api_gateway.configs.filters;
 
+import java.util.List;
+
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -9,9 +11,8 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
-import reactor.core.publisher.Mono;
 
-import java.util.List;
+import reactor.core.publisher.Mono;
 
 @Component
 public class AuthCookieToHeaderFilter implements GlobalFilter, Ordered {
@@ -20,26 +21,40 @@ public class AuthCookieToHeaderFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        String path = exchange.getRequest().getURI().getPath();
+        ServerHttpRequest request = exchange.getRequest();
+        String path = request.getURI().getPath();
         boolean isRefreshPath = REFRESH_TOKEN_PATHS.stream().anyMatch(path::endsWith);
 
-        HttpCookie accessCookie = exchange.getRequest().getCookies().getFirst("access_token");
-        HttpCookie refreshCookie = exchange.getRequest().getCookies().getFirst("refresh_token");
+        HttpCookie accessCookie = request.getCookies().getFirst("access_token");
+        HttpCookie refreshCookie = request.getCookies().getFirst("refresh_token");
 
         String at = (accessCookie != null) ? accessCookie.getValue() : null;
         String rt = (refreshCookie != null) ? refreshCookie.getValue() : null;
 
-        // CÁCH MỚI: Dùng mutate().request(consumer) cực kỳ an toàn cho Multipart
-        return chain.filter(exchange.mutate().request(builder -> {
-            if (isRefreshPath) {
-                if (rt != null) builder.header(HttpHeaders.AUTHORIZATION, "Bearer " + rt);
-                if (at != null) builder.header("X-Access-Token", at);
-            } else {
-                if (at != null) builder.header(HttpHeaders.AUTHORIZATION, "Bearer " + at);
-                if (rt != null) builder.header("X-Refresh-Token", rt);
+        // 1. Tạo một HttpHeaders mới (Mutable - có thể sửa đổi)
+        HttpHeaders newHeaders = new HttpHeaders();
+        // 2. Copy toàn bộ header cũ sang header mới
+        newHeaders.putAll(request.getHeaders());
+
+        // 3. Thêm header mới vào list này (An toàn tuyệt đối)
+        if (isRefreshPath) {
+            if (rt != null) newHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer " + rt);
+            if (at != null) newHeaders.add("X-Access-Token", at);
+        } else {
+            if (at != null) newHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer " + at);
+            if (rt != null) newHeaders.add("X-Refresh-Token", rt);
+        }
+
+        // 4. Dùng Decorator để "đánh tráo" headers khi hệ thống gọi getHeaders()
+        ServerHttpRequest decoratedRequest = new ServerHttpRequestDecorator(request) {
+            @Override
+            public HttpHeaders getHeaders() {
+                return newHeaders;
             }
-            // Tuyệt đối không gọi builder.contentType(...) ở đây để tránh mất boundary
-        }).build());
+        };
+
+        // 5. Tiếp tục filter chain với request đã được bọc (decorated)
+        return chain.filter(exchange.mutate().request(decoratedRequest).build());
     }
 
     @Override

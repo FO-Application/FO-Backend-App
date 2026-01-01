@@ -23,7 +23,7 @@ import com.fo_product.order_service.models.entities.OrderItemOption;
 import com.fo_product.order_service.models.enums.OrderStatus;
 import com.fo_product.order_service.models.enums.PaymentMethod;
 import com.fo_product.order_service.models.repositories.OrderRepository;
-import com.fo_product.order_service.services.interfaces.IOrderService;
+import com.fo_product.order_service.services.interfaces.ICustomerOrderService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -46,12 +46,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class OrderService implements IOrderService {
+public class CustomerOrderService implements ICustomerOrderService {
     OrderRepository orderRepository;
     UserClient userClient;
     MerchantClient merchantClient;
     OrderMapper mapper;
-    KafkaProducerService kafkaProducerService;
 
     @Override
     @Transactional
@@ -198,136 +197,5 @@ public class OrderService implements IOrderService {
         Order result = orderRepository.save(order);
 
         return mapper.response(result);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<OrderResponse> getOrdersByMerchant(Long userId, Long merchantId, String status, int page, int size) {
-        boolean isUserValid = checkMerchantOwnership(userId, merchantId);
-        if (!isUserValid)
-            throw new  OrderException(OrderErrorCode.INVALID_OWNER);
-
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-
-        Page<Order> result;
-        if (status != null && !status.isEmpty()) {
-            result = orderRepository.findByMerchantIdAndOrderStatus(merchantId, OrderStatus.valueOf(status), pageable);
-        } else {
-            result = orderRepository.findByMerchantId(merchantId, pageable);
-        }
-
-        return result.map(mapper::response);
-    }
-
-    @Override
-    @Transactional
-    public OrderResponse updateOrderStatus(Long userId, Long orderId, UpdateOrderStatusRequest request) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new OrderException(OrderErrorCode.ORDER_NOT_EXIST));
-
-        long merchantId = order.getMerchantId();
-
-        boolean isUserValid = checkMerchantOwnership(userId, merchantId);
-        if (!isUserValid)
-            throw new  OrderException(OrderErrorCode.INVALID_OWNER);
-
-        OrderStatus newStatus = OrderStatus.valueOf(request.status());
-        OrderStatus oldStatus = order.getOrderStatus();
-
-        boolean isValidTransition = false;
-
-        switch (oldStatus) {
-            case CREATED:
-                //Đơn hàng mới đặt chỉ có thể nhận hoặc hủy
-                if (newStatus == OrderStatus.PREPARING || newStatus == OrderStatus.CANCELED)
-                    isValidTransition = true;
-                break;
-
-//            case CONFIRMED:
-//                //Đơn hàng đã nhận chỉ có thể chuẩn bị đồ ăn hoặc hủy
-//                if (newStatus == OrderStatus.PREPARING || newStatus == OrderStatus.CANCELED)
-//                    isValidTransition = true;
-//                break;
-
-            case PREPARING:
-                //Đơn hàng đã chuẩn bị chỉ có thể vận chuyển
-                if (newStatus == OrderStatus.DELIVERING)
-                    isValidTransition = true;
-                break;
-
-            case DELIVERING:
-                //Đơn hàng đang vận chuyển chỉ có thể là hoàn thành vận chuyển hoặc bom hàng
-                if (newStatus == OrderStatus.COMPLETED || newStatus == OrderStatus.BOMB)
-                    isValidTransition = true;
-                break;
-
-            case COMPLETED:
-            case CANCELED:
-            case BOMB:
-                isValidTransition = false;
-
-            default:
-                isValidTransition = false;
-        }
-
-        if (!isValidTransition)
-            throw new OrderException(OrderErrorCode.INVALID_ORDER_STATUS);
-
-        if (newStatus == OrderStatus.PREPARING) {
-            log.info("Chủ quán đã xác nhận nấu đơn {}. Gọi Shipper ngay!", orderId);
-
-            OrderConfirmedEvent orderConfirmedEvent = OrderConfirmedEvent.builder()
-                    .orderId(order.getId())
-                    .merchantId(order.getMerchantId())
-                    .customerName(order.getCustomerName())
-                    .customerPhone(order.getCustomerPhone())
-                    .deliveryAddress(order.getDeliveryAddress())
-                    .build();
-
-            kafkaProducerService.sendOrderConfirmedEvent(orderConfirmedEvent);
-        }
-
-        if (newStatus == OrderStatus.DELIVERING) {
-            log.info("Đang vận chuyển ...");
-            OrderDeliveringEvent orderDeliveringEvent = OrderDeliveringEvent.builder()
-                    .orderId(order.getId())
-                    .customerName(order.getCustomerName())
-                    .customerEmail(order.getCustomerEmail())
-                    .deliveryAddress(order.getDeliveryAddress())
-                    .merchantName(order.getMerchantName())
-                    .productName(order.getOrderItems().stream().map(OrderItem::getProductName).collect(Collectors.joining(",")))
-                    .descriptionOrder(order.getDescriptionOrder())
-                    .amount(order.getGrandTotal())
-                    .build();
-
-            kafkaProducerService.sendOrderDeliveringEvent(orderDeliveringEvent);
-        }
-
-        if (newStatus == OrderStatus.COMPLETED) {
-            OrderCompletedEvent orderCompletedEvent = OrderCompletedEvent.builder()
-                    .orderId(order.getId())
-                    .merchantId(order.getMerchantId())
-                    .orderAmount(order.getGrandTotal())
-                    .build();
-            kafkaProducerService.sendOrderCompletedEvent(orderCompletedEvent);
-            log.info("Đã vận hàng thành công ...");
-        }
-
-        order.setOrderStatus(newStatus);
-        Order result = orderRepository.save(order);
-
-        return mapper.response(result);
-    }
-
-    private boolean checkMerchantOwnership(Long userId, Long merchantId) {
-        RestaurantDTO restaurant = merchantClient.getRestaurant(merchantId);
-
-        if (restaurant == null)
-            return false;
-
-        if (restaurant.user() == null || !restaurant.user().id().equals(userId))
-            return false;
-
-        return true;
     }
 }

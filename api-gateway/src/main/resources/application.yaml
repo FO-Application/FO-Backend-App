@@ -84,7 +84,8 @@ spring:
                 patterns:
                   - /api/v1/order/**
                   - /api/v1/review/**
-                  - /api/v1/order/merchant/**
+                  - /api/v1/management/order/merchant/**
+                  - /api/v1/shipping/order/**
           filters:
             - name: RequestRateLimiter
               args:
