@@ -196,4 +196,24 @@ public class RestaurantService implements IRestaurantService {
 
         restaurantRepository.delete(restaurant);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<RestaurantResponse> getNearbyRestaurants(Double lat, Double lon, Double radius, String cuisineSlug, int page, int size) {
+        if (lat == null || lon == null) {
+            throw new MerchantException(MerchantErrorCode.COORDINATE_NOT_VALID);
+        }
+
+        double searchRadius = (radius != null && radius > 0) ? radius : 5.0;
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Restaurant> restaurantPage;
+
+        if (cuisineSlug != null && !cuisineSlug.isEmpty()) {
+            restaurantPage = restaurantRepository.findNearbyRestaurantsByCuisine(lat, lon, searchRadius, cuisineSlug, pageable);
+        } else {
+            restaurantPage = restaurantRepository.findNearbyRestaurants(lat, lon, searchRadius, pageable);
+        }
+
+        return restaurantPage.map(mapper::response);
+    }
 }

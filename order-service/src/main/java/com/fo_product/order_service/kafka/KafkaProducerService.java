@@ -2,6 +2,7 @@ package com.fo_product.order_service.kafka;
 
 import com.fo_product.order_service.kafka.events.OrderCompletedEvent;
 import com.fo_product.order_service.kafka.events.OrderConfirmedEvent;
+import com.fo_product.order_service.kafka.events.OrderCreatedEvent;
 import com.fo_product.order_service.kafka.events.OrderDeliveringEvent;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +48,17 @@ public class KafkaProducerService {
         Message<OrderDeliveringEvent> message = MessageBuilder
                 .withPayload(event)
                 .setHeader(KafkaHeaders.TOPIC, "order-delivering-topic")
+                .build();
+
+        kafkaTemplate.send(message);
+    }
+
+    public void sendOrderCreatedEvent(OrderCreatedEvent event) {
+        log.info("Order Service: Bắn sự kiện CÓ ĐƠN MỚI cho quán ID {}", event.merchantId());
+
+        Message<OrderCreatedEvent> message = MessageBuilder
+                .withPayload(event)
+                .setHeader(KafkaHeaders.TOPIC, "order-created-topic")
                 .build();
 
         kafkaTemplate.send(message);

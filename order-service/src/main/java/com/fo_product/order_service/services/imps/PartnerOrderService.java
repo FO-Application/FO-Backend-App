@@ -2,7 +2,6 @@ package com.fo_product.order_service.services.imps;
 
 import com.fo_product.order_service.clients.MerchantClient;
 import com.fo_product.order_service.dtos.feigns.RestaurantDTO;
-import com.fo_product.order_service.dtos.requests.UpdateOrderStatusRequest;
 import com.fo_product.order_service.dtos.responses.OrderResponse;
 import com.fo_product.order_service.exceptions.OrderException;
 import com.fo_product.order_service.exceptions.codes.OrderErrorCode;

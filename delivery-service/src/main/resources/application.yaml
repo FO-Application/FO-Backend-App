@@ -53,3 +53,7 @@ springdoc:
     enabled: true
   swagger-ui:
     enabled: false
+
+openapi:
+  service:
+    url: ${OPENAPI_SERVICE_URL}

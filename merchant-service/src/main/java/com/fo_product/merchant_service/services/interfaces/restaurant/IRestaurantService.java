@@ -13,4 +13,5 @@ public interface IRestaurantService {
     Page<RestaurantResponse> getAllRestaurants(int page, int size);
     Page<RestaurantResponse> getAllRestaurantsByCuisine(int page, int size, String cuisineSlug);
     void deleteRestaurantById(Long id);
+    Page<RestaurantResponse> getNearbyRestaurants(Double lat, Double lon, Double radius, String cuisineSlug, int page, int size);
 }

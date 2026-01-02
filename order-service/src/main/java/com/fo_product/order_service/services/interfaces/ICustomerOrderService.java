@@ -1,7 +1,6 @@
 package com.fo_product.order_service.services.interfaces;
 
 import com.fo_product.order_service.dtos.requests.OrderRequest;
-import com.fo_product.order_service.dtos.requests.UpdateOrderStatusRequest;
 import com.fo_product.order_service.dtos.responses.OrderResponse;
 import org.springframework.data.domain.Page;
 

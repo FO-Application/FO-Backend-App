@@ -50,6 +50,21 @@ public class Order {
     @Column(name = "delivery_address")
     String deliveryAddress;
 
+    @Column(name = "delivery_latitude")
+    Double deliveryLatitude;
+
+    @Column(name = "delivery_longitude")
+    Double deliveryLongitude;
+
+    @Column(name = "merchant_latitude")
+    Double merchantLatitude;
+
+    @Column(name = "merchant_longitude")
+    Double merchantLongitude;
+
+    @Column(name = "distance_km")
+    Double distanceKm;
+
     @Column(name = "sub_total", precision = 19, scale = 2)
     BigDecimal subTotal;
 

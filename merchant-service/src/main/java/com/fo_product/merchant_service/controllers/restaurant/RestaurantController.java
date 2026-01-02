@@ -126,4 +126,26 @@ public class RestaurantController {
                 .message("Delete restaurant by id")
                 .build();
     }
+
+    @Operation(summary = "Tìm nhà hàng gần nhất (Có lọc theo danh mục)",
+            description = "VD: Muốn tìm quán Phở gần đây, truyền cuisine=pho-bo")
+    @GetMapping("/nearby")
+    public APIResponse<Page<RestaurantResponse>> getNearbyRestaurants(
+            @RequestParam Double lat,
+            @RequestParam Double lon,
+            @RequestParam(required = false, defaultValue = "5.0") Double radius,
+
+            @Parameter(description = "Slug của danh mục (VD: tra-sua, com-tam). Để trống nếu tìm tất cả.")
+            @RequestParam(required = false) String cuisine,
+
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Page<RestaurantResponse> result = restaurantService.getNearbyRestaurants(lat, lon, radius, cuisine, page, size);
+
+        return APIResponse.<Page<RestaurantResponse>>builder()
+                .result(result)
+                .message("Success")
+                .build();
+    }
 }

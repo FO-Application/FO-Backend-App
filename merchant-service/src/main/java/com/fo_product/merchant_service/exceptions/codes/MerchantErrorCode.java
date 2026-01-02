@@ -30,6 +30,7 @@ public enum MerchantErrorCode implements ErrorCode{
     INVALID_SELECTION_RANGE(4017, "Invalid selection range", HttpStatus.BAD_REQUEST),
     OPTION_ITEM_NOT_EXIST(4018, "Option item not exist", HttpStatus.NOT_FOUND),
     OPTION_ITEM_EXIST(4019, "Option item exist", HttpStatus.CONFLICT),
+    COORDINATE_NOT_VALID(4020, "Coordinate not valid", HttpStatus.BAD_REQUEST),
 
     ;
     int code;

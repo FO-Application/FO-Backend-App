@@ -4,6 +4,7 @@ import com.fo_product.common_lib.dtos.APIResponse;
 import com.fo_product.order_service.dtos.responses.OrderResponse;
 import com.fo_product.order_service.services.interfaces.IPartnerOrderService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/shipping/order")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Tag(name = "Delivery Order Controller", description = "API Quản lý đơn hàng dành cho Shipper")
 public class DeliveryOrderController {
     IPartnerOrderService orderService;
 
