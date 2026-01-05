@@ -8,6 +8,12 @@ spring:
     password: ${NOTIFICATION_DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  jpa:
+    open-in-view: true
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
   mail:
     host: ${MAIL_HOST}
     port: ${MAIL_PORT}
