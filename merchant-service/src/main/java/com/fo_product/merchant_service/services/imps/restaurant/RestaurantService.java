@@ -1,5 +1,6 @@
 package com.fo_product.merchant_service.services.imps.restaurant;
 
+import com.fo_product.common_lib.dtos.APIResponse;
 import com.fo_product.merchant_service.client.UserClient;
 import com.fo_product.merchant_service.dtos.requests.restaurant.RestaurantPatchRequest;
 import com.fo_product.merchant_service.dtos.requests.restaurant.RestaurantRequest;
@@ -46,14 +47,9 @@ public class RestaurantService implements IRestaurantService {
         if (restaurantRepository.existsByName(request.name()) ||  restaurantRepository.existsBySlug(request.slug()))
             throw new MerchantException(MerchantErrorCode.RESTAURANT_EXIST);
 
-        UserDTO user = userClient.getUserById(request.ownerId());
-        if (user == null || !"MERCHANT".equals(user.role()))
-            throw new MerchantException(MerchantErrorCode.INVALID_MERCHANT_USER_ACCOUNT);
+        UserDTO user = validateMerchant(request.ownerId());
 
-        String imageUrl = null;
-        if (image != null && !image.isEmpty()) {
-            imageUrl = minIOService.uploadFile(image);
-        }
+        String imageUrl = processImageUpload(image, null);
 
         Set<Cuisine> cuisines = new HashSet<>();
         if (request.cuisinesId() != null && !request.cuisinesId().isEmpty()) {
@@ -114,10 +110,7 @@ public class RestaurantService implements IRestaurantService {
             restaurant.setDescription(request.description());
 
         if (request.ownerId() != null) {
-            UserDTO user = userClient.getUserById(request.ownerId());
-            if (user == null || !"MERCHANT".equals(user.role())) {
-                throw new MerchantException(MerchantErrorCode.INVALID_MERCHANT_USER_ACCOUNT);
-            }
+            UserDTO user = validateMerchant(request.ownerId());
             restaurant.setOwnerId(user.id());
         }
 
@@ -138,11 +131,8 @@ public class RestaurantService implements IRestaurantService {
             restaurant.setCuisines(new HashSet<>(cuisinesResult));
         }
 
-        if (image != null && !image.isEmpty()) {
-            if (restaurant.getImageFileUrl() != null && !restaurant.getImageFileUrl().isEmpty()) {
-                minIOService.deleteFile(restaurant.getImageFileUrl());
-            }
-            String newImageUrl = minIOService.uploadFile(image);
+        String newImageUrl = processImageUpload(image, restaurant.getImageFileUrl());
+        if (newImageUrl != null) {
             restaurant.setImageFileUrl(newImageUrl);
         }
 
@@ -215,5 +205,32 @@ public class RestaurantService implements IRestaurantService {
         }
 
         return restaurantPage.map(mapper::response);
+    }
+
+    private UserDTO validateMerchant(Long ownerId) {
+        APIResponse<UserDTO> userResponse = userClient.getUserById(ownerId);
+
+        UserDTO user = null;
+        if (userResponse != null) {
+            user = userResponse.getResult();
+        }
+
+        if (user == null || !"MERCHANT".equals(user.role())) {
+            throw new MerchantException(MerchantErrorCode.INVALID_MERCHANT_USER_ACCOUNT);
+        }
+        return user;
+    }
+
+    private String processImageUpload(MultipartFile image, String oldImageUrl) {
+        if (image == null || image.isEmpty()) {
+            return null;
+        }
+
+        // Nếu có ảnh cũ thì xóa đi trước khi up cái mới
+        if (oldImageUrl != null && !oldImageUrl.isEmpty()) {
+            minIOService.deleteFile(oldImageUrl);
+        }
+
+        return minIOService.uploadFile(image);
     }
 }

@@ -136,7 +136,12 @@ services:
     environment:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://fo-discovery-server:8761/eureka/
       KAFKA_BOOTSTRAP_SERVERS: fo-kafka:29092
+      MYSQL_HOST: fo-mysql
+      MYSQL_PORT: 3306
       NOTIFICATION_SERVICE_PORT: ${NOTIFICATION_SERVICE_PORT}
+      NOTIFICATION_DB_USERNAME: ${NOTIFICATION_DB_USERNAME}
+      NOTIFICATION_DB_PASSWORD: ${NOTIFICATION_DB_PASSWORD}
+      NOTIFICATION_DB_NAME: ${NOTIFICATION_DB_NAME}
       MAIL_HOST: ${MAIL_HOST}
       MAIL_PORT: ${MAIL_PORT}
       MAIL_USERNAME: ${MAIL_USERNAME}
@@ -144,6 +149,7 @@ services:
     depends_on:
       - discovery-service
       - kafka
+      - mysql-db
     networks:
       - fo-network
 

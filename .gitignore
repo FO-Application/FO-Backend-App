@@ -30,3 +30,6 @@ target/
 
 ### Minio ###
 minio_data/
+
+### Firebase Service Account ###
+notification-service/src/main/resources/firebase-service-account.json

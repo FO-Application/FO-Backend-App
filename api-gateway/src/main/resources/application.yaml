@@ -110,8 +110,8 @@ spring:
           filters:
             - name: RequestRateLimiter
               args:
-                redis-rate-limiter.replenishRate: 2
-                redis-rate-limiter.burstCapacity: 5
+                redis-rate-limiter.replenishRate: 5
+                redis-rate-limiter.burstCapacity: 10
                 key-resolver: "#{@userKeyResolver}"
 
         - id: delivery-service-docs
@@ -121,6 +121,27 @@ spring:
           filters:
             - RewritePath=/v3/api-docs/delivery-serice, /v3/api-docs
 
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - name: Path
+              args:
+                patterns:
+                  - /api/v1/notification/**
+
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 5
+                redis-rate-limiter.burstCapacity: 10
+                key-resolver: "#{@userKeyResolver}"
+
+        - id: notification-service-docs
+          uri: lb://notification-service
+          predicates:
+            - Path=/v3/api-docs/notification-service
+          filters:
+            - RewritePath=/v3/api-docs/notification-service, /v3/api-docs
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
@@ -133,6 +154,8 @@ springdoc:
         url: /v3/api-docs/order-service
       - name: delivery-service
         url: /v3/api-docs/delivery-service
+      - name: notification-service
+        url: /v3/api-docs/notification-service
   api-docs:
     enabled: true
 

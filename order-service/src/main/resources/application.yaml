@@ -21,7 +21,7 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       auto-offset-reset: earliest
       properties:
-        spring.json.trusted.packages: "*" # Chấp nhận deserialize mọi object (DTO)
+        spring.json.trusted.packages: "*" #Accept deserialize every objects (DTO)
 
   cache:
     type: redis

@@ -156,8 +156,6 @@ public class CustomerOrderService implements ICustomerOrderService {
             orderItems.add(orderItem);
         }
 
-
-
         // 5. Chốt đơn & Tính tổng tiền
         order.setOrderItems(orderItems);
         order.setSubTotal(subTotal);

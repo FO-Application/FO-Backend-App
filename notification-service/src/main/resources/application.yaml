@@ -2,6 +2,12 @@ spring:
   application:
     name: notification-service
 
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${NOTIFICATION_DB_NAME}
+    username: ${NOTIFICATION_DB_USERNAME}
+    password: ${NOTIFICATION_DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
   mail:
     host: ${MAIL_HOST}
     port: ${MAIL_PORT}
@@ -22,7 +28,6 @@ spring:
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
-
     consumer:
       group-id: notification-service-group
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
@@ -50,3 +55,14 @@ logging:
   level:
     org.springframework.mail: DEBUG
     org.springframework.kafka: INFO
+
+openapi:
+  service:
+    url: ${OPENAPI_SERVICE_URL}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    enabled: false

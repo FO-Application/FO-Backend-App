@@ -1,5 +1,6 @@
-package com.fo_product.api_gateway.configs.filters;
+package com.fo_product.api_gateway.filters;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -31,21 +32,35 @@ public class AuthCookieToHeaderFilter implements GlobalFilter, Ordered {
         String at = (accessCookie != null) ? accessCookie.getValue() : null;
         String rt = (refreshCookie != null) ? refreshCookie.getValue() : null;
 
-        // 1. Tạo một HttpHeaders mới (Mutable - có thể sửa đổi)
+        // --- BƯỚC 1: TẠO HEADER MỚI VÀ COPY SÂU (DEEP COPY) ---
         HttpHeaders newHeaders = new HttpHeaders();
-        // 2. Copy toàn bộ header cũ sang header mới
-        newHeaders.putAll(request.getHeaders());
 
-        // 3. Thêm header mới vào list này (An toàn tuyệt đối)
+        // Thay vì dùng newHeaders.putAll(request.getHeaders()) -> Gây lỗi Shallow Copy
+        // Ta duyệt qua từng phần tử và tạo một ArrayList MỚI cho từng value
+        request.getHeaders().forEach((key, value) -> {
+            // new ArrayList<>(value) chính là chìa khoá để "bẻ khoá" UnmodifiableList
+            newHeaders.put(key, new ArrayList<>(value));
+        });
+
+        // --- BƯỚC 2: THÊM HEADER MỚI (Bây giờ thì thoải mái thêm sửa xoá) ---
         if (isRefreshPath) {
-            if (rt != null) newHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer " + rt);
-            if (at != null) newHeaders.add("X-Access-Token", at);
+            if (rt != null) {
+                // Dùng set để ghi đè, tránh bị trùng lặp header nếu chạy qua filter nhiều lần
+                newHeaders.set(HttpHeaders.AUTHORIZATION, "Bearer " + rt);
+            }
+            if (at != null) {
+                newHeaders.set("X-Access-Token", at);
+            }
         } else {
-            if (at != null) newHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer " + at);
-            if (rt != null) newHeaders.add("X-Refresh-Token", rt);
+            if (at != null) {
+                newHeaders.set(HttpHeaders.AUTHORIZATION, "Bearer " + at);
+            }
+            if (rt != null) {
+                newHeaders.set("X-Refresh-Token", rt);
+            }
         }
 
-        // 4. Dùng Decorator để "đánh tráo" headers khi hệ thống gọi getHeaders()
+        // --- BƯỚC 3: DÙNG DECORATOR ĐỂ TRẢ VỀ HEADER MỚI ---
         ServerHttpRequest decoratedRequest = new ServerHttpRequestDecorator(request) {
             @Override
             public HttpHeaders getHeaders() {
@@ -53,7 +68,7 @@ public class AuthCookieToHeaderFilter implements GlobalFilter, Ordered {
             }
         };
 
-        // 5. Tiếp tục filter chain với request đã được bọc (decorated)
+        // --- BƯỚC 4: TIẾP TỤC CHAIN VỚI REQUEST ĐÃ BỌC ---
         return chain.filter(exchange.mutate().request(decoratedRequest).build());
     }
 

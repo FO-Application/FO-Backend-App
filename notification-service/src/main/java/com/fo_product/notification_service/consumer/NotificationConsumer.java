@@ -1,8 +1,10 @@
 package com.fo_product.notification_service.consumer;
 
 import com.fo_product.notification_service.events.MailSenderEvent;
+import com.fo_product.notification_service.events.OrderCreatedEvent;
 import com.fo_product.notification_service.events.OrderDeliveringEvent;
 import com.fo_product.notification_service.services.interfaces.IMailSenderService;
+import com.fo_product.notification_service.services.interfaces.INotificationService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Component;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class NotificationConsumer {
     IMailSenderService mailSenderService;
+    INotificationService notificationService;
 
     @KafkaListener(topics = "otp-mail-sender-topic", groupId = "notification-service-group")
     public void sendAuthMail(MailSenderEvent event) {
@@ -35,5 +38,15 @@ public class NotificationConsumer {
         log.info("Received message: {}", event);
 
         mailSenderService.sendDeliverMail(event);
+    }
+
+    @KafkaListener(topics = "order-created-topic", groupId = "notification-service-group")
+    public void handleOrderCreated(OrderCreatedEvent event) {
+        notificationService.sendNotification(
+                event.merchantId(),
+                "Đơn hàng mới # " + event.orderId(),
+                "Tổng tiền: " + event.grandTotal(),
+                event.orderId()
+        );
     }
 }

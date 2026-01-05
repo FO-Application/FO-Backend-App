@@ -15,9 +15,6 @@ public record RestaurantResponse(
         @Schema(description = "Tên nhà hàng", example = "Phở Cồ")
         String name,
 
-        @Schema(description = "Thông tin chủ sở hữu")
-        UserDTO user,
-
         @Schema(description = "Slug URL", example = "pho-co")
         String slug,
 

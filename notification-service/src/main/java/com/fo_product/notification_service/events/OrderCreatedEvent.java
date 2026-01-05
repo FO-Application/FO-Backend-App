@@ -1,4 +1,4 @@
-package com.fo_product.order_service.kafka.events;
+package com.fo_product.notification_service.events;
 
 import lombok.Builder;
 import java.math.BigDecimal;
