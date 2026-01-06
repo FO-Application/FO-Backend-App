@@ -1,5 +1,6 @@
 package com.fo_product.order_service.clients;
 
+import com.fo_product.common_lib.dtos.APIResponse;
 import com.fo_product.order_service.configs.FeignClientInterceptorConfig;
 import com.fo_product.order_service.dtos.feigns.ProductDTO;
 import com.fo_product.order_service.dtos.feigns.RestaurantDTO;
@@ -13,8 +14,8 @@ import java.util.List;
 @FeignClient(name = "merchant-service", configuration = FeignClientInterceptorConfig.class)
 public interface MerchantClient {
     @GetMapping("/api/v1/restaurant/{restaurantId}")
-    RestaurantDTO getRestaurant(@PathVariable("restaurantId") Long id);
+    APIResponse<RestaurantDTO> getRestaurant(@PathVariable("restaurantId") Long id);
 
     @GetMapping("/api/v1/product/products")
-    List<ProductDTO> getAllProductsByIds(@RequestParam List<Long> productIds);
+    APIResponse<List<ProductDTO>> getAllProductsByIds(@RequestParam List<Long> productIds);
 }

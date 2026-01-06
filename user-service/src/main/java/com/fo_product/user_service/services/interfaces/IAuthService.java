@@ -14,5 +14,7 @@ public interface IAuthService {
     void resendOtp(EmailRequest request);
     AuthenticationDTO authentication(AuthenticateRequest request);
     AuthenticationDTO refreshToken(String refreshToken) throws ParseException, JOSEException;
+    void sendForgotPasswordOTP(String email);
+    void forgotPassword(NewPasswordRequest request);
     void logout(String refreshToken) throws ParseException, JOSEException;
 }

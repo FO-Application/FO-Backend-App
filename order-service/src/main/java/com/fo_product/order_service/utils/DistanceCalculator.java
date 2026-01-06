@@ -1,7 +1,10 @@
 package com.fo_product.order_service.utils;
 
+import org.springframework.stereotype.Component;
+
 import java.math.BigDecimal;
 
+@Component
 public class DistanceCalculator {
 
     // Bán kính trái đất (km)
@@ -21,7 +24,7 @@ public class DistanceCalculator {
      * @param lon2 Kinh độ điểm B
      * @return Khoảng cách (km) đã làm tròn 1 chữ số thập phân (VD: 3.5)
      */
-    public static double calculateEstimatedDistance(Double lat1, Double lon1, Double lat2, Double lon2) {
+    public double calculateEstimatedDistance(Double lat1, Double lon1, Double lat2, Double lon2) {
         if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) {
             return 0.0;
         }
@@ -51,7 +54,7 @@ public class DistanceCalculator {
      * - Dưới 2km: Giá cố định 15.000đ
      * - Trên 2km: Mỗi km tiếp theo cộng thêm 5.000đ
      */
-    public static BigDecimal calculateShippingFee(double distanceKm) {
+    public BigDecimal calculateShippingFee(double distanceKm) {
         // Giá mở cửa (Base fee) cho 2km đầu
         BigDecimal baseFee = BigDecimal.valueOf(15000);
         double baseDistance = 2.0;

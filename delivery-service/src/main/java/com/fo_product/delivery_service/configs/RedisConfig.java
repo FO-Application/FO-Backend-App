@@ -1,4 +1,4 @@
-package com.fo_product.user_service.configs;
+package com.fo_product.delivery_service.configs;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,17 +15,11 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 @Configuration
 public class RedisConfig {
 
-    // --- XÓA CÁI @BEAN ObjectMapper redisObjectMapper() ĐI ---
-    // Để tránh việc Spring dùng nó cho cả Controller API
-    
-    // Tạo một hàm private để dùng chung cho Redis thôi (Không phải @Bean)
-
-    // 1. Tạo Bean ObjectMapper đã đăng ký module Java 8 Date/Time
     private ObjectMapper redisObjectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.activateDefaultTyping(
-                objectMapper.getPolymorphicTypeValidator(), 
+                objectMapper.getPolymorphicTypeValidator(),
                 ObjectMapper.DefaultTyping.EVERYTHING,
                 JsonTypeInfo.As.PROPERTY
         );

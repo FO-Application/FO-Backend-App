@@ -8,6 +8,7 @@ import com.fo_product.merchant_service.dtos.responses.restaurant.RestaurantRespo
 import com.fo_product.merchant_service.dtos.feigns.UserDTO;
 import com.fo_product.merchant_service.exceptions.MerchantException;
 import com.fo_product.merchant_service.exceptions.codes.MerchantErrorCode;
+import com.fo_product.merchant_service.helpers.GetClientDTO;
 import com.fo_product.merchant_service.mappers.restaurant.RestaurantMapper;
 import com.fo_product.merchant_service.models.entities.restaurant.Cuisine;
 import com.fo_product.merchant_service.models.entities.restaurant.Restaurant;
@@ -38,8 +39,8 @@ public class RestaurantService implements IRestaurantService {
     RestaurantRepository restaurantRepository;
     CuisineRepository cuisineRepository;
     IMinIOService minIOService;
-    UserClient userClient;
     RestaurantMapper mapper;
+    GetClientDTO getClientDTO;
 
     @Override
     @Transactional
@@ -208,12 +209,8 @@ public class RestaurantService implements IRestaurantService {
     }
 
     private UserDTO validateMerchant(Long ownerId) {
-        APIResponse<UserDTO> userResponse = userClient.getUserById(ownerId);
+        UserDTO user = getClientDTO.getUserDTO(ownerId);
 
-        UserDTO user = null;
-        if (userResponse != null) {
-            user = userResponse.getResult();
-        }
 
         if (user == null || !"MERCHANT".equals(user.role())) {
             throw new MerchantException(MerchantErrorCode.INVALID_MERCHANT_USER_ACCOUNT);

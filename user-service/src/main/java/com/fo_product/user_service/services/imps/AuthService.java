@@ -121,12 +121,29 @@ public class AuthService implements IAuthService {
         if (request == null) throw new UserException(UserErrorCode.REQUEST_NULL);
 
         String email = request.email();
+        OtpTokenType type = request.type();
 
-        PendingUser pendingUser = pendingUserRepository.findById(email)
-                .orElseThrow(() -> new UserException(UserErrorCode.PENDING_USER_NOT_FOUND));
+        // LOGIC GỘP CHUNG Ở ĐÂY
+        switch (type) {
+            case REGISTER -> {
+                // Nếu là Đăng ký -> Phải check trong bảng Pending (User chưa kích hoạt)
+                if (!pendingUserRepository.existsById(email)) {
+                    throw new UserException(UserErrorCode.PENDING_USER_NOT_FOUND);
+                }
+            }
+            case FORGOT_PASSWORD -> {
+                // Nếu là Quên mật khẩu -> Phải check trong bảng User (User đã tồn tại)
+                if (!userRepository.existsByEmail(email)) {
+                    throw new UserException(UserErrorCode.USER_NOT_EXIST);
+                }
+            }
+            default -> throw new UserException(UserErrorCode.INVALID_OTP_TYPE);
+        }
 
-        otpService.generateAndSendOtp(pendingUser.getEmail(), OtpTokenType.REGISTER);
-        log.info("Resent OTP to email: {}", email);
+        // Nếu check OK thì tạo và gửi OTP (Hàm này đã xử lý việc gửi đúng template mail dựa theo type rồi)
+        otpService.generateAndSendOtp(email, type);
+
+        log.info("Resent OTP to email: {} with type: {}", email, type);
     }
 
     @Override
@@ -157,6 +174,28 @@ public class AuthService implements IAuthService {
                 .refreshToken(result.get("refreshToken").toString())
                 .role(result.get("role").toString())
                 .build();
+    }
+
+    @Override
+    public void sendForgotPasswordOTP(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_EXIST));
+
+        otpService.generateAndSendOtp(email, OtpTokenType.FORGOT_PASSWORD);
+    }
+
+    @Override
+    @Transactional
+    public void forgotPassword(NewPasswordRequest request) {
+        boolean verifiedOtp = otpService.verifyOtp(request.email(), request.otp());
+        if (!verifiedOtp)
+            throw new UserException(UserErrorCode.VERIFY_OTP_FAILED);
+
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_EXIST));
+
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
     }
 
     @Override

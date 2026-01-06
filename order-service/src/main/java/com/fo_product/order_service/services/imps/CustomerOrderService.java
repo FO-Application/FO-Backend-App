@@ -1,7 +1,5 @@
 package com.fo_product.order_service.services.imps;
 
-import com.fo_product.order_service.clients.MerchantClient;
-import com.fo_product.order_service.clients.UserClient;
 import com.fo_product.order_service.dtos.feigns.OptionItemDTO;
 import com.fo_product.order_service.dtos.feigns.ProductDTO;
 import com.fo_product.order_service.dtos.feigns.RestaurantDTO;
@@ -11,6 +9,7 @@ import com.fo_product.order_service.dtos.requests.OrderRequest;
 import com.fo_product.order_service.dtos.responses.OrderResponse;
 import com.fo_product.order_service.exceptions.OrderException;
 import com.fo_product.order_service.exceptions.codes.OrderErrorCode;
+import com.fo_product.order_service.helpers.GetClientDTO;
 import com.fo_product.order_service.kafka.KafkaProducerService;
 import com.fo_product.order_service.kafka.events.OrderCreatedEvent;
 import com.fo_product.order_service.mappers.OrderMapper;
@@ -46,17 +45,17 @@ import java.util.stream.Collectors;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class CustomerOrderService implements ICustomerOrderService {
     OrderRepository orderRepository;
-    UserClient userClient;
-    MerchantClient merchantClient;
+    GetClientDTO getClientDTO;
     OrderMapper mapper;
     KafkaProducerService kafkaProducerService;
+    DistanceCalculator distanceCalculator;
 
     @Override
     @Transactional
     public OrderResponse createOrder(Long userId, OrderRequest request) {
         // 1. Lấy thông tin User & Merchant
-        UserDTO user = userClient.getUserById(userId);
-        RestaurantDTO restaurant = merchantClient.getRestaurant(request.merchantId());
+        UserDTO user = getClientDTO.getUserDTO(userId);
+        RestaurantDTO restaurant = getClientDTO.getRestaurantDTO(request.merchantId());
 
         // ⚠️ Validate quan trọng: Quán phải có tọa độ thì mới tính ship được
         if (restaurant.latitude() == null || restaurant.longitude() == null) {
@@ -64,12 +63,12 @@ public class CustomerOrderService implements ICustomerOrderService {
         }
 
         // 2. Tính toán khoảng cách & Phí ship (LOGIC MỚI)
-        double distance = DistanceCalculator.calculateEstimatedDistance(
+        double distance = distanceCalculator.calculateEstimatedDistance(
                 restaurant.latitude(), restaurant.longitude(), // Từ quán
                 request.deliveryLatitude(), request.deliveryLongitude() // Đến khách
         );
 
-        BigDecimal shippingFee = DistanceCalculator.calculateShippingFee(distance);
+        BigDecimal shippingFee = distanceCalculator.calculateShippingFee(distance);
         log.info("Khoảng cách: {} km - Phí ship: {}", distance, shippingFee);
 
         // 3. Khởi tạo Order (Snapshot đầy đủ)
@@ -99,9 +98,9 @@ public class CustomerOrderService implements ICustomerOrderService {
                 .paymentMethod(PaymentMethod.valueOf(request.paymentMethod()))
                 .build();
 
-        // 4. Xử lý món ăn (Logic cũ giữ nguyên)
+        // 4. Xử lý món ăn
         List<Long> productIds = request.items().stream().map(OrderItemRequest::productId).toList();
-        List<ProductDTO> products = merchantClient.getAllProductsByIds(productIds);
+        List<ProductDTO> products = getClientDTO.getProductDTOs(productIds);
         Map<Long, ProductDTO> productMap = products.stream().collect(Collectors.toMap(ProductDTO::id, Function.identity()));
 
         List<OrderItem> orderItems = new ArrayList<>();

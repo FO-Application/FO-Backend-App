@@ -5,6 +5,7 @@ import com.fo_product.order_service.dtos.feigns.RestaurantDTO;
 import com.fo_product.order_service.dtos.responses.OrderResponse;
 import com.fo_product.order_service.exceptions.OrderException;
 import com.fo_product.order_service.exceptions.codes.OrderErrorCode;
+import com.fo_product.order_service.helpers.GetClientDTO;
 import com.fo_product.order_service.kafka.KafkaProducerService;
 import com.fo_product.order_service.kafka.events.OrderCompletedEvent;
 import com.fo_product.order_service.kafka.events.OrderConfirmedEvent;
@@ -34,9 +35,9 @@ import java.util.stream.Collectors;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class PartnerOrderService implements IPartnerOrderService {
     OrderRepository orderRepository;
-    MerchantClient merchantClient;
     OrderMapper mapper;
     KafkaProducerService kafkaProducerService;
+    GetClientDTO getClientDTO;
 
     @Override
     @Transactional(readOnly = true)
@@ -168,7 +169,7 @@ public class PartnerOrderService implements IPartnerOrderService {
     }
 
     private boolean checkMerchantOwnership(Long userId, Long merchantId) {
-        RestaurantDTO restaurant = merchantClient.getRestaurant(merchantId);
+        RestaurantDTO restaurant = getClientDTO.getRestaurantDTO(merchantId);
 
         if (restaurant == null)
             return false;
