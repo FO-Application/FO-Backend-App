@@ -197,7 +197,7 @@ public class AuthController {
             @ApiResponse(responseCode = "200", description = "OTP đã được gửi thành công"),
             @ApiResponse(responseCode = "404", description = "Email không tồn tại trong hệ thống")
     })
-    @PostMapping("/forgot-password-request")
+    @PostMapping("/forgot-password")
     public APIResponse<Void> requestForgotPassword(
             @Parameter(description = "Email của tài khoản cần khôi phục", required = true)
             @RequestParam String email
@@ -217,7 +217,7 @@ public class AuthController {
             @ApiResponse(responseCode = "400", description = "OTP sai, hết hạn hoặc mật khẩu không đúng định dạng"),
             @ApiResponse(responseCode = "404", description = "Email không tồn tại")
     })
-    @PostMapping("/forgot-password")
+    @PostMapping("/reset-password")
     public APIResponse<Void> resetPassword(@RequestBody @Valid NewPasswordRequest request) {
         authService.forgotPassword(request);
         return APIResponse.<Void>builder()
