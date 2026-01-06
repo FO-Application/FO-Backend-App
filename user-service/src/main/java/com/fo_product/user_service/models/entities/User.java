@@ -1,5 +1,6 @@
 package com.fo_product.user_service.models.entities;
 
+import com.fo_product.user_service.models.enums.AuthProvider;
 import com.fo_product.user_service.models.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -41,8 +42,15 @@ public class User {
     @UpdateTimestamp
     LocalDateTime updatedAt;
 
+    @Column(name = "user_status")
+    boolean userStatus;
+
+    @Column(name = "provider_id")
+    String providerId;
+
     @Enumerated(EnumType.STRING)
-    UserStatus userStatus;
+    @Column(name = "auth_provider")
+    AuthProvider authProvider;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_id")

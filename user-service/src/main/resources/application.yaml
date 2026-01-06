@@ -78,6 +78,9 @@ openapi:
   service:
     url: ${OPENAPI_SERVICE_URL}
 
+google:
+  client-id: ${GOOGLE_CLIENT_ID}
+
 logging:
   level:
     org.springframework.security: DEBUG

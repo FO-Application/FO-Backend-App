@@ -135,6 +135,26 @@ public class AuthController {
                 .build();
     }
 
+    @PostMapping("/outbound/google") // Hoặc đường dẫn tùy bạn chọn
+    public APIResponse<AuthenticationResponse> loginWithGoogle(@RequestBody GoogleLoginRequest request, HttpServletResponse httpServletResponse) {
+        AuthenticationDTO result = authService.loginWithGoogle(request);
+        ResponseCookie accessToken = authCookieService.setAccessToken(result.accessToken());
+        ResponseCookie refreshToken = authCookieService.setRefreshToken(result.refreshToken());
+
+        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, accessToken.toString());
+        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, refreshToken.toString());
+
+        AuthenticationResponse response = AuthenticationResponse.builder()
+                .accessToken(result.accessToken())
+                .refreshToken(result.refreshToken())
+                .role(result.role())
+                .authenticated(true)
+                .build();
+        return APIResponse.<AuthenticationResponse>builder()
+                .result(response)
+                .build();
+    }
+
     @Operation(
             summary = "Làm mới Token (Refresh)",
             description = "Tự động đọc Cookie `refresh_token` từ trình duyệt để cấp lại cặp Token mới. Dùng khi Access Token hết hạn."

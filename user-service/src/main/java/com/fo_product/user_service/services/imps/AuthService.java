@@ -5,6 +5,7 @@ import com.fo_product.user_service.exceptions.UserException;
 import com.fo_product.user_service.mappers.UserMapper;
 import com.fo_product.user_service.models.entities.Role;
 import com.fo_product.user_service.models.entities.User;
+import com.fo_product.user_service.models.enums.AuthProvider;
 import com.fo_product.user_service.models.enums.OtpTokenType;
 import com.fo_product.user_service.models.enums.UserStatus;
 import com.fo_product.user_service.models.hashes.PendingUser;
@@ -19,20 +20,30 @@ import com.fo_product.user_service.services.interfaces.IAuthService;
 import com.fo_product.user_service.services.interfaces.IJwtService;
 import com.fo_product.user_service.services.interfaces.IOtpService;
 import com.fo_product.user_service.services.interfaces.IPendingUserService;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.text.ParseException;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -47,6 +58,10 @@ public class AuthService implements IAuthService {
     PendingUserRepository pendingUserRepository;
     UserMapper userMapper;
     RoleRepository roleRepository;
+
+    @Value("${google.client-id}")
+    @NonFinal
+    String googleClientId;
 
     @Override
     @Transactional
@@ -102,7 +117,8 @@ public class AuthService implements IAuthService {
                 .lastName(pendingUser.getLastName())
                 .phone(pendingUser.getPhone())
                 .dob(pendingUser.getDob())
-                .userStatus(UserStatus.ACTIVE)
+                .userStatus(true)
+                .authProvider(AuthProvider.LOCAL)
                 .build();
 
         Role role = roleRepository.findByName(pendingUser.getRole())
@@ -204,5 +220,79 @@ public class AuthService implements IAuthService {
 
         SignedJWT token = jwtService.verifyToken(refreshToken, "refresh");
         jwtService.invalidatedToken(token);
+    }
+
+    @Override
+    @Transactional
+    public AuthenticationDTO loginWithGoogle(GoogleLoginRequest request) {
+        try {
+            // 1. Cấu hình Verifier
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
+                    .setAudience(Collections.singletonList(googleClientId))
+                    .build();
+
+            // 2. Xác thực token gửi từ Client
+            GoogleIdToken idToken = verifier.verify(request.token());
+
+            if (idToken == null) {
+                throw new UserException(UserErrorCode.UNAUTHENTICATED);
+            }
+
+            // 3. Lấy thông tin User từ Google Payload
+            GoogleIdToken.Payload payload = idToken.getPayload();
+            String email = payload.getEmail();
+            String firstName = (String) payload.get("given_name");
+            String lastName = (String) payload.get("family_name");
+
+            // 4. Kiểm tra User trong DB
+            User user = userRepository.findByEmail(email).orElse(null);
+
+            if (user == null) {
+                // TRƯỜNG HỢP 1: User chưa tồn tại -> Tự động đăng ký (Auto Register)
+                Role role = roleRepository.findByName("CUSTOMER")
+                        .orElseThrow(() -> new UserException(UserErrorCode.ROLE_NOT_EXIST));
+
+                user = User.builder()
+                        .email(email)
+                        .firstName(firstName)
+                        .lastName(lastName)
+                        // Google User không có pass, tạo UUID ngẫu nhiên để lấp đầy DB (nếu cột password not null)
+                        .password(passwordEncoder.encode(UUID.randomUUID().toString()))
+                        .userStatus(true) // Google đã xác thực email rồi nên active luôn
+                        .authProvider(AuthProvider.GOOGLE)
+                        .role(role)
+                        .build();
+
+                user = userRepository.save(user);
+            } else {
+                // TRƯỜNG HỢP 2: User đã tồn tại
+                // Tùy chọn: Cập nhật lại thông tin nếu cần thiết
+                // Lưu ý: Nếu user này trước đó đăng ký bằng LOCAL, bạn có thể cho phép đăng nhập luôn
+                // hoặc cập nhật authProvider thành GOOGLE tùy logic nghiệp vụ.
+                if (user.getAuthProvider() == null) {
+                    // Nếu chưa có provider (lỗi data cũ) thì set
+                    user.setAuthProvider(AuthProvider.GOOGLE);
+                    userRepository.save(user);
+                } else if (user.getAuthProvider() == AuthProvider.LOCAL) {
+                    // Nếu đang là LOCAL -> GIỮ NGUYÊN
+                    // Không làm gì cả. Cho phép đăng nhập luôn.
+                    // Điều này nghĩa là: User này chấp nhận cả 2 cách đăng nhập.
+                }
+            }
+
+            // 5. Sinh Token của hệ thống (JWT) trả về cho Client
+            String roleName = user.getRole().getName();
+            JwtService.TokenPair tokenPair = jwtService.generateTokenPair(user);
+
+            return AuthenticationDTO.builder()
+                    .accessToken(tokenPair.getAccessToken())
+                    .refreshToken(tokenPair.getRefreshToken())
+                    .role(roleName)
+                    .build();
+
+        } catch (Exception e) {
+            log.error("Google login error: ", e);
+            throw new UserException(UserErrorCode.UNAUTHENTICATED);
+        }
     }
 }

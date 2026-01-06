@@ -6,6 +6,8 @@ import com.fo_product.user_service.dtos.responses.PendingUserResponse;
 import com.fo_product.user_service.dtos.responses.UserResponse;
 import com.nimbusds.jose.JOSEException;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.text.ParseException;
 
 public interface IAuthService {
@@ -17,4 +19,5 @@ public interface IAuthService {
     void sendForgotPasswordOTP(String email);
     void forgotPassword(NewPasswordRequest request);
     void logout(String refreshToken) throws ParseException, JOSEException;
+    AuthenticationDTO loginWithGoogle(GoogleLoginRequest request);
 }
