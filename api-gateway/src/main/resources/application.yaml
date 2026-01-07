@@ -106,7 +106,7 @@ spring:
             - name: Path
               args:
                 patterns:
-                  -
+                  - /api/v1/delivery/shippers/**
           filters:
             - name: RequestRateLimiter
               args:

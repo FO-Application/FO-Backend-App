@@ -88,6 +88,8 @@ public class PartnerOrderService implements IPartnerOrderService {
                 .deliveryAddress(order.getDeliveryAddress())
                 .productPrice(order.getSubTotal())
                 .shippingFee(order.getShippingFee())
+                .merchantLatitude(order.getMerchantLatitude())
+                .merchantLongitude(order.getMerchantLongitude())
                 .build();
         kafkaProducerService.sendOrderConfirmedEvent(event);
 

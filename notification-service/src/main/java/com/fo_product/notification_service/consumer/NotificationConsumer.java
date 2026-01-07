@@ -3,6 +3,7 @@ package com.fo_product.notification_service.consumer;
 import com.fo_product.notification_service.events.MailSenderEvent;
 import com.fo_product.notification_service.events.OrderCreatedEvent;
 import com.fo_product.notification_service.events.OrderDeliveringEvent;
+import com.fo_product.notification_service.events.ShipperFoundEvent;
 import com.fo_product.notification_service.services.interfaces.IMailSenderService;
 import com.fo_product.notification_service.services.interfaces.INotificationService;
 import lombok.AccessLevel;
@@ -46,6 +47,22 @@ public class NotificationConsumer {
                 event.merchantId(),
                 "Đơn hàng mới # " + event.orderId(),
                 "Tổng tiền: " + event.grandTotal(),
+                event.orderId()
+        );
+    }
+
+    @KafkaListener(topics = "shipper-found-topic", groupId = "notification-group")
+    public void handleShipperFound(ShipperFoundEvent event) {
+        log.info("Bắn FCM mời nhận đơn cho Shipper ID: {}", event.shipperId());
+
+        String title = "Có đơn hàng mới gần bạn!";
+        String body = "Đơn #" + event.orderId() + " - Phí ship: " + event.shippingFee();
+
+        // Gửi thông báo xuống App
+        notificationService.sendNotification(
+                event.shipperId(),
+                title,
+                body,
                 event.orderId()
         );
     }

@@ -1,4 +1,4 @@
-package com.fo_product.order_service.kafka.events;
+package com.fo_product.delivery_service.kafka.events;
 
 import lombok.Builder;
 
