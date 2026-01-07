@@ -33,17 +33,20 @@ import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.text.ParseException;
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -58,10 +61,7 @@ public class AuthService implements IAuthService {
     PendingUserRepository pendingUserRepository;
     UserMapper userMapper;
     RoleRepository roleRepository;
-
-    @Value("${google.client-id}")
-    @NonFinal
-    String googleClientId;
+    RestTemplate restTemplate;
 
     @Override
     @Transactional
@@ -226,29 +226,44 @@ public class AuthService implements IAuthService {
     @Transactional
     public AuthenticationDTO loginWithGoogle(GoogleLoginRequest request) {
         try {
-            // 1. Cấu hình Verifier
-            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
-                    .setAudience(Collections.singletonList(googleClientId))
-                    .build();
+            // 1. Lấy Access Token từ Frontend (chuỗi ya29...)
+            String accessToken = request.token();
 
-            // 2. Xác thực token gửi từ Client
-            GoogleIdToken idToken = verifier.verify(request.token());
+            // 2. Gọi API của Google để lấy thông tin User
+            String googleUserInfoUri = "https://www.googleapis.com/oauth2/v3/userinfo";
 
-            if (idToken == null) {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(accessToken); // Gắn token vào Header "Authorization: Bearer ..."
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            // Thực hiện gọi API
+            ResponseEntity<Map> response = restTemplate.exchange(
+                    googleUserInfoUri,
+                    HttpMethod.GET,
+                    entity,
+                    Map.class
+            );
+
+            Map<String, Object> userInfo = response.getBody();
+
+            // Kiểm tra nếu không lấy được dữ liệu
+            if (userInfo == null || userInfo.get("email") == null) {
                 throw new UserException(UserErrorCode.UNAUTHENTICATED);
             }
 
-            // 3. Lấy thông tin User từ Google Payload
-            GoogleIdToken.Payload payload = idToken.getPayload();
-            String email = payload.getEmail();
-            String firstName = (String) payload.get("given_name");
-            String lastName = (String) payload.get("family_name");
+            // 3. Trích xuất thông tin từ Google trả về
+            // Access Token trả về field hơi khác ID Token một chút, chuẩn là như sau:
+            String email = (String) userInfo.get("email");
+            String firstName = (String) userInfo.get("given_name");
+            String lastName = (String) userInfo.get("family_name");
+            String picture = (String) userInfo.get("picture");
+            // String googleId = (String) userInfo.get("sub"); // Nếu cần ID định danh
 
-            // 4. Kiểm tra User trong DB
+            // 4. Kiểm tra User trong DB (GIỮ NGUYÊN LOGIC CŨ CỦA BẠN)
             User user = userRepository.findByEmail(email).orElse(null);
 
             if (user == null) {
-                // TRƯỜNG HỢP 1: User chưa tồn tại -> Tự động đăng ký (Auto Register)
+                // TRƯỜNG HỢP 1: User chưa tồn tại -> Tự động đăng ký
                 Role role = roleRepository.findByName("CUSTOMER")
                         .orElseThrow(() -> new UserException(UserErrorCode.ROLE_NOT_EXIST));
 
@@ -256,31 +271,23 @@ public class AuthService implements IAuthService {
                         .email(email)
                         .firstName(firstName)
                         .lastName(lastName)
-                        // Google User không có pass, tạo UUID ngẫu nhiên để lấp đầy DB (nếu cột password not null)
-                        .password(passwordEncoder.encode(UUID.randomUUID().toString()))
-                        .userStatus(true) // Google đã xác thực email rồi nên active luôn
+                        // .avatar(picture) // Nếu entity User có trường avatar thì set vào đây
+                        .userStatus(true)
                         .authProvider(AuthProvider.GOOGLE)
                         .role(role)
                         .build();
 
                 user = userRepository.save(user);
             } else {
-                // TRƯỜNG HỢP 2: User đã tồn tại
-                // Tùy chọn: Cập nhật lại thông tin nếu cần thiết
-                // Lưu ý: Nếu user này trước đó đăng ký bằng LOCAL, bạn có thể cho phép đăng nhập luôn
-                // hoặc cập nhật authProvider thành GOOGLE tùy logic nghiệp vụ.
+                // TRƯỜNG HỢP 2: User đã tồn tại -> Update Provider nếu cần
                 if (user.getAuthProvider() == null) {
-                    // Nếu chưa có provider (lỗi data cũ) thì set
                     user.setAuthProvider(AuthProvider.GOOGLE);
                     userRepository.save(user);
-                } else if (user.getAuthProvider() == AuthProvider.LOCAL) {
-                    // Nếu đang là LOCAL -> GIỮ NGUYÊN
-                    // Không làm gì cả. Cho phép đăng nhập luôn.
-                    // Điều này nghĩa là: User này chấp nhận cả 2 cách đăng nhập.
                 }
+                // Nếu là LOCAL thì kệ, cho login luôn
             }
 
-            // 5. Sinh Token của hệ thống (JWT) trả về cho Client
+            // 5. Sinh Token hệ thống trả về (GIỮ NGUYÊN LOGIC CŨ)
             String roleName = user.getRole().getName();
             JwtService.TokenPair tokenPair = jwtService.generateTokenPair(user);
 
@@ -296,3 +303,4 @@ public class AuthService implements IAuthService {
         }
     }
 }
+

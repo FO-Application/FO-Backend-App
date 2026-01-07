@@ -135,7 +135,37 @@ public class AuthController {
                 .build();
     }
 
-    @PostMapping("/outbound/google") // Hoặc đường dẫn tùy bạn chọn
+    @Operation(
+            summary = "Đăng nhập bằng Google (Exchange Token)",
+            description = """
+                    Nhận Google ID Token từ Client (Web/Mobile), xác thực với Google Server.
+                    Nếu hợp lệ, hệ thống sẽ:
+                    1. Tạo hoặc cập nhật User trong Database.
+                    2. Trả về Access Token & Refresh Token trong Body response.
+                    3. Tự động Set Access Token & Refresh Token vào HttpOnly Cookie (để bảo mật hơn cho Web).
+                    """,
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Đăng nhập thành công",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = AuthenticationResponse.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Token Google không hợp lệ hoặc đã hết hạn",
+                            content = @Content
+                    ),
+                    @ApiResponse(
+                            responseCode = "500",
+                            description = "Lỗi kết nối đến Google hoặc lỗi xử lý nội bộ",
+                            content = @Content
+                    )
+            }
+    )
+    @PostMapping("/outbound/google")
     public APIResponse<AuthenticationResponse> loginWithGoogle(@RequestBody GoogleLoginRequest request, HttpServletResponse httpServletResponse) {
         AuthenticationDTO result = authService.loginWithGoogle(request);
         ResponseCookie accessToken = authCookieService.setAccessToken(result.accessToken());
