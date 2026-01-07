@@ -4,5 +4,6 @@ import com.fo_product.delivery_service.kafka.events.OrderConfirmedEvent;
 
 public interface IOrderMatchingService {
     void processMatching(OrderConfirmedEvent orderConfirmedEvent);
-    void retryFindingShippers();
+    void addToPendingQueue(OrderConfirmedEvent event);
+    void removeFromPendingQueue(Long orderId);
 }

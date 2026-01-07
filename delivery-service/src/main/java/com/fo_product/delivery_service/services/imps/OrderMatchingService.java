@@ -74,14 +74,16 @@ public class OrderMatchingService implements IOrderMatchingService {
     }
 
     // Lưu đơn vào Redis để tìm lại sau
-    private void addToPendingQueue(OrderConfirmedEvent event) {
+    @Override
+    public void addToPendingQueue(OrderConfirmedEvent event) {
         // Key: PENDING_ORDER_KEY, HashKey: orderId, Value: Json Event
         // Set TTL cho key này khoảng 5-10 phút để tự hủy nếu trôi đơn
         String json = gson.toJson(event);
         redisTemplate.opsForHash().put(PENDING_ORDER_KEY, String.valueOf(event.orderId()), json);
     }
 
-    private void removeFromPendingQueue(Long orderId) {
+    @Override
+    public void removeFromPendingQueue(Long orderId) {
         redisTemplate.opsForHash().delete(PENDING_ORDER_KEY, String.valueOf(orderId));
     }
 
@@ -89,7 +91,6 @@ public class OrderMatchingService implements IOrderMatchingService {
      * CRON JOB: Chạy mỗi 15 giây để quét lại các đơn chưa có xe
      */
     @Scheduled(fixedDelay = 15000)
-    @Override
     public void retryFindingShippers() {
         // Lấy tất cả đơn đang treo trong Redis
         Set<Object> orderIds = redisTemplate.opsForHash().keys(PENDING_ORDER_KEY);
