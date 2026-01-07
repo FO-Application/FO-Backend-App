@@ -119,7 +119,7 @@ spring:
           predicates:
             - Path=/v3/api-docs/delivery-service
           filters:
-            - RewritePath=/v3/api-docs/delivery-serice, /v3/api-docs
+            - RewritePath=/v3/api-docs/delivery-service, /v3/api-docs
 
         - id: notification-service
           uri: lb://notification-service

@@ -29,7 +29,7 @@ public class SecurityConfig {
     private String ALGORITHM;
 
     private static final String[] PUBLIC_MATCHERS = {
-            "/api/v1/delivery/shippers",
+            "/api/v1/delivery/shippers/**",
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html"
