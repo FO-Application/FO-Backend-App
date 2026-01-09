@@ -7,16 +7,16 @@ COPY common-lib/pom.xml common-lib/pom.xml
 COPY common-lib/src common-lib/src
 RUN mvn -f common-lib/pom.xml clean install -DskipTests
 
-# 2. Build User Service
-COPY user-service/pom.xml user-service/pom.xml
-WORKDIR /app/user-service
+# 2. Build Payment Service
+COPY payment-service/pom.xml payment-service/pom.xml
+WORKDIR /app/payment-service
 RUN mvn dependency:go-offline
 
-COPY user-service/src src
+COPY payment-service/src src
 RUN mvn clean package -DskipTests -Dfile.encoding=UTF-8
 
 # --- GIAI ĐOẠN 2: RUN ---
 FROM eclipse-temurin:21-jdk-alpine
 WORKDIR /app
-COPY --from=build /app/user-service/target/*.jar app.jar
+COPY --from=build /app/payment-service/target/*.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]

@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: payment-service
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      client-id: order-service-producer
+
+    consumer:
+      group-id: order-service-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+      properties:
+        spring.json.trusted.packages: "*" #Accept deserialize every objects (DTO)
+
+server:
+  port: ${PAYMENT_SERVICE_PORT}
+  error:
+    include-message: always
+    include-binding-errors: always
+
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    enabled: false
+
+openapi:
+  service:
+    url: ${OPENAPI_SERVICE_URL}
+
+zalo-pay:
+  app-id: ${ZALOPAY_APP_ID}
+  key1: ${ZALOPAY_KEY_1}
+  key2: ${ZALOPAY_KEY_2}
+  create-order-endpoint: ${ZALOPAY_CREATE_ORDER_ENDPOINT}

@@ -15,7 +15,7 @@ public class OpenAPIConfig {
     private String url;
 
     @Bean
-    public OpenAPI customerOpenAPI() {
+    public OpenAPI orderOpenAPI() {
         return new OpenAPI()
                 .servers(List.of(new Server().url(url)))
                 .info(new Info()

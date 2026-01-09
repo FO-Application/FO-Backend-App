@@ -1,4 +1,4 @@
-package com.fo_product.delivery_service.configs;
+package com.fo_product.payment_service.configs;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
@@ -15,13 +15,13 @@ public class OpenAPIConfig {
     private String url;
 
     @Bean
-    public OpenAPI deliveryOpenAPI() {
+    public OpenAPI paymentOpenAPI() {
         return new OpenAPI()
                 .servers(List.of(new Server().url(url)))
                 .info(new Info()
-                        .title("Delivery Service API")
+                        .title("Payment Service API")
                         .version("1.0")
-                        .description("Delivery Service API Documentation")
+                        .description("Payment Service API Documentation")
                 );
     }
 }

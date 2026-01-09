@@ -256,8 +256,7 @@ public class AuthService implements IAuthService {
             String email = (String) userInfo.get("email");
             String firstName = (String) userInfo.get("given_name");
             String lastName = (String) userInfo.get("family_name");
-            String picture = (String) userInfo.get("picture");
-            // String googleId = (String) userInfo.get("sub"); // Nếu cần ID định danh
+            String googleId = (String) userInfo.get("sub");
 
             // 4. Kiểm tra User trong DB (GIỮ NGUYÊN LOGIC CŨ CỦA BẠN)
             User user = userRepository.findByEmail(email).orElse(null);
@@ -271,8 +270,8 @@ public class AuthService implements IAuthService {
                         .email(email)
                         .firstName(firstName)
                         .lastName(lastName)
-                        // .avatar(picture) // Nếu entity User có trường avatar thì set vào đây
                         .userStatus(true)
+                        .providerId(googleId)
                         .authProvider(AuthProvider.GOOGLE)
                         .role(role)
                         .build();

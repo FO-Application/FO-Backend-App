@@ -248,7 +248,28 @@ services:
     networks:
       - fo-network
 
-  # --- 12. Minio ---
+  # --- 12. Delivery-service ---
+  payment-service:
+    image: payment-service:latest
+    build:
+      context: .
+      dockerfile: payment-service/Dockerfile
+    container_name: fo-payment-service
+    ports:
+      - "${PAYMENT_SERVICE_PORT}:${PAYMENT_SERVICE_PORT}"
+    env_file:
+      - .env
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://fo-discovery-server:8761/eureka/
+      KAFKA_BOOTSTRAP_SERVERS: fo-kafka:29092
+      PAYMENT_SERVICE_PORT: ${PAYMENT_SERVICE_PORT}
+    depends_on:
+      - discovery-service
+      - kafka
+    networks:
+      - fo-network
+
+  # --- 13. Minio ---
   minio:
     image: minio/minio:latest
     container_name: fo-minio
@@ -266,7 +287,7 @@ services:
     networks:
       - fo-network
 
-  # --- 13. Ngrok Tunnel ---
+  # --- 14. Ngrok Tunnel ---
   ngrok:
     image: ngrok/ngrok:latest
     container_name: fo-ngrok

@@ -141,6 +141,27 @@ spring:
             - Path=/v3/api-docs/notification-service
           filters:
             - RewritePath=/v3/api-docs/notification-service, /v3/api-docs
+
+        - id: payment-service
+          uri: lb://payment-service
+          predicates:
+            - name: Path
+              args:
+                patterns:
+                  - /api/v1/payment/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 5
+                redis-rate-limiter.burstCapacity: 10
+                key-resolver: "#{@userKeyResolver}"
+
+        - id: payment-service-docs
+          uri: lb://payment-service
+          predicates:
+            - Path=/v3/api-docs/payment-service
+          filters:
+            - RewritePath=/v3/api-docs/payment-service, /v3/api-docs
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
@@ -155,6 +176,8 @@ springdoc:
         url: /v3/api-docs/delivery-service
       - name: notification-service
         url: /v3/api-docs/notification-service
+      - name: payment-service
+        url: /v3/api-docs/payment-service
   api-docs:
     enabled: true
 

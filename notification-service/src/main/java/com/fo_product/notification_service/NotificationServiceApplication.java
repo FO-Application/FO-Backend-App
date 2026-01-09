@@ -6,11 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableAsync;
 
 @SpringBootApplication(
-		scanBasePackageClasses = {
-				NotificationServiceApplication.class,
-				GlobalExceptionHandler.class
-		}
-
+		scanBasePackages = "com.fo_product"
 )
 @EnableAsync
 public class NotificationServiceApplication {
