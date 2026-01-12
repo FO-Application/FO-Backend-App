@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ZaloPayConfig {
     @Value("${zalo-pay.app-id}")
-    Integer appId;
+    String appId;
 
     @Value("${zalo-pay.key1}")
     String key1;
@@ -21,4 +21,10 @@ public class ZaloPayConfig {
 
     @Value("${zalo-pay.create-order-endpoint}")
     String createOrderEndpoint;
+
+    @Value("${zalo-pay.query-endpoint}")
+    String queryEndpoint;
+
+    @Value("${zalo-pay.callback-url}")
+    String callbackUrl;
 }

@@ -149,12 +149,6 @@ spring:
               args:
                 patterns:
                   - /api/v1/payment/**
-          filters:
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 5
-                redis-rate-limiter.burstCapacity: 10
-                key-resolver: "#{@userKeyResolver}"
 
         - id: payment-service-docs
           uri: lb://payment-service

@@ -292,9 +292,11 @@ services:
     image: ngrok/ngrok:latest
     container_name: fo-ngrok
     restart: unless-stopped
+    ports:
+      - "4040:4040"
     networks:
       - fo-network
-    command: http --domain=${NGROK_DOMAIN} fo-api-gateway:${GATEWAY_PORT}
+    command: http --domain=${NGROK_DOMAIN} fo-api-gateway:${GATEWAY_PORT} --log=stdout
     environment:
       - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
     depends_on:

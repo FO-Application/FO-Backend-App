@@ -48,3 +48,5 @@ zalo-pay:
   key1: ${ZALOPAY_KEY_1}
   key2: ${ZALOPAY_KEY_2}
   create-order-endpoint: ${ZALOPAY_CREATE_ORDER_ENDPOINT}
+  query-endpoint: ${ZALOPAY_QUERY_ENDPOINT}
+  callback-url: ${ZALOPAY_CALLBACK_URL}
