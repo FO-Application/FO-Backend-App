@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mã Xác Thực OTP - GrabFood</title>
+    <title>Mã Xác Thực OTP - FastBite</title>
     <style>
         /* =========================================
-           STYLE CƠ BẢN (Đồng bộ với Order Email)
+           STYLE CƠ BẢN
            ========================================= */
         body {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -33,7 +33,7 @@
         }
 
         /* =========================================
-           HEADER - MÀU XANH GRAB
+           HEADER - MÀU XANH CHỦ ĐẠO
            ========================================= */
         .header {
             background-color: #00B14F;
@@ -41,15 +41,32 @@
             text-align: center;
         }
 
-        .logo-container {
-            display: inline-block;
+        /* --- CSS LOGO MỚI (FASTBITE) --- */
+        .header-logo {
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Căn giữa logo */
+            margin-bottom: 10px; /* Tạo khoảng cách với dòng H1 bên dưới */
         }
 
-        .logo-img {
-            height: 100px; /* Điều chỉnh lại chút cho cân đối với form OTP */
-            display: block;
-            margin: 0 auto;
+        .header-logo-text {
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            display: flex;
         }
+
+        .logo-fast {
+            color: #ffffff; /* Màu trắng để nổi trên nền xanh */
+            font-style: italic;
+        }
+
+        .logo-bite {
+            color: #fff;
+            font-style: italic;
+        }
+        /* --------------------------------- */
 
         .header h1 {
             color: #ffffff;
@@ -74,14 +91,14 @@
         }
 
         .action-highlight {
-            color: #00B14F; /* Đổi sang màu xanh Grab */
+            color: #00B14F;
             font-weight: 700;
         }
 
-        /* OTP BOX (Style mới đồng bộ) */
+        /* OTP BOX */
         .otp-box {
-            background-color: #f0fcf4; /* Nền xanh rất nhạt giống header đơn hàng */
-            border: 2px dashed #00B14F; /* Viền xanh Grab */
+            background-color: #f0fcf4;
+            border: 2px dashed #00B14F;
             border-radius: 12px;
             padding: 25px;
             margin: 30px auto;
@@ -102,14 +119,14 @@
         .otp-code {
             font-size: 42px;
             font-weight: 800;
-            color: #00B14F; /* Chữ số màu xanh Grab */
+            color: #00B14F;
             letter-spacing: 8px;
             display: block;
             line-height: 1.2;
             font-family: 'Courier New', Courier, monospace;
         }
 
-        /* SECURITY NOTE (Tái sử dụng style shipper-note) */
+        /* SECURITY NOTE */
         .security-note {
             background-color: #fff8e1; /* Màu vàng nhạt cảnh báo */
             color: #856404; /* Màu chữ nâu vàng */
@@ -146,9 +163,10 @@
 <div class="email-wrapper">
     <div class="email-container">
         <div class="header">
-            <div class="logo-container">
-                <img src="https://images.icon-icons.com/2699/PNG/512/grab_logo_icon_169071.png"
-                     alt="GrabFood" class="logo-img">
+            <div class="header-logo">
+                <span class="header-logo-text">
+                    <span class="logo-fast">Fast</span><span class="logo-bite">Bite</span>
+                </span>
             </div>
             <h1>MÃ XÁC THỰC OTP</h1>
         </div>
@@ -173,17 +191,17 @@
                 <div style="font-size: 20px;">🛡️</div>
                 <div>
                     <strong>Lưu ý bảo mật:</strong><br>
-                    Tuyệt đối không chia sẻ mã này cho bất kỳ ai (kể cả nhân viên GrabFood). Chúng tôi không bao giờ yêu cầu bạn cung cấp mã OTP qua điện thoại.
+                    Tuyệt đối không chia sẻ mã này cho bất kỳ ai (kể cả nhân viên FastBite). Chúng tôi không bao giờ yêu cầu bạn cung cấp mã OTP qua điện thoại.
                 </div>
             </div>
 
             <div style="margin-top: 30px; font-size: 13px; color: #888;">
-                Cảm ơn bạn đã sử dụng dịch vụ GrabFood! 💚
+                Cảm ơn bạn đã sử dụng dịch vụ FastBite! 💚
             </div>
         </div>
 
         <div class="footer">
-            <p>&copy; 2025 Grab. All rights reserved.</p>
+            <p>&copy; 2025 FastBite. All rights reserved.</p>
             <p>
                 Đây là email tự động. Cần hỗ trợ?
                 <a href="#">Trung tâm trợ giúp</a>

@@ -7,6 +7,7 @@ import com.fo_product.order_service.dtos.feigns.UserDTO;
 import com.fo_product.order_service.dtos.requests.OrderItemRequest;
 import com.fo_product.order_service.dtos.requests.OrderRequest;
 import com.fo_product.order_service.dtos.responses.OrderResponse;
+import com.fo_product.order_service.dtos.responses.OrderStatusResponse;
 import com.fo_product.order_service.exceptions.OrderException;
 import com.fo_product.order_service.exceptions.codes.OrderErrorCode;
 import com.fo_product.order_service.helpers.GetClientDTO;
@@ -188,7 +189,12 @@ public class CustomerOrderService implements ICustomerOrderService {
         return mapper.response(result);
     }
 
-    // ... Các hàm getMyOrders, getOrderById, cancelOrder GIỮ NGUYÊN ...
+    @Override
+    public OrderStatusResponse checkOrderStatus(Long orderId) {
+
+        return null;
+    }
+
     @Override
     @Transactional(readOnly = true)
     public Page<OrderResponse> getMyOrders(Long userId, int page, int size) {

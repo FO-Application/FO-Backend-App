@@ -21,6 +21,8 @@ public enum OrderErrorCode implements ErrorCode {
     UNFINISHED_ORDER(2008, "Unfinished order", HttpStatus.BAD_REQUEST),
     INVALID_OWNER(2009, "Invalid owner id", HttpStatus.BAD_REQUEST),
     MERCHANT_COORDINATES_MISSING(2010, "Merchant coordinates missing", HttpStatus.BAD_REQUEST),
+    ORDER_NOT_FOUND_WITH_APP_TRANS_ID(2011, "Order not found with app transId", HttpStatus.NOT_FOUND),
+
     ;
 
     int code;

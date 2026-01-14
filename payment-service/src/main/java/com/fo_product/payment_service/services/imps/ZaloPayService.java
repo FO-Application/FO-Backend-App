@@ -1,5 +1,6 @@
 package com.fo_product.payment_service.services.imps;
 
+import com.fo_product.payment_service.clients.OrderClient;
 import com.fo_product.payment_service.configs.ZaloPayConfig;
 import com.fo_product.payment_service.services.interfaces.IZaloPayService;
 import com.fo_product.payment_service.utils.HmacUtil;
@@ -32,10 +33,19 @@ import java.util.*;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ZaloPayService implements IZaloPayService {
     ZaloPayConfig zaloPayConfig;
+    OrderClient orderClient;
 
     @Override
     public Map<String, Object> createOrder(Long orderId, long amount) throws Exception {
         String appTransId = getCurrentTimeString("yyMMdd") +"_"+ new Date().getTime();
+
+        try {
+            orderClient.updateAppTransId(orderId, appTransId);
+            log.info("Linked Order {} with AppTransId {}", orderId, appTransId);
+        } catch (Exception e) {
+            log.error("Failed to link order with transId", e);
+            throw new RuntimeException("Không thể liên kết đơn hàng với hệ thống thanh toán");
+        }
 
         Map<String, Object> order = new HashMap<String, Object>() {{
             put("app_id", zaloPayConfig.getAppId());
@@ -48,6 +58,7 @@ public class ZaloPayService implements IZaloPayService {
             put("item", "[]");
             put("embed_data", "{\"redirecturl\": \"https://google.com\"}"); // Link mở lại app sau khi thanh toán
             put("callback_url", zaloPayConfig.getCallbackUrl());
+            put("expire_duration_seconds", 900); //Secconds
         }};
 
         String data = order.get("app_id") + "|" + order.get("app_trans_id") + "|" + order.get("app_user") + "|" + order.get("amount")
@@ -71,7 +82,6 @@ public class ZaloPayService implements IZaloPayService {
         String line;
 
         while ((line = rd.readLine()) != null) {
-
             resultJsonStr.append(line);
         }
 
@@ -151,11 +161,25 @@ public class ZaloPayService implements IZaloPayService {
         JSONObject result = new JSONObject(resultJsonStr.toString());
         Map<String, Object> finalResult = new HashMap<>();
         if(result.has("return_code")){
+            int returnCode = result.getInt("return_code");
             finalResult.put("return_code", result.get("return_code"));
             finalResult.put("return_message", result.get("return_message"));
             finalResult.put("is_processing", result.get("is_processing"));
             finalResult.put("amount", result.get("amount"));
             finalResult.put("zp_trans_id", result.opt("zp_trans_id"));
+
+            if (returnCode == 1) {
+                try {
+                    // Gọi sang Order Service để update trạng thái thành PAID
+                    log.info("Query thấy đơn {} thành công. Đang gọi Order Service update...", appTransId);
+                    orderClient.updateOrderStatus(appTransId, "PAID");
+                    finalResult.put("order_status_update", "SUCCESS");
+                } catch (Exception e) {
+                    log.error("Lỗi update trạng thái đơn hàng: ", e);
+                    // Không throw lỗi để Client vẫn nhận được kết quả là ZaloPay đã trừ tiền
+                    finalResult.put("order_status_update", "FAILED_TO_CONNECT_ORDER_SERVICE");
+                }
+            }
         } else {
             finalResult.put("return_code", -1);
             finalResult.put("return_message", "Unknown error or Parsing error");

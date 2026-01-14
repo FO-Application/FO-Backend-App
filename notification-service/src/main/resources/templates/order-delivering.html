@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đơn Hàng Đang Giao - GrabFood</title>
+    <title>Đơn Hàng Đang Giao - FastBite</title>
     <style>
         /* =========================================
            STYLE CƠ BẢN
            ========================================= */
         body {
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; /* Font style Grab */
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
             background-color: #f7f7f7;
             margin: 0;
             padding: 0;
@@ -27,13 +27,13 @@
             max-width: 550px;
             margin: 0 auto;
             background-color: #ffffff;
-            border-radius: 8px; /* Grab bo góc ít hơn */
+            border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
 
         /* =========================================
-           HEADER - MÀU XANH GRAB
+           HEADER - MÀU XANH CHỦ ĐẠO
            ========================================= */
         .header {
             background-color: #00B14F;
@@ -41,14 +41,33 @@
             text-align: center;
         }
 
-        .logo-container {
-            display: inline-block;
+        /* --- CSS LOGO MỚI (FASTBITE) --- */
+        .header-logo {
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Thêm thuộc tính này để căn giữa trong header */
+            margin-bottom: 15px; /* Tạo khoảng cách với dòng H1 bên dưới */
         }
 
-        .logo-img {
-            height: 120px; /* Chiều cao logo Grab */
-            display: block;
+        .header-logo-text {
+            font-size: 32px; /* Tăng kích thước lên một chút cho nổi bật */
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            display: flex;
         }
+
+        .logo-fast {
+            /* color: #00B14F;  <- Màu gốc bạn đưa sẽ bị chìm trên nền xanh */
+            color: #ffffff; /* Đã đổi sang màu trắng để hiển thị rõ trên nền header */
+            font-style: italic;
+        }
+
+        .logo-bite {
+            color: #fff;
+            font-style: italic;
+        }
+        /* --------------------------------- */
 
         .header h1 {
             color: #ffffff;
@@ -84,7 +103,7 @@
         }
 
         .order-header {
-            background-color: #f0fcf4; /* Xanh rất nhạt */
+            background-color: #f0fcf4;
             padding: 15px 20px;
             border-bottom: 1px solid #e0e0e0;
             font-weight: bold;
@@ -122,7 +141,7 @@
         }
 
         .highlight-price {
-            color: #00B14F; /* Giá tiền màu xanh Grab */
+            color: #00B14F;
             font-size: 18px;
             font-weight: 800;
         }
@@ -140,8 +159,8 @@
 
         /* NOTE */
         .shipper-note {
-            background-color: #e5f7ed; /* Nền xanh nhạt */
-            color: #00602b; /* Chữ xanh đậm */
+            background-color: #e5f7ed;
+            color: #00602b;
             padding: 15px;
             border-radius: 8px;
             font-size: 14px;
@@ -169,9 +188,10 @@
 <div class="email-wrapper">
     <div class="email-container">
         <div class="header">
-            <div class="logo-container">
-                <img src="https://images.icon-icons.com/2699/PNG/512/grab_logo_icon_169071.png"
-                     alt="GrabFood" class="logo-img">
+            <div class="header-logo">
+                <span class="header-logo-text">
+                    <span class="logo-fast">Fast</span><span class="logo-bite">Bite</span>
+                </span>
             </div>
             <h1>ĐƠN HÀNG ĐANG ĐẾN!</h1>
         </div>
@@ -215,12 +235,12 @@
             </div>
 
             <div style="margin-top: 30px; font-size: 13px; color: #888;">
-                Cảm ơn bạn đã sử dụng dịch vụ GrabFood! 💚
+                Cảm ơn bạn đã sử dụng dịch vụ FastBite! 💚
             </div>
         </div>
 
         <div class="footer">
-            <p>&copy; 2025 Grab. All rights reserved.</p>
+            <p>&copy; 2025 FastBite. All rights reserved.</p>
         </div>
     </div>
 </div>

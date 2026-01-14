@@ -9,6 +9,6 @@ public interface IPartnerOrderService {
     OrderResponse cancelOrder(Long userId, Long orderId);
     void markOrderAsDelivering(Long orderId);
     void markOrderAsCompleted(Long orderId);
-    //OrderResponse updateOrderStatus(Long userId, Long orderId, UpdateOrderStatusRequest request);
+    OrderResponse markOrderAsReady(Long userId, Long orderId);
     OrderResponse getOrderById(Long orderId);
 }

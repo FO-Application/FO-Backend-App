@@ -88,6 +88,9 @@ public class Order {
     @Column(name = "payment_method")
     PaymentMethod  paymentMethod;
 
+    @Column(name = "app_trans_id")
+    String appTransId;
+
     @CreationTimestamp
     LocalDateTime createdAt;
 

@@ -40,8 +40,8 @@ public class MerchantOrderController {
     }
 
     @Operation(
-            summary = "Chủ quán xác nhận đơn hàng (Nấu món)",
-            description = "Chuyển trạng thái từ CREATED -> PREPARING. Hệ thống sẽ tự động bắn event tìm Tài xế."
+            summary = "Chủ quán xác nhận đơn hàng (Bắt đầu nấu)",
+            description = "Chuyển trạng thái từ CREATED/PAID -> PREPARING. Hệ thống sẽ tự động bắn event tìm Tài xế."
     )
     @PutMapping("/{id}/confirm")
     public APIResponse<OrderResponse> confirmOrder(
@@ -59,8 +59,27 @@ public class MerchantOrderController {
     }
 
     @Operation(
+            summary = "Chủ quán báo món đã làm xong (Sẵn sàng giao)",
+            description = "Chuyển trạng thái từ PREPARING -> READY. Báo hiệu cho Shipper có thể vào lấy món."
+    )
+    @PutMapping("/{id}/ready")
+    public APIResponse<OrderResponse> markAsReady(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable("id") Long orderId
+    ) {
+        Long userId = Long.valueOf(jwt.getClaim("user-id").toString());
+
+        OrderResponse result = orderService.markOrderAsReady(userId, orderId);
+
+        return APIResponse.<OrderResponse>builder()
+                .result(result)
+                .message("Món ăn đã sẵn sàng (READY). Chờ shipper lấy hàng.")
+                .build();
+    }
+
+    @Operation(
             summary = "Chủ quán hủy đơn hàng",
-            description = "Chỉ hủy được khi đơn ở trạng thái CREATED hoặc PREPARING (tùy policy)."
+            description = "Chỉ hủy được khi đơn ở trạng thái CREATED, PAID hoặc PREPARING."
     )
     @PutMapping("/{id}/cancel")
     public APIResponse<OrderResponse> cancelOrder(

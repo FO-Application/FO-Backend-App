@@ -14,6 +14,7 @@ import com.fo_product.order_service.mappers.OrderMapper;
 import com.fo_product.order_service.models.entities.Order;
 import com.fo_product.order_service.models.entities.OrderItem;
 import com.fo_product.order_service.models.enums.OrderStatus;
+import com.fo_product.order_service.models.enums.PaymentMethod; // Nhớ import cái này
 import com.fo_product.order_service.models.repositories.OrderRepository;
 import com.fo_product.order_service.services.interfaces.IPartnerOrderService;
 import lombok.AccessLevel;
@@ -58,27 +59,31 @@ public class PartnerOrderService implements IPartnerOrderService {
         return result.map(mapper::response);
     }
 
+    // --- UPDATE 1: LOGIC XÁC NHẬN ĐƠN (CONFIRM) ---
     @Override
     @Transactional
     public OrderResponse confirmAndPrepareOrder(Long userId, Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderException(OrderErrorCode.ORDER_NOT_EXIST));
 
-        // 1. Check quyền chủ quán
         if (!checkMerchantOwnership(userId, order.getMerchantId())) {
             throw new OrderException(OrderErrorCode.INVALID_OWNER);
         }
 
-        // 2. Validate trạng thái: Phải là CREATED mới được xác nhận
-        if (order.getOrderStatus() != OrderStatus.CREATED) {
+        // Logic cũ: Chỉ check CREATED -> Sai nếu khách trả ZaloPay (PAID)
+        // Logic mới: Chấp nhận cả CREATED (COD) và PAID (ZaloPay)
+        if (order.getOrderStatus() != OrderStatus.CREATED && order.getOrderStatus() != OrderStatus.PAID) {
             throw new OrderException(OrderErrorCode.INVALID_ORDER_STATUS);
         }
 
-        // 3. Đổi trạng thái -> PREPARING
+        // (Optional) Kỹ tính hơn thì check: Nếu ZaloPay mà chưa PAID thì chặn
+        if (order.getPaymentMethod() != PaymentMethod.COD && order.getOrderStatus() == OrderStatus.CREATED) {
+            // throw new RuntimeException("Khách chưa thanh toán, không được nấu!");
+        }
+
         order.setOrderStatus(OrderStatus.PREPARING);
         Order savedOrder = orderRepository.save(order);
 
-        // 4. Bắn Event tìm tài xế ngay lập tức
         log.info("Merchant confirm đơn {}. Bắn event tìm Shipper!", orderId);
         OrderConfirmedEvent event = OrderConfirmedEvent.builder()
                 .orderId(order.getId())
@@ -96,6 +101,30 @@ public class PartnerOrderService implements IPartnerOrderService {
         return mapper.response(savedOrder);
     }
 
+    // --- UPDATE 2: THÊM HÀM MỚI (MARK READY) ---
+    @Override
+    @Transactional
+    public OrderResponse markOrderAsReady(Long userId, Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderException(OrderErrorCode.ORDER_NOT_EXIST));
+
+        if (!checkMerchantOwnership(userId, order.getMerchantId())) {
+            throw new OrderException(OrderErrorCode.INVALID_OWNER);
+        }
+
+        // Phải đang nấu (PREPARING) thì mới xong được
+        if (order.getOrderStatus() != OrderStatus.PREPARING) {
+            throw new OrderException(OrderErrorCode.INVALID_ORDER_STATUS);
+        }
+
+        log.info("Merchant đã nấu xong đơn {}. Chuyển sang READY.", orderId);
+        order.setOrderStatus(OrderStatus.READY);
+
+        // TODO: Bắn notification cho Shipper nếu cần
+
+        return mapper.response(orderRepository.save(order));
+    }
+
     @Override
     public OrderResponse cancelOrder(Long userId, Long orderId) {
         Order order = orderRepository.findById(orderId)
@@ -105,25 +134,28 @@ public class PartnerOrderService implements IPartnerOrderService {
             throw new OrderException(OrderErrorCode.INVALID_OWNER);
         }
 
-        // Chỉ đơn mới được hủy (Đang nấu dở thì tùy chính sách, ở đây cho hủy luôn)
-        if (order.getOrderStatus() != OrderStatus.CREATED && order.getOrderStatus() != OrderStatus.PREPARING) {
+        // Chỉ đơn mới được hủy
+        if (order.getOrderStatus() != OrderStatus.CREATED
+                && order.getOrderStatus() != OrderStatus.PAID // Thêm PAID vào để hủy đơn đã thanh toán
+                && order.getOrderStatus() != OrderStatus.PREPARING) {
             throw new OrderException(OrderErrorCode.INVALID_ORDER_STATUS);
         }
 
         order.setOrderStatus(OrderStatus.CANCELED);
-        // TODO: Nếu khách trả tiền rồi thì bắn event hoàn tiền ở đây
+        // TODO: Nếu khách trả tiền rồi thì logic hoàn tiền (Refund) sẽ nằm ở đây
 
         return mapper.response(orderRepository.save(order));
     }
 
+    // --- UPDATE 3: LOGIC SHIPPER LẤY HÀNG ---
     @Override
     public void markOrderAsDelivering(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderException(OrderErrorCode.ORDER_NOT_EXIST));
 
-        // Logic: Phải đang PREPARING (Đang nấu/Đã nấu xong) thì mới lấy hàng được
-        if (order.getOrderStatus() != OrderStatus.PREPARING) {
-            // Có thể thêm log warning
+        // Logic cũ: Chỉ check PREPARING -> Thiếu READY
+        // Logic mới: Cho phép lấy hàng khi đang Nấu (PREPARING) hoặc Đã xong (READY)
+        if (order.getOrderStatus() != OrderStatus.PREPARING && order.getOrderStatus() != OrderStatus.READY) {
             throw new OrderException(OrderErrorCode.INVALID_ORDER_STATUS);
         }
 
@@ -131,7 +163,6 @@ public class PartnerOrderService implements IPartnerOrderService {
         order.setOrderStatus(OrderStatus.DELIVERING);
         orderRepository.save(order);
 
-        // Bắn event báo khách (Notification Service sẽ nghe cái này)
         OrderDeliveringEvent event = OrderDeliveringEvent.builder()
                 .orderId(order.getId())
                 .customerName(order.getCustomerName())
@@ -152,7 +183,6 @@ public class PartnerOrderService implements IPartnerOrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderException(OrderErrorCode.ORDER_NOT_EXIST));
 
-        // Logic: Phải đang đi giao (DELIVERING) thì mới hoàn thành được
         if (order.getOrderStatus() != OrderStatus.DELIVERING) {
             throw new OrderException(OrderErrorCode.INVALID_ORDER_STATUS);
         }
@@ -161,11 +191,10 @@ public class PartnerOrderService implements IPartnerOrderService {
         order.setOrderStatus(OrderStatus.COMPLETED);
         orderRepository.save(order);
 
-        // Bắn event tính tiền (Revenue)
         OrderCompletedEvent event = OrderCompletedEvent.builder()
                 .orderId(order.getId())
                 .merchantId(order.getMerchantId())
-                .orderAmount(order.getGrandTotal()) // Tổng tiền để cộng doanh thu
+                .orderAmount(order.getGrandTotal())
                 .build();
         kafkaProducerService.sendOrderCompletedEvent(event);
     }
