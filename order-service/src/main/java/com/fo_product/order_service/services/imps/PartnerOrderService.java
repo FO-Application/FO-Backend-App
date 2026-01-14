@@ -1,20 +1,17 @@
 package com.fo_product.order_service.services.imps;
 
-import com.fo_product.order_service.clients.MerchantClient;
 import com.fo_product.order_service.dtos.feigns.RestaurantDTO;
 import com.fo_product.order_service.dtos.responses.OrderResponse;
 import com.fo_product.order_service.exceptions.OrderException;
 import com.fo_product.order_service.exceptions.codes.OrderErrorCode;
 import com.fo_product.order_service.helpers.GetClientDTO;
 import com.fo_product.order_service.kafka.KafkaProducerService;
-import com.fo_product.order_service.kafka.events.OrderCompletedEvent;
-import com.fo_product.order_service.kafka.events.OrderConfirmedEvent;
-import com.fo_product.order_service.kafka.events.OrderDeliveringEvent;
+import com.fo_product.order_service.kafka.events.*; // Import hết events
 import com.fo_product.order_service.mappers.OrderMapper;
 import com.fo_product.order_service.models.entities.Order;
 import com.fo_product.order_service.models.entities.OrderItem;
 import com.fo_product.order_service.models.enums.OrderStatus;
-import com.fo_product.order_service.models.enums.PaymentMethod; // Nhớ import cái này
+import com.fo_product.order_service.models.enums.PaymentMethod;
 import com.fo_product.order_service.models.repositories.OrderRepository;
 import com.fo_product.order_service.services.interfaces.IPartnerOrderService;
 import lombok.AccessLevel;
@@ -49,17 +46,16 @@ public class PartnerOrderService implements IPartnerOrderService {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
-        Page<Order> result;
         if (status != null && !status.isEmpty()) {
-            result = orderRepository.findByMerchantIdAndOrderStatus(merchantId, OrderStatus.valueOf(status), pageable);
+            return orderRepository.findByMerchantIdAndOrderStatus(merchantId, OrderStatus.valueOf(status), pageable)
+                    .map(mapper::response);
         } else {
-            result = orderRepository.findByMerchantId(merchantId, pageable);
+            return orderRepository.findByMerchantId(merchantId, pageable)
+                    .map(mapper::response);
         }
-
-        return result.map(mapper::response);
     }
 
-    // --- UPDATE 1: LOGIC XÁC NHẬN ĐƠN (CONFIRM) ---
+    // --- XÁC NHẬN ĐƠN (CONFIRM) ---
     @Override
     @Transactional
     public OrderResponse confirmAndPrepareOrder(Long userId, Long orderId) {
@@ -70,15 +66,8 @@ public class PartnerOrderService implements IPartnerOrderService {
             throw new OrderException(OrderErrorCode.INVALID_OWNER);
         }
 
-        // Logic cũ: Chỉ check CREATED -> Sai nếu khách trả ZaloPay (PAID)
-        // Logic mới: Chấp nhận cả CREATED (COD) và PAID (ZaloPay)
         if (order.getOrderStatus() != OrderStatus.CREATED && order.getOrderStatus() != OrderStatus.PAID) {
             throw new OrderException(OrderErrorCode.INVALID_ORDER_STATUS);
-        }
-
-        // (Optional) Kỹ tính hơn thì check: Nếu ZaloPay mà chưa PAID thì chặn
-        if (order.getPaymentMethod() != PaymentMethod.COD && order.getOrderStatus() == OrderStatus.CREATED) {
-            // throw new RuntimeException("Khách chưa thanh toán, không được nấu!");
         }
 
         order.setOrderStatus(OrderStatus.PREPARING);
@@ -101,7 +90,7 @@ public class PartnerOrderService implements IPartnerOrderService {
         return mapper.response(savedOrder);
     }
 
-    // --- UPDATE 2: THÊM HÀM MỚI (MARK READY) ---
+    // --- BÁO MÓN XONG (MARK READY) ---
     @Override
     @Transactional
     public OrderResponse markOrderAsReady(Long userId, Long orderId) {
@@ -112,20 +101,28 @@ public class PartnerOrderService implements IPartnerOrderService {
             throw new OrderException(OrderErrorCode.INVALID_OWNER);
         }
 
-        // Phải đang nấu (PREPARING) thì mới xong được
         if (order.getOrderStatus() != OrderStatus.PREPARING) {
             throw new OrderException(OrderErrorCode.INVALID_ORDER_STATUS);
         }
 
         log.info("Merchant đã nấu xong đơn {}. Chuyển sang READY.", orderId);
         order.setOrderStatus(OrderStatus.READY);
+        Order savedOrder = orderRepository.save(order);
 
-        // TODO: Bắn notification cho Shipper nếu cần
+        // [FIXED]: Lấy shipperId từ DB (đã được Consumer cập nhật trước đó)
+        OrderReadyEvent event = OrderReadyEvent.builder()
+                .orderId(savedOrder.getId())
+                .merchantId(savedOrder.getMerchantId())
+                .shipperId(savedOrder.getShipperId())
+                .build();
+        kafkaProducerService.sendOrderReadyEvent(event);
 
-        return mapper.response(orderRepository.save(order));
+        return mapper.response(savedOrder);
     }
 
+    // --- HỦY ĐƠN (CANCEL) ---
     @Override
+    @Transactional
     public OrderResponse cancelOrder(Long userId, Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderException(OrderErrorCode.ORDER_NOT_EXIST));
@@ -134,27 +131,39 @@ public class PartnerOrderService implements IPartnerOrderService {
             throw new OrderException(OrderErrorCode.INVALID_OWNER);
         }
 
-        // Chỉ đơn mới được hủy
         if (order.getOrderStatus() != OrderStatus.CREATED
-                && order.getOrderStatus() != OrderStatus.PAID // Thêm PAID vào để hủy đơn đã thanh toán
+                && order.getOrderStatus() != OrderStatus.PAID
                 && order.getOrderStatus() != OrderStatus.PREPARING) {
             throw new OrderException(OrderErrorCode.INVALID_ORDER_STATUS);
         }
 
         order.setOrderStatus(OrderStatus.CANCELED);
-        // TODO: Nếu khách trả tiền rồi thì logic hoàn tiền (Refund) sẽ nằm ở đây
+        Order savedOrder = orderRepository.save(order);
 
-        return mapper.response(orderRepository.save(order));
+        // [ADDED]: Bắn event Hủy đơn để hoàn tiền và báo khách
+        OrderCancelledEvent event = OrderCancelledEvent.builder()
+                .orderId(savedOrder.getId())
+                .merchantId(savedOrder.getMerchantId())
+                .userId(savedOrder.getUserId())
+                .cancelledBy("MERCHANT")
+                .reason("Chủ quán hủy đơn")
+                .amount(savedOrder.getGrandTotal())
+                .paymentMethod(savedOrder.getPaymentMethod().name())
+                .cancelledAt(java.time.LocalDateTime.now())
+                .build();
+
+        kafkaProducerService.sendOrderCancelledEvent(event);
+
+        return mapper.response(savedOrder);
     }
 
-    // --- UPDATE 3: LOGIC SHIPPER LẤY HÀNG ---
+    // ... (Các hàm markOrderAsDelivering, markOrderAsCompleted giữ nguyên như cũ)
     @Override
     public void markOrderAsDelivering(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderException(OrderErrorCode.ORDER_NOT_EXIST));
 
-        // Logic cũ: Chỉ check PREPARING -> Thiếu READY
-        // Logic mới: Cho phép lấy hàng khi đang Nấu (PREPARING) hoặc Đã xong (READY)
+        // Cho phép từ PREPARING hoặc READY chuyển sang DELIVERING
         if (order.getOrderStatus() != OrderStatus.PREPARING && order.getOrderStatus() != OrderStatus.READY) {
             throw new OrderException(OrderErrorCode.INVALID_ORDER_STATUS);
         }
@@ -199,15 +208,11 @@ public class PartnerOrderService implements IPartnerOrderService {
         kafkaProducerService.sendOrderCompletedEvent(event);
     }
 
+    // ... Helper private method ...
     private boolean checkMerchantOwnership(Long userId, Long merchantId) {
         RestaurantDTO restaurant = getClientDTO.getRestaurantDTO(merchantId);
-
-        if (restaurant == null)
-            return false;
-
-        if (restaurant.user() == null || !restaurant.user().id().equals(userId))
-            return false;
-
+        if (restaurant == null) return false;
+        if (restaurant.user() == null || !restaurant.user().id().equals(userId)) return false;
         return true;
     }
 
@@ -216,7 +221,6 @@ public class PartnerOrderService implements IPartnerOrderService {
     public OrderResponse getOrderById(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderException(OrderErrorCode.ORDER_NOT_EXIST));
-
         return mapper.response(order);
     }
 }

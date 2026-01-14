@@ -9,8 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -24,4 +22,5 @@ public class KafkaConsumerService {
         // Ủy quyền xử lý tìm kiếm
         orderMatchingService.processMatching(event);
     }
+
 }

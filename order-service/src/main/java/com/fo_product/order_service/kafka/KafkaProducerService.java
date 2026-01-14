@@ -1,9 +1,6 @@
 package com.fo_product.order_service.kafka;
 
-import com.fo_product.order_service.kafka.events.OrderCompletedEvent;
-import com.fo_product.order_service.kafka.events.OrderConfirmedEvent;
-import com.fo_product.order_service.kafka.events.OrderCreatedEvent;
-import com.fo_product.order_service.kafka.events.OrderDeliveringEvent;
+import com.fo_product.order_service.kafka.events.*;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -61,6 +58,34 @@ public class KafkaProducerService {
                 .setHeader(KafkaHeaders.TOPIC, "order-created-topic")
                 .build();
 
+        kafkaTemplate.send(message);
+    }
+
+    public void sendOrderPaidEvent(OrderPaidEvent event) {
+        log.info("Order Service: Bắn sự kiện thanh toán thành công MỚI cho đơn có mã ID {}", event.getOrderId());
+        Message<OrderPaidEvent> message = MessageBuilder
+                .withPayload(event)
+                .setHeader(KafkaHeaders.TOPIC, "order-paid-topic")
+                .build();
+
+        kafkaTemplate.send(message);
+    }
+
+    public void sendOrderCancelledEvent(OrderCancelledEvent event) {
+        log.info("Order Service: Bắn sự kiện HỦY ĐƠN {} do {}", event.getOrderId(), event.getCancelledBy());
+        Message<OrderCancelledEvent> message = MessageBuilder
+                .withPayload(event)
+                .setHeader(KafkaHeaders.TOPIC, "order-cancelled-topic")
+                .build();
+        kafkaTemplate.send(message);
+    }
+
+    public void sendOrderReadyEvent(OrderReadyEvent event) {
+        log.info("Order Service: Bắn sự kiện MÓN ĐÃ XONG (READY) cho đơn {}", event.getOrderId());
+        Message<OrderReadyEvent> message = MessageBuilder
+                .withPayload(event)
+                .setHeader(KafkaHeaders.TOPIC, "order-ready-topic")
+                .build();
         kafkaTemplate.send(message);
     }
 }

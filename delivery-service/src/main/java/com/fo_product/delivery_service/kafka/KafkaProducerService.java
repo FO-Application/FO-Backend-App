@@ -1,5 +1,6 @@
 package com.fo_product.delivery_service.kafka;
 
+import com.fo_product.delivery_service.kafka.events.ShipperAssignedEvent;
 import com.fo_product.delivery_service.kafka.events.ShipperFoundEvent;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,15 @@ public class KafkaProducerService {
         Message<ShipperFoundEvent> message = MessageBuilder
                 .withPayload(event)
                 .setHeader(KafkaHeaders.TOPIC, "shipper-found-topic")
+                .build();
+        kafkaTemplate.send(message);
+    }
+
+    public void sendShipperAssignedEvent(ShipperAssignedEvent event) {
+        log.info("Shipper {} đã nhận đơn {}. Báo cho Order Service...", event.getShipperId(), event.getOrderId());
+        Message<ShipperAssignedEvent> message = MessageBuilder
+                .withPayload(event)
+                .setHeader(KafkaHeaders.TOPIC, "shipper-assigned-topic")
                 .build();
         kafkaTemplate.send(message);
     }

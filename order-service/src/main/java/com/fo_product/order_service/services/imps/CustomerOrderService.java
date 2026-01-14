@@ -12,6 +12,7 @@ import com.fo_product.order_service.exceptions.OrderException;
 import com.fo_product.order_service.exceptions.codes.OrderErrorCode;
 import com.fo_product.order_service.helpers.GetClientDTO;
 import com.fo_product.order_service.kafka.KafkaProducerService;
+import com.fo_product.order_service.kafka.events.OrderCancelledEvent;
 import com.fo_product.order_service.kafka.events.OrderCreatedEvent;
 import com.fo_product.order_service.mappers.OrderMapper;
 import com.fo_product.order_service.models.entities.Order;
@@ -190,12 +191,6 @@ public class CustomerOrderService implements ICustomerOrderService {
     }
 
     @Override
-    public OrderStatusResponse checkOrderStatus(Long orderId) {
-
-        return null;
-    }
-
-    @Override
     @Transactional(readOnly = true)
     public Page<OrderResponse> getMyOrders(Long userId, int page, int size) {
         Pageable pageable =  PageRequest.of(page, size, Sort.by("createdAt").descending());
@@ -224,7 +219,20 @@ public class CustomerOrderService implements ICustomerOrderService {
             throw new OrderException(OrderErrorCode.CANNOT_CANCEL_ORDER);
 
         order.setOrderStatus(OrderStatus.CANCELED);
-        Order result = orderRepository.save(order);
-        return mapper.response(result);
+        Order savedOrder = orderRepository.save(order);
+
+        OrderCancelledEvent event = OrderCancelledEvent.builder()
+                .orderId(savedOrder.getId())
+                .merchantId(savedOrder.getMerchantId())
+                .userId(savedOrder.getUserId())
+                .cancelledBy("CUSTOMER")
+                .reason("Khách hàng tự hủy")
+                .amount(savedOrder.getGrandTotal())
+                .paymentMethod(savedOrder.getPaymentMethod().name())
+                .cancelledAt(java.time.LocalDateTime.now())
+                .build();
+
+        kafkaProducerService.sendOrderCancelledEvent(event);
+        return mapper.response(savedOrder);
     }
 }

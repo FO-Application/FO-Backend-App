@@ -86,4 +86,35 @@ public class NotificationService implements INotificationService {
             }
         }
     }
+
+    @Override
+    public void sendNotificationToTopic(String topic, String title, String body, Long orderId) {
+        try {
+            // 1. Lưu log vào DB (Optional - tùy bạn muốn lưu hay không)
+            // Nếu lưu thì để recipientId = null hoặc 0 vì gửi cho nhiều người
+            Notification notification = Notification.builder()
+                    .recipientId(0L) // 0 đại diện cho Topic
+                    .title(title + " [Topic: " + topic + "]")
+                    .message(body)
+                    .referenceId(orderId)
+                    .build();
+            notificationRepository.save(notification);
+
+            // 2. Gửi Firebase Topic
+            Message message = Message.builder()
+                    .setTopic(topic)
+                    .setNotification(com.google.firebase.messaging.Notification.builder()
+                            .setTitle(title)
+                            .setBody(body)
+                            .build())
+                    .putData("orderId", String.valueOf(orderId))
+                    .build();
+
+            FirebaseMessaging.getInstance().send(message);
+            log.info("Đã gửi thông báo tới Topic: {}", topic);
+
+        } catch (Exception e) {
+            log.error("Lỗi gửi FCM Topic: ", e);
+        }
+    }
 }

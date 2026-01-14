@@ -29,6 +29,9 @@ public class Order {
     @Column(name = "user_id", nullable = false)
     Long userId;
 
+    @Column(name = "user_id", nullable = false)
+    Long shipperId;
+
     @Column(name = "merchant_id", nullable = false)
     Long merchantId;
 

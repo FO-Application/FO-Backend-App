@@ -1,5 +1,7 @@
 package com.fo_product.delivery_service.services.imps;
 
+import com.fo_product.delivery_service.dtos.feigns.OrderDTO;
+import com.fo_product.delivery_service.helpers.GetClientDTO;
 import com.fo_product.delivery_service.kafka.KafkaProducerService;
 import com.fo_product.delivery_service.kafka.events.OrderConfirmedEvent;
 import com.fo_product.delivery_service.kafka.events.ShipperFoundEvent;
@@ -22,6 +24,7 @@ public class OrderMatchingService implements IOrderMatchingService {
     private final ShipperLocationService locationService;
     private final KafkaProducerService kafkaProducerService;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final GetClientDTO getClientDTO;
     private final Gson gson = new Gson();
 
     private static final String PENDING_ORDER_KEY = "pending_matching_orders";
@@ -49,12 +52,13 @@ public class OrderMatchingService implements IOrderMatchingService {
             // --- TRƯỜNG HỢP A: TÌM THẤY ---
             log.info("Tìm thấy {} shipper cho đơn {}", shipperIds.size(), orderEvent.orderId());
 
+            OrderDTO orderRes = getClientDTO.getOrderDTO(orderEvent.orderId());
             // Gửi thông báo cho TẤT CẢ shipper tìm thấy (hoặc chỉ 1 người tùy thuật toán)
             for (Long shipperId : shipperIds) {
                 ShipperFoundEvent event = ShipperFoundEvent.builder()
                         .shipperId(shipperId)
                         .orderId(orderEvent.orderId())
-                        .pickupAddress(orderEvent.deliveryAddress()) // Map tạm
+                        .pickupAddress(orderRes.merchantName())
                         .lat(orderEvent.merchantLatitude())
                         .lon(orderEvent.merchantLongitude())
                         .shippingFee(orderEvent.shippingFee())
