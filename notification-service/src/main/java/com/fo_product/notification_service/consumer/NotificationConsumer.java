@@ -17,7 +17,6 @@ import org.springframework.stereotype.Component;
 public class NotificationConsumer {
     IMailSenderService mailSenderService;
     INotificationService notificationService;
-    // ObjectMapper objectMapper; // Không cần dùng cái này nữa vì Spring tự parse rồi
 
     // --- 1. EMAIL OTP ---
     @KafkaListener(topics = "otp-mail-sender-topic", groupId = "notification-service-group")

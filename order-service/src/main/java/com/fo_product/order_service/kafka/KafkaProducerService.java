@@ -88,4 +88,13 @@ public class KafkaProducerService {
                 .build();
         kafkaTemplate.send(message);
     }
+
+    public void sendReviewCreatedEvent(ReviewCreatedEvent event) {
+        log.info("Order Service: Bắn sự kiện đánh giá đơn hàng ĐÃ XONG (READY) cho nhà hàng có ID {}", event.getMerchantId());
+        Message<ReviewCreatedEvent> message = MessageBuilder
+                .withPayload(event)
+                .setHeader(KafkaHeaders.TOPIC, "review-created-topic")
+                .build();
+        kafkaTemplate.send(message);
+    }
 }

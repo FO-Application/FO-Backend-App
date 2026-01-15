@@ -6,6 +6,8 @@ import com.fo_product.order_service.exceptions.OrderException;
 import com.fo_product.order_service.exceptions.ReviewException;
 import com.fo_product.order_service.exceptions.codes.OrderErrorCode;
 import com.fo_product.order_service.exceptions.codes.ReviewErrorCode;
+import com.fo_product.order_service.kafka.KafkaProducerService;
+import com.fo_product.order_service.kafka.events.ReviewCreatedEvent;
 import com.fo_product.order_service.mappers.ReviewMapper;
 import com.fo_product.order_service.models.entities.Order;
 import com.fo_product.order_service.models.entities.Review;
@@ -30,6 +32,7 @@ public class ReviewService implements IReviewService {
     OrderRepository orderRepository;
     ReviewRepository reviewRepository;
     ReviewMapper mapper;
+    KafkaProducerService kafkaProducerService;
 
     @Override
     @Transactional
@@ -55,6 +58,14 @@ public class ReviewService implements IReviewService {
                 .build();
 
         Review result = reviewRepository.save(review);
+
+        ReviewCreatedEvent reviewCreatedEvent = ReviewCreatedEvent.builder()
+                .merchantId(review.getMerchantId())
+                .rating(review.getRating())
+                .build();
+
+        kafkaProducerService.sendReviewCreatedEvent(reviewCreatedEvent);
+
         return mapper.response(result);
     }
 
