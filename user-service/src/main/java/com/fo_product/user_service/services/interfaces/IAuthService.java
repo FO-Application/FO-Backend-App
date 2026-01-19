@@ -14,10 +14,10 @@ public interface IAuthService {
     PendingUserResponse createPendingUser(UserRequest request, String role);
     UserResponse verifyAndCreateUser(VerifyOtpRequest request);
     void resendOtp(EmailRequest request);
+    AuthenticationDTO loginWithFirebase(SocialLoginRequest request);
     AuthenticationDTO authentication(AuthenticateRequest request);
     AuthenticationDTO refreshToken(String refreshToken) throws ParseException, JOSEException;
     void sendForgotPasswordOTP(String email);
     void forgotPassword(NewPasswordRequest request);
     void logout(String refreshToken) throws ParseException, JOSEException;
-    AuthenticationDTO loginWithGoogle(GoogleLoginRequest request);
 }

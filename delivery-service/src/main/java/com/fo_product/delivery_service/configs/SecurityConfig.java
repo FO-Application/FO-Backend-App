@@ -1,5 +1,6 @@
 package com.fo_product.delivery_service.configs;
 
+import com.fo_product.common_lib.filters.CustomJwtAuthenticationEntryPoint;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,6 +36,12 @@ public class SecurityConfig {
             "/swagger-ui.html"
     };
 
+    private final CustomJwtAuthenticationEntryPoint customJwtAuthenticationEntryPoint;
+
+    public SecurityConfig(CustomJwtAuthenticationEntryPoint customJwtAuthenticationEntryPoint) {
+        this.customJwtAuthenticationEntryPoint = customJwtAuthenticationEntryPoint;
+    }
+
     @Bean
     public SecurityFilterChain filterChain (HttpSecurity http) throws Exception {
         return http
@@ -54,6 +61,7 @@ public class SecurityConfig {
                                                 .decoder(jwtDecoder())
                                                 .jwtAuthenticationConverter(jwtAuthenticationConverter())
                                 )
+                                .authenticationEntryPoint(customJwtAuthenticationEntryPoint)
                 )
 
                 .sessionManagement(session ->

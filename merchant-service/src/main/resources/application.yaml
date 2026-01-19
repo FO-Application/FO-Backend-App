@@ -37,6 +37,11 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
 
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
+
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
     producer:

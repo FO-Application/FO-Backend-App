@@ -1,5 +1,6 @@
 package com.fo_product.api_gateway.configs;
 
+import com.fo_product.api_gateway.filters.CustomAuthenticationConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,6 +28,20 @@ public class SecurityConfig {
     @Value("${spring.security.oauth2.resourceserver.jwt.jws-algorithms}")
     private String ALGORITHM;
 
+    private final CustomAuthenticationConverter customAuthenticationConverter;
+
+    public SecurityConfig(CustomAuthenticationConverter customAuthenticationConverter) {
+        this.customAuthenticationConverter = customAuthenticationConverter;
+    }
+
+    private static final String[] PUBLIC_MATCHERS = {
+            "/api/v1/auth/**",
+            "/api/v1/user/me",
+            "/v3/api-docs/**",
+            "/swagger-ui/**",
+            "/swagger-ui.html"
+    };
+
     @Bean
     public SecurityWebFilterChain filterChain(ServerHttpSecurity http, CorsConfigurationSource corsConfigurationSource) {
         return http
@@ -34,7 +49,10 @@ public class SecurityConfig {
 
                 .cors(corsSpec -> corsSpec.configurationSource(corsConfigurationSource))
 
-                .authorizeExchange(exchange -> exchange.anyExchange().permitAll())
+                .authorizeExchange(exchange -> exchange
+                        .pathMatchers(PUBLIC_MATCHERS).permitAll()
+                        .anyExchange().authenticated()
+                )
 
                 .oauth2ResourceServer(oauth2 ->
                         oauth2
@@ -42,6 +60,7 @@ public class SecurityConfig {
                                         .jwtDecoder(jwtDecoder())
                                         .jwtAuthenticationConverter(reactiveJwtAuthenticationConverter())
                         )
+                                .bearerTokenConverter(customAuthenticationConverter)
                 )
                 .build();
     }

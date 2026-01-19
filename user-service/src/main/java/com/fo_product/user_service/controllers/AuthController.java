@@ -135,39 +135,10 @@ public class AuthController {
                 .build();
     }
 
-    @Operation(
-            summary = "Đăng nhập bằng Google (Exchange Token)",
-            description = """
-                    Nhận Google ID Token từ Client (Web/Mobile), xác thực với Google Server.
-                    Nếu hợp lệ, hệ thống sẽ:
-                    1. Tạo hoặc cập nhật User trong Database.
-                    2. Trả về Access Token & Refresh Token trong Body response.
-                    3. Tự động Set Access Token & Refresh Token vào HttpOnly Cookie (để bảo mật hơn cho Web).
-                    """,
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Đăng nhập thành công",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    schema = @Schema(implementation = AuthenticationResponse.class)
-                            )
-                    ),
-                    @ApiResponse(
-                            responseCode = "400",
-                            description = "Token Google không hợp lệ hoặc đã hết hạn",
-                            content = @Content
-                    ),
-                    @ApiResponse(
-                            responseCode = "500",
-                            description = "Lỗi kết nối đến Google hoặc lỗi xử lý nội bộ",
-                            content = @Content
-                    )
-            }
-    )
-    @PostMapping("/outbound/google")
-    public APIResponse<AuthenticationResponse> loginWithGoogle(@RequestBody GoogleLoginRequest request, HttpServletResponse httpServletResponse) {
-        AuthenticationDTO result = authService.loginWithGoogle(request);
+    @Operation(summary = "Đăng nhập bằng Mạng xã hội (Google/Facebook)", description = "Frontend dùng Firebase SDK login, lấy ID Token rồi gửi vào đây.")
+    @PostMapping("/outbound/social-login")
+    public APIResponse<AuthenticationResponse> socialLogin(@RequestBody @Valid SocialLoginRequest request, HttpServletResponse httpServletResponse) {
+        AuthenticationDTO result = authService.loginWithFirebase(request);
         ResponseCookie accessToken = authCookieService.setAccessToken(result.accessToken());
         ResponseCookie refreshToken = authCookieService.setRefreshToken(result.refreshToken());
 
@@ -180,8 +151,10 @@ public class AuthController {
                 .role(result.role())
                 .authenticated(true)
                 .build();
+
         return APIResponse.<AuthenticationResponse>builder()
                 .result(response)
+                .message("Login success")
                 .build();
     }
 

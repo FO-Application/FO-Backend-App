@@ -24,6 +24,8 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseToken;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.AccessLevel;
@@ -61,7 +63,6 @@ public class AuthService implements IAuthService {
     PendingUserRepository pendingUserRepository;
     UserMapper userMapper;
     RoleRepository roleRepository;
-    RestTemplate restTemplate;
 
     @Override
     @Transactional
@@ -163,6 +164,91 @@ public class AuthService implements IAuthService {
     }
 
     @Override
+    @Transactional
+    public AuthenticationDTO loginWithFirebase(SocialLoginRequest request) {
+        try {
+            // 1. Verify Token bằng Firebase Admin SDK
+            // Hàm này sẽ tự động check chữ ký, hạn sử dụng, và gọi sang Google nếu cần
+            FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(request.token());
+
+            // 2. Lấy thông tin User từ Token đã giải mã
+            String uid = decodedToken.getUid();
+            String email = decodedToken.getEmail();
+            String name = decodedToken.getName();
+            String picture = decodedToken.getPicture(); // Avatar
+
+            // Lấy provider (google.com, facebook.com, password...)
+            Map<String, Object> firebaseClaim = (Map<String, Object>) decodedToken.getClaims().get("firebase");
+            String signInProvider = (String) firebaseClaim.get("sign_in_provider");
+
+            // 3. Logic xử lý User trong DB
+            if (email == null) {
+                // Một số trường hợp FB/Login SĐT không trả về email -> Bắt lỗi
+                throw new UserException(UserErrorCode.INVALID_SOCIAL_TOKEN);
+            }
+
+            User user = userRepository.findByEmail(email).orElse(null);
+
+            if (user == null) {
+                // --- TRƯỜNG HỢP A: USER MỚI -> TẠO MỚI ---
+                Role role = roleRepository.findByName("CUSTOMER")
+                        .orElseThrow(() -> new UserException(UserErrorCode.ROLE_NOT_EXIST));
+
+                // Tách name thành First/Last name (Vì DB lưu riêng)
+                String firstName = name;
+                String lastName = "";
+                if (name != null && name.contains(" ")) {
+                    int lastSpaceIdx = name.lastIndexOf(" ");
+                    firstName = name.substring(0, lastSpaceIdx);
+                    lastName = name.substring(lastSpaceIdx + 1);
+                }
+
+                user = User.builder()
+                        .email(email)
+                        .firstName(firstName)
+                        .lastName(lastName)
+                        .userStatus(true) // Active luôn
+                        .providerId(uid)  // Lưu UID của Firebase
+                        .authProvider(convertProvider(signInProvider))
+                        .role(role)
+                        // .avatar(picture) // Nếu Entity User có trường avatar thì set vào đây
+                        .build();
+
+                user = userRepository.save(user);
+            } else {
+                // --- TRƯỜNG HỢP B: USER ĐÃ TỒN TẠI -> CẬP NHẬT ---
+                // Nếu trước đây đăng ký LOCAL, giờ đăng nhập Google -> Cập nhật provider
+                if (user.getAuthProvider() == AuthProvider.LOCAL) {
+                    user.setAuthProvider(convertProvider(signInProvider));
+                    user.setProviderId(uid);
+                    userRepository.save(user);
+                }
+            }
+
+            // 4. Sinh JWT Token của hệ thống mình (Internal Token)
+            String roleName = user.getRole().getName();
+            JwtService.TokenPair tokenPair = jwtService.generateTokenPair(user);
+
+            return AuthenticationDTO.builder()
+                    .accessToken(tokenPair.getAccessToken())
+                    .refreshToken(tokenPair.getRefreshToken())
+                    .role(roleName)
+                    .build();
+
+        } catch (Exception e) {
+            log.error("Lỗi xác thực Firebase: ", e);
+            throw new UserException(UserErrorCode.UNAUTHENTICATED);
+        }
+    }
+
+    // Hàm phụ trợ để chuyển đổi chuỗi provider của Firebase sang Enum của mình
+    private AuthProvider convertProvider(String provider) {
+        if (provider.contains("google")) return AuthProvider.GOOGLE;
+        if (provider.contains("facebook")) return AuthProvider.FACEBOOK;
+        return AuthProvider.LOCAL;
+    }
+
+    @Override
     public AuthenticationDTO authentication(AuthenticateRequest request) {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_EXIST));
@@ -220,86 +306,6 @@ public class AuthService implements IAuthService {
 
         SignedJWT token = jwtService.verifyToken(refreshToken, "refresh");
         jwtService.invalidatedToken(token);
-    }
-
-    @Override
-    @Transactional
-    public AuthenticationDTO loginWithGoogle(GoogleLoginRequest request) {
-        try {
-            // 1. Lấy Access Token từ Frontend (chuỗi ya29...)
-            String accessToken = request.token();
-
-            // 2. Gọi API của Google để lấy thông tin User
-            String googleUserInfoUri = "https://www.googleapis.com/oauth2/v3/userinfo";
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(accessToken); // Gắn token vào Header "Authorization: Bearer ..."
-            HttpEntity<String> entity = new HttpEntity<>(headers);
-
-            // Thực hiện gọi API
-            ResponseEntity<Map> response = restTemplate.exchange(
-                    googleUserInfoUri,
-                    HttpMethod.GET,
-                    entity,
-                    Map.class
-            );
-
-            Map<String, Object> userInfo = response.getBody();
-
-            // Kiểm tra nếu không lấy được dữ liệu
-            if (userInfo == null || userInfo.get("email") == null) {
-                throw new UserException(UserErrorCode.UNAUTHENTICATED);
-            }
-
-            // 3. Trích xuất thông tin từ Google trả về
-            // Access Token trả về field hơi khác ID Token một chút, chuẩn là như sau:
-            String email = (String) userInfo.get("email");
-            String firstName = (String) userInfo.get("given_name");
-            String lastName = (String) userInfo.get("family_name");
-            String googleId = (String) userInfo.get("sub");
-
-            // 4. Kiểm tra User trong DB (GIỮ NGUYÊN LOGIC CŨ CỦA BẠN)
-            User user = userRepository.findByEmail(email).orElse(null);
-
-            if (user == null) {
-                // TRƯỜNG HỢP 1: User chưa tồn tại -> Tự động đăng ký
-                Role role = roleRepository.findByName("CUSTOMER")
-                        .orElseThrow(() -> new UserException(UserErrorCode.ROLE_NOT_EXIST));
-
-                user = User.builder()
-                        .email(email)
-                        .firstName(firstName)
-                        .lastName(lastName)
-                        .userStatus(true)
-                        .providerId(googleId)
-                        .authProvider(AuthProvider.GOOGLE)
-                        .role(role)
-                        .build();
-
-                user = userRepository.save(user);
-            } else {
-                // TRƯỜNG HỢP 2: User đã tồn tại -> Update Provider nếu cần
-                if (user.getAuthProvider() == null) {
-                    user.setAuthProvider(AuthProvider.GOOGLE);
-                    userRepository.save(user);
-                }
-                // Nếu là LOCAL thì kệ, cho login luôn
-            }
-
-            // 5. Sinh Token hệ thống trả về (GIỮ NGUYÊN LOGIC CŨ)
-            String roleName = user.getRole().getName();
-            JwtService.TokenPair tokenPair = jwtService.generateTokenPair(user);
-
-            return AuthenticationDTO.builder()
-                    .accessToken(tokenPair.getAccessToken())
-                    .refreshToken(tokenPair.getRefreshToken())
-                    .role(roleName)
-                    .build();
-
-        } catch (Exception e) {
-            log.error("Google login error: ", e);
-            throw new UserException(UserErrorCode.UNAUTHENTICATED);
-        }
     }
 }
 

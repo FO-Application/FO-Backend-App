@@ -1,6 +1,7 @@
 package com.fo_product.merchant_service.configs;
 
 import com.fo_product.common_lib.custom.CookieBearerTokenResolver;
+import com.fo_product.common_lib.filters.CustomJwtAuthenticationEntryPoint;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -49,6 +50,12 @@ public class SecurityConfig {
             "/swagger-ui.html"
     };
 
+    private final CustomJwtAuthenticationEntryPoint customJwtAuthenticationEntryPoint;
+
+    public SecurityConfig(CustomJwtAuthenticationEntryPoint customJwtAuthenticationEntryPoint) {
+        this.customJwtAuthenticationEntryPoint = customJwtAuthenticationEntryPoint;
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
@@ -69,6 +76,7 @@ public class SecurityConfig {
                                                 .decoder(jwtDecoder())
                                                 .jwtAuthenticationConverter(jwtAuthenticationConverter())
                         )
+                                .authenticationEntryPoint(customJwtAuthenticationEntryPoint)
                 )
 
                 .sessionManagement(session ->

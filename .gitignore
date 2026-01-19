@@ -33,4 +33,4 @@ minio_data/
 
 ### Firebase Service Account ###
 notification-service/src/main/resources/firebase-service-account.json
-.fake
+user-service/src/main/resources/firebase-service-account.json

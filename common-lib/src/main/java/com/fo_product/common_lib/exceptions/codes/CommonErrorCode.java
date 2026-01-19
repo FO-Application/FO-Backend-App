@@ -11,8 +11,8 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public enum CommonErrorCode implements ErrorCode {
-    UNCATEGORIZED_EXCEPTION(1001, "Unknow exception!", HttpStatus.INTERNAL_SERVER_ERROR),
-
+    UNCATEGORIZED_EXCEPTION(9998, "Unknow exception!", HttpStatus.INTERNAL_SERVER_ERROR),
+    UNAUTHENTICATED(9999, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     ;
 
     int code;
