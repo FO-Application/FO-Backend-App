@@ -14,6 +14,7 @@ public enum DeliveryErrorCode implements ErrorCode {
     ORDER_ALREADY_TAKEN(6001, "Order already taken", HttpStatus.CONFLICT),
     SHIPPER_NOT_FOUND(6002, "Shipper not found", HttpStatus.NOT_FOUND),
     DELIVERY_NOT_FOUND(6003, "Delivery not found", HttpStatus.NOT_FOUND),
+    SERVICE_UNAVAILABLE(6004, "Service Unavailable", HttpStatus.SERVICE_UNAVAILABLE),
 
     ;
 

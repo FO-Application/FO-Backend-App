@@ -32,6 +32,11 @@ eureka:
     service-url:
       defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
 
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
+
 springdoc:
   api-docs:
     path: /v3/api-docs
@@ -50,3 +55,15 @@ zalo-pay:
   create-order-endpoint: ${ZALOPAY_CREATE_ORDER_ENDPOINT}
   query-endpoint: ${ZALOPAY_QUERY_ENDPOINT}
   callback-url: ${ZALOPAY_CALLBACK_URL}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true

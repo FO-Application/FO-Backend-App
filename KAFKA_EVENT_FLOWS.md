@@ -32,6 +32,10 @@ flowchart TB
         T5[order-completed-topic]
         T6[order-paid-topic]
         T7[shipper-found-topic]
+        T8[shipper-assigned-topic]
+        T9[order-ready-topic]
+        T10[order-cancelled-topic]
+        T11[review-created-topic]
     end
 
     subgraph Consumers
@@ -46,14 +50,24 @@ flowchart TB
     OS -->|OrderDeliveringEvent| T4
     OS -->|OrderCompletedEvent| T5
     OS -->|OrderPaidEvent| T6
+    OS -->|OrderReadyEvent| T9
+    OS -->|OrderCancelledEvent| T10
+    OS -->|ReviewCreatedEvent| T11
+    
     DS -->|ShipperFoundEvent| T7
+    DS -->|ShipperAssignedEvent| T8
 
     T1 --> NS
     T2 --> NS
     T3 --> DS2
     T4 --> NS
     T5 --> MS
+    T6 --> NS
     T7 --> NS
+    T8 --> NS
+    T9 --> NS
+    T10 --> NS
+    T11 --> MS
 ```
 
 ---
@@ -66,29 +80,17 @@ flowchart TB
 |------------|---------|
 | **Producer** | `user-service` |
 | **Consumer** | `notification-service` |
-| **Group ID** | `notification-service-group` |
 | **Mục đích** | Gửi email OTP cho xác thực người dùng |
 
-#### Event: `MailSenderEvent`
-
+Event Data (`MailSenderEvent`):
 ```java
-public record MailSenderEvent(
-    String recipientEmail,  // Email người nhận
-    String subject,         // Tiêu đề email
-    String otpCode,         // Mã OTP
-    String eventType        // Loại event: "REGISTER" | "FORGOT_PASSWORD"
-) {}
+{
+    "recipientEmail": "user@example.com",
+    "subject": "OTP Code",
+    "otpCode": "123456",
+    "eventType": "REGISTER" | "FORGOT_PASSWORD"
+}
 ```
-
-#### Flow:
-```
-User đăng ký/quên mật khẩu
-    → user-service tạo OTP
-    → Bắn event đến Kafka
-    → notification-service nhận và gửi email
-```
-
----
 
 ### 2. `order-created-topic`
 
@@ -96,32 +98,20 @@ User đăng ký/quên mật khẩu
 |------------|---------|
 | **Producer** | `order-service` |
 | **Consumer** | `notification-service` |
-| **Group ID** | `notification-service-group` |
-| **Mục đích** | Thông báo cho merchant có đơn hàng mới |
+| **Mục đích** | Thông báo cho merchant có đơn hàng mới (Push Notification) |
 
-#### Event: `OrderCreatedEvent`
-
+Event Data (`OrderCreatedEvent`):
 ```java
-public record OrderCreatedEvent(
-    Long orderId,           // ID đơn hàng
-    Long merchantId,        // ID quán
-    String merchantName,    // Tên quán
-    String customerName,    // Tên khách hàng
-    BigDecimal grandTotal,  // Tổng tiền
-    LocalDateTime createdAt,// Thời gian tạo
-    List<String> itemNames  // Danh sách món
-) {}
+{
+    "orderId": 101,
+    "merchantId": 1,
+    "merchantName": "Burger King",
+    "customerName": "John Doe",
+    "grandTotal": 150000,
+    "createdAt": "2026-01-20T10:00:00",
+    "itemNames": ["2x Burger", "1x Coke"]
+}
 ```
-
-#### Flow:
-```
-Khách hàng đặt đơn
-    → order-service tạo đơn hàng
-    → Bắn event đến Kafka
-    → notification-service gửi FCM notification đến merchant app
-```
-
----
 
 ### 3. `order-confirmed-topic`
 
@@ -129,290 +119,194 @@ Khách hàng đặt đơn
 |------------|---------|
 | **Producer** | `order-service` |
 | **Consumer** | `delivery-service` |
-| **Group ID** | `delivery-service-group` |
-| **Mục đích** | Yêu cầu tìm shipper cho đơn hàng |
+| **Mục đích** | Trigger quy trình tìm shipper sau khi quán xác nhận đơn |
 
-#### Event: `OrderConfirmedEvent`
-
+Event Data (`OrderConfirmedEvent`):
 ```java
-public record OrderConfirmedEvent(
-    Long orderId,              // ID đơn hàng
-    Long merchantId,           // ID quán
-    String customerName,       // Tên khách
-    String customerPhone,      // SĐT khách
-    String deliveryAddress,    // Địa chỉ giao
-    BigDecimal productPrice,   // Giá sản phẩm
-    BigDecimal shippingFee,    // Phí ship
-    Double merchantLatitude,   // Vĩ độ quán
-    Double merchantLongitude   // Kinh độ quán
-) {}
-```
-
-#### Flow:
-```
-Merchant xác nhận đơn hàng
-    → order-service bắn event
-    → delivery-service nhận và bắt đầu tìm shipper phù hợp
-```
-
----
-
-### 4. `order-delivering-topic`
-
-| Thuộc tính | Giá trị |
-|------------|---------|
-| **Producer** | `order-service` |
-| **Consumer** | `notification-service` |
-| **Group ID** | `notification-service-group` |
-| **Mục đích** | Thông báo cho khách hàng đơn đang được giao |
-
-#### Event: `OrderDeliveringEvent`
-
-```java
-public record OrderDeliveringEvent(
-    Long orderId,            // ID đơn hàng
-    String customerName,     // Tên khách
-    String customerEmail,    // Email khách
-    String deliveryAddress,  // Địa chỉ giao
-    String merchantName,     // Tên quán
-    String descriptionOrder, // Mô tả đơn
-    List<String> productName,// Danh sách món
-    BigDecimal productPrice, // Giá sản phẩm
-    BigDecimal shippingFee   // Phí ship
-) {}
-```
-
-#### Flow:
-```
-Shipper bắt đầu giao hàng
-    → order-service cập nhật trạng thái
-    → Bắn event đến Kafka
-    → notification-service gửi email thông báo cho khách
-```
-
----
-
-### 5. `order-completed-topic`
-
-| Thuộc tính | Giá trị |
-|------------|---------|
-| **Producer** | `order-service` |
-| **Consumer** | `merchant-service` |
-| **Group ID** | `merchant-service-group` |
-| **Mục đích** | Cộng tiền vào ví của merchant khi đơn hoàn thành |
-
-#### Event: `OrderCompletedEvent`
-
-```java
-public record OrderCompletedEvent(
-    Long orderId,          // ID đơn hàng
-    Long merchantId,       // ID quán
-    BigDecimal orderAmount // Số tiền đơn hàng
-) {}
-```
-
-#### Flow:
-```
-Đơn hàng giao thành công
-    → order-service bắn event hoàn thành
-    → merchant-service nhận event
-    → Cộng tiền vào wallet của merchant
-    → Tạo transaction history
-```
-
----
-
-### 6. `order-paid-topic`
-
-| Thuộc tính | Giá trị |
-|------------|---------|
-| **Producer** | `order-service` |
-| **Consumer** | `notification-service` |
-| **Group ID** | `notification-group` |
-| **Mục đích** | Thông báo thanh toán thành công cho merchant |
-
-#### Event: `OrderPaidEvent`
-
-```java
-public class OrderPaidEvent {
-    Long orderId;         // ID đơn hàng
-    Long merchantId;      // ID quán
-    Long ownerId;         // ID chủ quán
-    BigDecimal amount;    // Số tiền
-    String paymentMethod; // Phương thức: "ZALOPAY"
-    LocalDateTime paidAt; // Thời gian thanh toán
+{
+    "orderId": 101,
+    "merchantId": 1,
+    "customerName": "John Doe",
+    "customerPhone": "0987654321",
+    "deliveryAddress": "123 ABC Street",
+    "productPrice": 120000,
+    "shippingFee": 30000,
+    "merchantLatitude": 10.762622,
+    "merchantLongitude": 106.660172
 }
 ```
 
-#### Flow:
-```
-Khách thanh toán qua ZaloPay thành công
-    → order-service bắn event
-    → notification-service nhận event
-    → Gửi FCM notification đến merchant app về việc đã nhận thanh toán
-```
-
----
-
-### 7. `shipper-found-topic`
+### 4. `shipper-found-topic`
 
 | Thuộc tính | Giá trị |
 |------------|---------|
 | **Producer** | `delivery-service` |
 | **Consumer** | `notification-service` |
-| **Group ID** | `notification-group` |
-| **Mục đích** | Mời shipper nhận đơn hàng |
+| **Mục đích** | Gửi thông báo mời Shipper nhận đơn (khi hệ thống tìm thấy shipper phù hợp) |
 
-#### Event: `ShipperFoundEvent`
-
+Event Data (`ShipperFoundEvent`):
 ```java
-public record ShipperFoundEvent(
-    Long shipperId,       // ID shipper
-    Long orderId,         // ID đơn hàng
-    String pickupAddress, // Địa chỉ lấy hàng
-    Double lat,           // Vĩ độ
-    Double lon,           // Kinh độ
-    BigDecimal shippingFee// Phí ship
-) {}
+{
+    "shipperId": 505,
+    "orderId": 101,
+    "pickupAddress": "Burger King, Quan 1",
+    "lat": 10.762622,
+    "lon": 106.660172,
+    "shippingFee": 30000
+}
 ```
 
-#### Flow:
-```
-delivery-service tìm được shipper phù hợp
-    → Bắn event mời nhận đơn
-    → notification-service gửi FCM đến shipper app
-    → Shipper nhận thông báo và có thể accept đơn
-```
+### 5. `shipper-assigned-topic`
 
----
+| Thuộc tính | Giá trị |
+|------------|---------|
+| **Producer** | `delivery-service` |
+| **Consumer** | `notification-service` |
+| **Mục đích** | Thông báo cho Khách hàng: "Đã có tài xế nhận đơn" |
 
-## 🔄 Luồng hoạt động tổng thể của đơn hàng
-
-```mermaid
-sequenceDiagram
-    participant Customer
-    participant OrderService
-    participant NotificationService
-    participant Merchant
-    participant DeliveryService
-    participant Shipper
-    participant MerchantService
-
-    Customer->>OrderService: Đặt đơn hàng
-    OrderService->>NotificationService: order-created-topic
-    NotificationService->>Merchant: Push notification (FCM)
-    
-    Merchant->>OrderService: Xác nhận đơn
-    OrderService->>DeliveryService: order-confirmed-topic
-    DeliveryService->>DeliveryService: Tìm shipper phù hợp
-    DeliveryService->>NotificationService: shipper-found-topic
-    NotificationService->>Shipper: Push notification mời nhận đơn
-    
-    Shipper->>DeliveryService: Accept đơn
-    OrderService->>NotificationService: order-delivering-topic
-    NotificationService->>Customer: Email thông báo đang giao
-    
-    Shipper->>OrderService: Giao hàng thành công
-    OrderService->>MerchantService: order-completed-topic
-    MerchantService->>MerchantService: Cộng tiền vào wallet
+Event Data (`ShipperAssignedEvent`):
+```java
+{
+    "orderId": 101,
+    "shipperId": 505,
+    "shipperName": "Nguyen Van Shipper",
+    "shipperPhone": "0909000111",
+    "licensePlate": "59UA-123.45"
+}
 ```
 
----
+### 6. `order-ready-topic`
 
-## 🏗️ Cấu trúc thư mục Kafka
+| Thuộc tính | Giá trị |
+|------------|---------|
+| **Producer** | `order-service` |
+| **Consumer** | `notification-service` |
+| **Mục đích** | Thông báo cho Shipper: "Món đã xong, vào lấy ngay!" |
 
-```
-📦 food-ordering-backend
-├── 📂 user-service
-│   └── 📂 kafka
-│       ├── KafkaProducerService.java   # Producer gửi OTP
-│       └── 📂 events
-│           └── MailSenderEvent.java
-│
-├── 📂 order-service
-│   └── 📂 kafka
-│       ├── KafkaProducerService.java   # Producer cho order events
-│       └── 📂 events
-│           ├── OrderCreatedEvent.java
-│           ├── OrderConfirmedEvent.java
-│           ├── OrderDeliveringEvent.java
-│           └── OrderCompletedEvent.java
-│
-├── 📂 delivery-service
-│   └── 📂 kafka
-│       ├── KafkaProducerService.java   # Producer shipper-found
-│       ├── KafkaConsumerService.java   # Consumer order-confirmed
-│       └── 📂 events
-│           ├── OrderConfirmedEvent.java
-│           └── ShipperFoundEvent.java
-│
-├── 📂 notification-service
-│   └── 📂 consumer
-│       └── NotificationConsumer.java   # Consumer nhiều topics
-│
-└── 📂 merchant-service
-    └── 📂 kafka
-        └── WalletConsumer.java         # Consumer order-completed
+Event Data (`OrderReadyEvent`):
+```java
+{
+    "orderId": 101,
+    "merchantId": 1,
+    "shipperId": 505
+}
 ```
 
----
+### 7. `order-delivering-topic`
 
-## ⚙️ Cấu hình Kafka
+| Thuộc tính | Giá trị |
+|------------|---------|
+| **Producer** | `order-service` |
+| **Consumer** | `notification-service` |
+| **Mục đích** | Thông báo cho Khách hàng: "Shipper đã lấy món và đang giao" |
 
-### application.yaml (ví dụ từ order-service)
-
-```yaml
-spring:
-  kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-    consumer:
-      group-id: order-service-group
-      auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.trusted.packages: "*"
+Event Data (`OrderDeliveringEvent`):
+```java
+{
+    "orderId": 101,
+    "customerName": "John Doe",
+    "customerEmail": "john@email.com",
+    "deliveryAddress": "123 ABC Street",
+    "merchantName": "Burger King",
+    "descriptionOrder": "Giao nhanh giup em",
+    "productName": ["Burger", "Coke"],
+    "productPrice": 120000,
+    "shippingFee": 30000
+}
 ```
 
----
+### 8. `order-completed-topic`
 
-## 📝 Bảng tóm tắt
+| Thuộc tính | Giá trị |
+|------------|---------|
+| **Producer** | `order-service` |
+| **Consumer** | `merchant-service` |
+| **Mục đích** | Chuyển tiền doanh thu vào Ví Merchant sau khi hoàn thành đơn |
 
-| Topic | Producer | Consumer | Mục đích |
-|-------|----------|----------|----------|
-| `otp-mail-sender-topic` | user-service | notification-service | Gửi email OTP |
-| `order-created-topic` | order-service | notification-service | Thông báo đơn mới cho merchant |
-| `order-confirmed-topic` | order-service | delivery-service | Yêu cầu tìm shipper |
-| `order-delivering-topic` | order-service | notification-service | Thông báo đang giao cho khách |
-| `order-completed-topic` | order-service | merchant-service | Cộng tiền vào wallet merchant |
-| `order-paid-topic` | order-service | notification-service | Thông báo thanh toán cho merchant |
-| `shipper-found-topic` | delivery-service | notification-service | Mời shipper nhận đơn |
-
----
-
-## 🚀 Hướng dẫn debug Kafka
-
-### Xem logs của Kafka
-```bash
-docker logs fo-kafka -f
+Event Data (`OrderCompletedEvent`):
+```java
+{
+    "orderId": 101,
+    "merchantId": 1,
+    "orderAmount": 150000
+}
 ```
 
-### Kiểm tra topics
-```bash
-docker exec -it fo-kafka kafka-topics --bootstrap-server localhost:9092 --list
+### 9. `order-paid-topic`
+
+| Thuộc tính | Giá trị |
+|------------|---------|
+| **Producer** | `order-service` |
+| **Consumer** | `notification-service` |
+| **Mục đích** | Thông báo Merchant khi Khách thanh toán Online (ZaloPay) thành công |
+
+Event Data (`OrderPaidEvent`):
+```java
+{
+    "orderId": 101,
+    "merchantId": 1,
+    "ownerId": 10,
+    "amount": 150000,
+    "paymentMethod": "ZALOPAY",
+    "paidAt": "2026-01-20T10:05:00"
+}
 ```
 
-### Xem messages trong topic
-```bash
-docker exec -it fo-kafka kafka-console-consumer \
-    --bootstrap-server localhost:9092 \
-    --topic order-created-topic \
-    --from-beginning
+### 10. `order-cancelled-topic`
+
+| Thuộc tính | Giá trị |
+|------------|---------|
+| **Producer** | `order-service` |
+| **Consumer** | `notification-service` |
+| **Mục đích** | Thông báo Hủy đơn (Báo Merchant nếu khách hủy, báo Khách nếu Merchant hủy) |
+
+Event Data (`OrderCancelledEvent`):
+```java
+{
+    "orderId": 101,
+    "merchantId": 1,
+    "userId": 202, // User thực hiện hủy
+    "cancelledBy": "CUSTOMER" | "MERCHANT",
+    "reason": "Doi qua lau",
+    "amount": 150000,
+    "paymentMethod": "ZALOPAY",
+    "cancelledAt": "2026-01-20T10:30:00"
+}
+```
+
+### 11. `review-created-topic`
+
+| Thuộc tính | Giá trị |
+|------------|---------|
+| **Producer** | `order-service` |
+| **Consumer** | `merchant-service` |
+| **Mục đích** | Cập nhật điểm Rating trung bình của Quán khi có đánh giá mới |
+
+Event Data (`ReviewCreatedEvent`):
+```java
+{
+    "merchantId": 1,
+    "rating": 4.5
+}
 ```
 
 ---
 
-*Cập nhật lần cuối: Tháng 01/2026*
+## 📝 Bảng tóm tắt Routing
+
+| Topic | Producer | Consumer | Hành động chính |
+|-------|----------|----------|-----------------|
+| `otp-mail-sender-topic` | user-service | notification-service | Gửi Email OTP |
+| `order-created-topic` | order-service | notification-service | Push Noti Merchant (Đơn mới) |
+| `order-confirmed-topic` | order-service | delivery-service | Tìm kiếm Shipper (Redis) |
+| `shipper-found-topic` | delivery-service | notification-service | Push Noti Shipper (Mời đơn) |
+| `shipper-assigned-topic`| delivery-service | notification-service | Push Noti Customer (Có xe) |
+| `order-ready-topic` | order-service | notification-service | Push Noti Shipper (Món xong) |
+| `order-delivering-topic`| order-service | notification-service | Email Customer (Đang giao) |
+| `order-completed-topic` | order-service | merchant-service | Cộng tiền Ví Merchant |
+| `order-paid-topic` | order-service | notification-service | Push Noti Merchant (Tiền về) |
+| `order-cancelled-topic` | order-service | notification-service | Push Noti Hủy đơn |
+| `review-created-topic` | order-service | merchant-service | Tính lại Rating Quán |
+
+---
+*Documented by Antigravity - 2026*

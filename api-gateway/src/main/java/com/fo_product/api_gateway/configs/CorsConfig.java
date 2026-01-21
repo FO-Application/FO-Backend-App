@@ -13,14 +13,10 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(
-            "http://localhost:5173", 
-            "http://localhost:3000",
-            "https://vanessa-unabsolved-buck.ngrok-free.dev"
-        ));
-        configuration.setAllowedOriginPatterns(List.of("https://*.ngrok-free.dev"));
 
-        configuration.setAllowedMethods(List.of("GET", "PUT", "POST", "DELETE", "OPTIONS"));
+        configuration.setAllowedOriginPatterns(List.of("*"));
+
+        configuration.setAllowedMethods(List.of("*"));
 
         configuration.setAllowedHeaders(List.of("*"));
 

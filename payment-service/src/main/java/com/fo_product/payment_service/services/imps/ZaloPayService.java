@@ -2,6 +2,8 @@ package com.fo_product.payment_service.services.imps;
 
 import com.fo_product.payment_service.clients.OrderClient;
 import com.fo_product.payment_service.configs.ZaloPayConfig;
+import com.fo_product.payment_service.exceptions.PaymentException;
+import com.fo_product.payment_service.exceptions.codes.PaymentErrorCode;
 import com.fo_product.payment_service.services.interfaces.IZaloPayService;
 import com.fo_product.payment_service.utils.HmacUtil;
 import jakarta.xml.bind.DatatypeConverter;
@@ -44,7 +46,7 @@ public class ZaloPayService implements IZaloPayService {
             log.info("Linked Order {} with AppTransId {}", orderId, appTransId);
         } catch (Exception e) {
             log.error("Failed to link order with transId", e);
-            throw new RuntimeException("Không thể liên kết đơn hàng với hệ thống thanh toán");
+            throw new PaymentException(PaymentErrorCode.CANT_LINK_UP_ORDER_WITH_PAYMENT_SERVICE);
         }
 
         Map<String, Object> order = new HashMap<String, Object>() {{
@@ -70,7 +72,6 @@ public class ZaloPayService implements IZaloPayService {
 
         List<NameValuePair> params = new ArrayList<>();
         for (Map.Entry<String, Object> e : order.entrySet()) {
-
             params.add(new BasicNameValuePair(e.getKey(), e.getValue().toString()));
         }
 
@@ -154,7 +155,6 @@ public class ZaloPayService implements IZaloPayService {
         String line;
 
         while ((line = rd.readLine()) != null) {
-
             resultJsonStr.append(line);
         }
 
@@ -193,6 +193,4 @@ public class ZaloPayService implements IZaloPayService {
         fmt.setCalendar(cal);
         return fmt.format(cal.getTimeInMillis());
     }
-
-
 }

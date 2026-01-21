@@ -1,4 +1,4 @@
-package com.fo_product.order_service.exceptions.codes;
+package com.fo_product.delivery_service.exceptions.code;
 
 import com.fo_product.common_lib.exceptions.codes.interfaces.ErrorCode;
 import lombok.AccessLevel;

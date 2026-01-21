@@ -212,7 +212,7 @@ public class RestaurantService implements IRestaurantService {
         UserDTO user = getClientDTO.getUserDTO(ownerId);
 
 
-        if (user == null || !"MERCHANT".equals(user.role())) {
+        if (!"MERCHANT".equals(user.role())) {
             throw new MerchantException(MerchantErrorCode.INVALID_MERCHANT_USER_ACCOUNT);
         }
         return user;

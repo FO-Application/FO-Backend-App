@@ -11,6 +11,11 @@ spring:
   cache:
     type: redis
 
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
+
   data:
     redis:
       host: ${REDIS_HOST}
@@ -75,3 +80,15 @@ jwt:
 openapi:
   service:
     url: ${OPENAPI_SERVICE_URL}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true

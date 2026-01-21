@@ -51,7 +51,6 @@ public class InternalOrderService implements IInternalOrderService {
             order.setOrderStatus(newStatus);
             Order savedOrder = orderRepository.save(order);
 
-            // [LOGIC QUAN TRỌNG VỪA THÊM]: Bắn Kafka nếu trạng thái chuyển sang PAID
             if (newStatus == OrderStatus.PAID && oldStatus != OrderStatus.PAID) {
                 log.info("Order {} thanh toán thành công. Đang bắn event Kafka...", savedOrder.getId());
                 RestaurantDTO restaurant = getClientDTO.getRestaurantDTO(savedOrder.getMerchantId());

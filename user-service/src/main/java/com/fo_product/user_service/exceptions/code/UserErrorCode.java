@@ -24,7 +24,7 @@ public enum UserErrorCode implements ErrorCode {
     VERIFY_OTP_FAILED(1011, "Invalid OTP!", HttpStatus.BAD_REQUEST),
     ROLE_NOT_EXIST(1012, "This role is not exist!", HttpStatus.NOT_FOUND),
     INVALID_OTP_TYPE(1013,  "Invalid OTP type!", HttpStatus.BAD_REQUEST),
-    INVALID_SOCIAL_TOKEN(1014, "Invalid SOCIAL TOKEN!", HttpStatus.BAD_REQUEST),
+    INVALID_SOCIAL_TOKEN(1014, "Invalid social token!", HttpStatus.BAD_REQUEST),
 
     ;
 

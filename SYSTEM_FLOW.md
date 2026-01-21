@@ -12,8 +12,9 @@ Tài liệu này mô tả chi tiết luồng hoạt động của code trong h�
 4. [Luồng thanh toán (Payment Flow)](#luồng-thanh-toán-payment-flow)
 5. [Luồng tìm shipper (Delivery Matching Flow)](#luồng-tìm-shipper-delivery-matching-flow)
 6. [Luồng giao hàng & Ví Shipper (Delivery Flow)](#luồng-giao-hàng--ví-shipper-delivery-flow)
-7. [Luồng thông báo (Notification Flow)](#luồng-thông-báo-notification-flow)
-8. [Chi tiết từng Microservice](#chi-tiết-từng-microservice)
+7. [Luồng hủy đơn (Cancellation Flow)](#luồng-hủy-đơn-cancellation-flow)
+8. [Luồng đánh giá (Review Flow)](#luồng-đánh-giá-review-flow)
+9. [Chi tiết từng Microservice](#chi-tiết-từng-microservice)
 
 ---
 
@@ -152,17 +153,19 @@ public OrderResponse createOrder(Long userId, OrderRequest request) {
 
 Merchant có thể nhận đơn COD (CREATED) hoặc đơn ZaloPay đã trả (PAID).
 
+**Step 1: Xác nhận đơn**
 **API**: `PUT /api/v1/management/order/merchant/{id}/confirm`
 - **Logic**:
   1. Check quyền sở hữu quán.
-  2. Chấp nhận status: `CREATED` hoặc `PAID`.
-  3. Chuyển status → `PREPARING`.
-  4. Bắn Kafka `OrderConfirmedEvent` → **Đây là tín hiệu để bắt đầu tìm Shipper!**
+  2. Chuyển status → `PREPARING`.
+  3. Bắn Kafka `OrderConfirmedEvent` → **Đây là tín hiệu để bắt đầu tìm Shipper!**
 
+**Step 2: Món đã xong**
 **API**: `PUT /api/v1/management/order/merchant/{id}/ready`
 - **Logic**:
   1. Chuyển status `PREPARING` → `READY`.
-  2. (Món ăn đã nấu xong, shipper đến là lấy được ngay).
+  2. Bắn Kafka `OrderReadyEvent` cho Notification Service.
+  3. Notification Service bắn Push cho Shipper: "Vào lấy món ngay!".
 
 ---
 
@@ -223,64 +226,55 @@ Quy trình shipper xử lý đơn và nhận tiền công.
 ### 1. Shipper nhận đơn (Accept)
 - **API**: `POST /api/v1/delivery/shippers/accept`
 - **Logic**:
-  1. Check concurrency (tranh chấp đơn): Dùng DB Lock hoặc check `existsByOrderId`.
+  1. Check concurrency: Dùng DB Lock (Unique Contraint).
   2. Tạo bản ghi `Delivery` với status `ACCEPTED`.
-  3. Xóa đơn khỏi hàng đợi tìm kiếm (để shipper khác không thấy nữa).
+  3. Xóa đơn khỏi hàng đợi tìm kiếm.
+  4. Bắn Kafka `ShipperAssignedEvent` → Notification Service báo cho Khách hàng: "Shipper Nguyễn Văn A đang đến".
 
 ### 2. Lấy hàng (Pick Up)
 - **API**: `POST /api/v1/delivery/shippers/picked-up`
 - **Logic**:
   1. Update Delivery status → `DELIVERING`.
   2. Gọi Order Service update Order status → `DELIVERING`.
-  3. Bắn Kafka báo khách "Hàng đang đến!".
+  3. Bắn Kafka `OrderDeliveringEvent` báo khách "Hàng đang đến!".
 
 ### 3. Hoàn thành & Cộng tiền (Complete)
 - **API**: `POST /api/v1/delivery/shippers/complete`
 - **Logic Quan Trọng**:
   1. Update Delivery status → `COMPLETED`.
   2. Gọi Order Service update Order status → `COMPLETED` (Hoàn tất vòng đời đơn hàng).
-  3. **Cộng tiền Ví Shipper**:
-     - Lấy `shippingFee` từ đơn hàng.
-     - Tìm/Tạo `ShipperWallet`.
-     - `wallet.balance += shippingFee`.
-     - Lưu lịch sử `ShipperTransaction` (Type: INCOME).
-
-```java
-// DeliveryService.completeOrder()
-public void completeOrder(Long userId, Long orderId) {
-    // ... Update status ...
-
-    // Tính toán thu nhập
-    BigDecimal shippingFee = orderRes.shippingFee();
-    
-    // Cộng ví
-    ShipperWallet wallet = walletRepository.findByShipper_Id(shipperId);
-    wallet.setBalance(wallet.getBalance().add(shippingFee));
-    walletRepository.save(wallet);
-
-    // Lưu log giao dịch
-    transactionRepository.save(ShipperTransaction.builder()
-            .amount(shippingFee)
-            .type(TransactionType.INCOME)
-            .description("Thu nhập đơn " + orderId)
-            .build());
-}
-```
+  3. **Cộng tiền Ví Shipper**.
+  4. Bắn Kafka `OrderCompletedEvent` → Merchant Service nhận và cộng tiền cho quán.
 
 ---
 
-## 📢 Luồng thông báo (Notification Flow)
+## 🚫 Luồng hủy đơn (Cancellation Flow)
 
-Notification Service là **Central Hub** nhận sự kiện từ khắp nơi.
+Người dùng hoặc Merchant có thể hủy đơn khi ở trạng thái `CREATED` hoặc `PREPARING` (với Merchant).
 
-| Sự kiện (Kafka Topic) | Nguồn phát | Hành động |
-|-----------------------|------------|-----------|
-| `otp-mail-sender-topic` | User Service | Gửi Email OTP đăng ký |
-| `order-created-topic` | Order Service | Push Notification cho Merchant (App chủ quán) |
-| `order-paid-topic` | Order Service | Push Notification "Đã thanh toán" cho Merchant |
-| `shipper-found-topic` | Delivery Service | Push Notification "Nổ đơn" cho Shipper |
-| `order-delivering-topic` | Order Service | Gửi Email cho Khách hàng (theo dõi đơn) |
-| `order-completed-topic` | Order Service | Cộng tiền Merchant & Shipper |
+- **API**: `PATCH /api/v1/order/{id}/cancel` (Client) hoặc `PUT .../cancel` (Merchant)
+- **Logic**:
+  1. Validate trạng thái (không thể hủy khi đã đang ship).
+  2. Update status → `CANCELED`.
+  3. Bắn Kafka `OrderCancelledEvent`.
+  4. Notification Service nhận event:
+     - Nếu Khách hủy → Báo Merchant.
+     - Nếu Merchant hủy → Báo Khách.
+
+---
+
+## ⭐ Luồng đánh giá (Review Flow)
+
+Sau khi đơn hoàn thành, khách hàng có thể đánh giá.
+
+- **API**: `POST /api/v1/order/review`
+- **Logic**:
+  1. Validate đơn hàng phải là `COMPLETED`.
+  2. Lưu review vào `order-service` DB.
+  3. Bắn Kafka `ReviewCreatedEvent` (chứa Rating).
+  4. **Merchant Service** nhận event:
+     - Tính lại điểm trung bình (Average Rating) của quán.
+     - Update số lượng đánh giá.
 
 ---
 
@@ -291,12 +285,12 @@ Notification Service là **Central Hub** nhận sự kiện từ khắp nơi.
 - **Config**: `application.yaml` (Routes definition).
 
 ### `user-service` (Port 8081)
-- **Auth**: JWT, Refresh Token, Google OAuth2.
+- **Auth**: JWT, Refresh Token, Google OAuth2, Firebase Auth.
 - **Data**: Redis (OTP, Blacklist Token), MySQL (Users).
 
 ### `order-service` (Port 8084)
 - **Core**: Quản lý `Order`, `OrderItem`.
-- **Logic**: Tính toán tổng tiền, trạng thái đơn.
+- **Logic**: Tính toán tổng tiền, trạng thái đơn, tính khoảng cách ship.
 
 ### `merchant-service` (Port 8083)
 - **Data**: Restaurant, Product, Topping.
@@ -304,7 +298,7 @@ Notification Service là **Central Hub** nhận sự kiện từ khắp nơi.
 
 ### `delivery-service` (Port 8085)
 - **Geo**: `ShipperLocationService` (Redis GEO).
-- **Matching**: `OrderMatchingService`.
+- **Matching**: `OrderMatchingService` (Tìm kiếm tài xế).
 - **Wallet**: `ShipperWallet` (Ví tài xế).
 
 ### `payment-service` (Port 8086)
@@ -313,7 +307,7 @@ Notification Service là **Central Hub** nhận sự kiện từ khắp nơi.
 
 ### `notification-service` (Port 8082)
 - **Consumers**: Lắng nghe tất cả topics.
-- **Providers**: JavaMailSender (Email), Firebase Messaging (Push).
+- **Providers**: JavaMailSender (Email), Firebase Messaging (Push Notification).
 
 ---
 *Documented by Antigravity - 2026*

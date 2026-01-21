@@ -1,6 +1,7 @@
 package com.fo_product.order_service.clients;
 
 import com.fo_product.common_lib.dtos.APIResponse;
+import com.fo_product.order_service.clients.factories.MerchantClientFallbackFactory;
 import com.fo_product.order_service.configs.FeignClientInterceptorConfig;
 import com.fo_product.order_service.dtos.feigns.ProductDTO;
 import com.fo_product.order_service.dtos.feigns.RestaurantDTO;
@@ -11,7 +12,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(name = "merchant-service", configuration = FeignClientInterceptorConfig.class)
+@FeignClient(
+        name = "merchant-service",
+        configuration = FeignClientInterceptorConfig.class,
+        fallbackFactory =  MerchantClientFallbackFactory.class
+)
 public interface MerchantClient {
     @GetMapping("/api/v1/restaurant/{restaurantId}")
     APIResponse<RestaurantDTO> getRestaurant(@PathVariable("restaurantId") Long id);

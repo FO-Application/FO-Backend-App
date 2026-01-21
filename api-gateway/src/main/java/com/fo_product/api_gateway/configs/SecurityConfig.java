@@ -13,6 +13,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtGra
 import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtGrantedAuthoritiesConverterAdapter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.header.CrossOriginOpenerPolicyServerHttpHeadersWriter;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
 
 import javax.crypto.SecretKey;
@@ -39,7 +40,9 @@ public class SecurityConfig {
             "/api/v1/user/me",
             "/v3/api-docs/**",
             "/swagger-ui/**",
-            "/swagger-ui.html"
+            "/swagger-ui.html",
+            "/webjars/**",
+            "/swagger-resources/**"
     };
 
     @Bean
@@ -48,6 +51,10 @@ public class SecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
 
                 .cors(corsSpec -> corsSpec.configurationSource(corsConfigurationSource))
+
+                .headers(headers -> headers
+                        .crossOriginOpenerPolicy(coop -> coop.policy(CrossOriginOpenerPolicyServerHttpHeadersWriter.CrossOriginOpenerPolicy.UNSAFE_NONE)) // Tắt COOP để popup giao tiếp được với main window
+                )
 
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers(PUBLIC_MATCHERS).permitAll()

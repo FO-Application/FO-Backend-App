@@ -1,6 +1,7 @@
 package com.fo_product.merchant_service.client;
 
 import com.fo_product.common_lib.dtos.APIResponse;
+import com.fo_product.merchant_service.client.factories.UserClientFallbackFactory;
 import com.fo_product.merchant_service.configs.FeignClientInterceptorConfig;
 import com.fo_product.merchant_service.dtos.feigns.UserDTO;
 import org.springframework.cloud.openfeign.FeignClient;

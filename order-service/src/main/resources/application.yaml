@@ -2,6 +2,11 @@ spring:
   application:
     name: order-service
 
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
+
   datasource:
     url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${ORDER_DB_NAME}
     username: ${ORDER_DB_USERNAME}
@@ -79,4 +84,16 @@ jwt:
 logging:
   level:
     org.springframework.security: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
 

@@ -32,6 +32,7 @@ public enum MerchantErrorCode implements ErrorCode{
     OPTION_ITEM_EXIST(4019, "Option item exist", HttpStatus.CONFLICT),
     COORDINATE_NOT_VALID(4020, "Coordinate not valid", HttpStatus.BAD_REQUEST),
     SERVICE_UNAVAILABLE(4021, "Service Unavailable", HttpStatus.SERVICE_UNAVAILABLE),
+    USER_NOT_EXIST(4022, "User is not exist", HttpStatus.NOT_FOUND),
 
     ;
     int code;

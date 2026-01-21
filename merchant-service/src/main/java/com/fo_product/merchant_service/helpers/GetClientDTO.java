@@ -17,10 +17,6 @@ public class GetClientDTO {
     public UserDTO getUserDTO(Long userId) {
         APIResponse<UserDTO> userResponse = userClient.getUserById(userId);
 
-        if (userResponse == null) {
-            return null;
-        }
-
         return userResponse.getResult();
     }
 }
