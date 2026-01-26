@@ -40,7 +40,7 @@ spring:
   cloud:
     openfeign:
       circuitbreaker:
-        enabled: true
+        enabled: false
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}

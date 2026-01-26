@@ -110,6 +110,8 @@ public class AuthService implements IAuthService {
         boolean verified = otpService.verifyOtp(email, otpCode);
         if (!verified) throw new UserException(UserErrorCode.VERIFY_OTP_FAILED);
 
+        otpService.deleteOtp(email, otpCode);
+
         // Tạo User và lưu vào DB
         User user = User.builder()
                 .email(pendingUser.getEmail())
@@ -292,6 +294,8 @@ public class AuthService implements IAuthService {
         boolean verifiedOtp = otpService.verifyOtp(request.email(), request.otp());
         if (!verifiedOtp)
             throw new UserException(UserErrorCode.VERIFY_OTP_FAILED);
+
+        otpService.deleteOtp(request.email(), request.otp());
 
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_EXIST));

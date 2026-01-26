@@ -13,8 +13,15 @@ public class FeignClientInterceptorConfig {
     public RequestInterceptor requestInterceptor() {
         return requestTemplate -> {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication instanceof JwtAuthenticationToken jwt) {
-                String token = jwt.getToken().getTokenValue();
+            if (authentication != null && authentication.getCredentials() != null) {
+                // Lấy token từ credentials (thường là String token)
+                String token = authentication.getCredentials().toString();
+
+                // Nếu là JwtAuthenticationToken, có thể lấy trực tiếp
+                if (authentication instanceof JwtAuthenticationToken jwt) {
+                    token = jwt.getToken().getTokenValue();
+                }
+
                 requestTemplate.header("Authorization", "Bearer " + token);
             }
         };

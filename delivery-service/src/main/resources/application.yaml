@@ -14,7 +14,7 @@ spring:
   cloud:
     openfeign:
       circuitbreaker:
-        enabled: true
+        enabled: false
 
   data:
     redis:

@@ -52,11 +52,16 @@ public class OtpService implements IOtpService {
         OtpToken otpToken = otpTokenRepository.findById(email)
                 .orElseThrow(() -> new UserException(UserErrorCode.OTP_NOT_EXIST));
 
+        return otpToken.getOtpCode().equals(otp);
+    }
+
+    @Override
+    public void deleteOtp(String email, String otp) {
+        OtpToken otpToken = otpTokenRepository.findById(email)
+                .orElseThrow(() -> new UserException(UserErrorCode.OTP_NOT_EXIST));
+
         if (otpToken.getOtpCode().equals(otp)) {
             otpTokenRepository.delete(otpToken);
-            return true;
         }
-
-        return false;
     }
 }

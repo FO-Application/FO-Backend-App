@@ -42,6 +42,7 @@ public class SecurityConfig {
             "/swagger-ui/**",
             "/swagger-ui.html",
             "/webjars/**",
+            "/merchant-images/**",
             "/swagger-resources/**"
     };
 

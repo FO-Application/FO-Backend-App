@@ -8,6 +8,7 @@ import com.fo_product.user_service.dtos.responses.PendingUserResponse;
 import com.fo_product.user_service.dtos.responses.UserResponse;
 import com.fo_product.user_service.services.interfaces.IAuthCookieService;
 import com.fo_product.user_service.services.interfaces.IAuthService;
+import com.fo_product.user_service.services.interfaces.IOtpService;
 import com.nimbusds.jose.JOSEException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -36,6 +37,7 @@ import java.text.ParseException;
 public class AuthController {
     IAuthService authService;
     IAuthCookieService authCookieService;
+    IOtpService otpService;
 
     // --- ĐĂNG KÝ ---
 
@@ -80,7 +82,7 @@ public class AuthController {
             @ApiResponse(responseCode = "200", description = "Kích hoạt tài khoản thành công"),
             @ApiResponse(responseCode = "400", description = "Mã OTP sai hoặc đã hết hạn")
     })
-    @PostMapping("/verify-otp")
+    @PostMapping("/verify-otp-and-register")
     APIResponse<UserResponse> verifyAndCreateUser(@Valid @RequestBody VerifyOtpRequest request) { // Đã sửa tên hàm verifyAndCreateUSer -> verifyAndCreateUser
         UserResponse result = authService.verifyAndCreateUser(request);
 
@@ -233,7 +235,7 @@ public class AuthController {
 
     @Operation(
             summary = "Đặt lại mật khẩu mới (Bước 2)",
-            description = "Nhập OTP vừa nhận được và mật khẩu mới để tiến hành đổi mật khẩu."
+            description = "Nhập mật khẩu mới để tiến hành đổi mật khẩu."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Đổi mật khẩu thành công"),
@@ -248,8 +250,24 @@ public class AuthController {
                 .build();
     }
 
-    // --- PRIVATE UTILS ---
+    @Operation(
+            summary = "Xác thực mã OTP",
+            description = "Xác thực mã OTP bằng cách nhập mã OTP gửi về cho hệ thống"
+    )
+    @PostMapping("/verify-otp")
+    public APIResponse<Boolean> verifyOtp(
+            @RequestParam String email,
+            @RequestParam String otpCode
 
+    ) {
+        boolean result = otpService.verifyOtp(email, otpCode);
+        return APIResponse.<Boolean>builder()
+                .result(result)
+                .message("OTP verified successfully")
+                .build();
+    }
+
+    // --- PRIVATE UTILS ---
     private String resolveToken(HttpServletRequest request, String cookieName) {
         String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
