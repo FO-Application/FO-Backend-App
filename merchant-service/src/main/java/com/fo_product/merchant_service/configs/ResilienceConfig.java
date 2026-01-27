@@ -1,7 +1,7 @@
 package com.fo_product.merchant_service.configs;
 
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
-import io.github.resilience4j.timelimiter.TimeLimiterConfig;
+
 import org.springframework.cloud.circuitbreaker.resilience4j.Resilience4JCircuitBreakerFactory;
 import org.springframework.cloud.circuitbreaker.resilience4j.Resilience4JConfigBuilder;
 import org.springframework.cloud.client.circuitbreaker.Customizer;
@@ -25,16 +25,12 @@ public class ResilienceConfig {
                 .permittedNumberOfCallsInHalfOpenState(3) //Khi thử lại, cho phép 3 request đi qua
                 .build();
 
-        //2. Cấu hình time limiter(Giới hạn thời gian chờ)
-        // Nếu gọi API qá 4s mà chưa trả lời thì coi như lỗi time out
-        TimeLimiterConfig timeLimiterConfig = TimeLimiterConfig.custom()
-                .timeoutDuration(Duration.ofSeconds(4))
-                .build();
+
 
         //3. Gắn cấu hình vào Factory
         return factory -> factory.configureDefault(
                 config -> new Resilience4JConfigBuilder(config)
-                        .timeLimiterConfig(timeLimiterConfig)
+
                         .circuitBreakerConfig(circuitBreakerConfig)
                         .build()
         );

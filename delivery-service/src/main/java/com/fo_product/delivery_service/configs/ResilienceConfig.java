@@ -1,7 +1,7 @@
 package com.fo_product.delivery_service.configs;
 
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
-import io.github.resilience4j.timelimiter.TimeLimiterConfig;
+
 import org.springframework.cloud.circuitbreaker.resilience4j.Resilience4JCircuitBreakerFactory;
 import org.springframework.cloud.circuitbreaker.resilience4j.Resilience4JConfigBuilder;
 import org.springframework.cloud.client.circuitbreaker.Customizer;
@@ -22,13 +22,11 @@ public class ResilienceConfig {
                 .permittedNumberOfCallsInHalfOpenState(3)
                 .build();
 
-        TimeLimiterConfig timeLimiterConfig = TimeLimiterConfig.custom()
-                .timeoutDuration(Duration.ofSeconds(4))
-                .build();
+
 
         return factory -> factory.configureDefault(
                 config -> new Resilience4JConfigBuilder(config)
-                        .timeLimiterConfig(timeLimiterConfig)
+
                         .circuitBreakerConfig(circuitBreakerConfig)
                         .build()
         );

@@ -248,7 +248,7 @@ services:
     networks:
       - fo-network
 
-  # --- 12. Delivery-service ---
+  # --- 12. Payment-service ---
   payment-service:
     image: payment-service:latest
     build:

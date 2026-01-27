@@ -2,6 +2,19 @@ spring:
   application:
     name: payment-service
 
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
+      client:
+        config:
+          default:
+            connectTimeout: 4000
+            readTimeout: 4000
+    circuitbreaker:
+      resilience4j:
+        disable-time-limiter: true
+
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
     producer:
@@ -32,10 +45,7 @@ eureka:
     service-url:
       defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
 
-  cloud:
-    openfeign:
-      circuitbreaker:
-        enabled: false
+
 
 springdoc:
   api-docs:
