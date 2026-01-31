@@ -13,6 +13,7 @@ public class RestaurantMapper {
         return RestaurantResponse.builder()
                 .id(restaurant.getId())
                 .name(restaurant.getName())
+                .ownerId(restaurant.getOwnerId())
                 .slug(restaurant.getSlug())
                 .address(restaurant.getAddress())
                 .latitude(restaurant.getLatitude())

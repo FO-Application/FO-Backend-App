@@ -1,9 +1,11 @@
 package com.fo_product.merchant_service;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @SpringBootApplication(
 		scanBasePackages = "com.fo_product"
@@ -16,4 +18,8 @@ public class MerchantServiceApplication {
 		SpringApplication.run(MerchantServiceApplication.class, args);
 	}
 
+	@PostConstruct
+	public void enableInheritableThreadLocal() {
+		SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
+	}
 }

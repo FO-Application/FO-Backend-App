@@ -11,6 +11,9 @@ public record RestaurantDTO(
         @Schema(description = "Tên nhà hàng", example = "Phở Cồ")
         String name,
 
+        @Schema(description = "ID Chủ quán", example = "2")
+        Long ownerId,
+
         @Schema(description = "Thông tin chủ sở hữu")
         UserDTO user,
 

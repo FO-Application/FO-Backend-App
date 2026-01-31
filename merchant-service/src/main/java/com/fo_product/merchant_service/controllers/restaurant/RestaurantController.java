@@ -148,4 +148,17 @@ public class RestaurantController {
                 .message("Success")
                 .build();
     }
+    @Operation(summary = "Lấy danh sách nhà hàng của một chủ quán", description = "Lấy nhà hàng theo ownerId.")
+    @GetMapping("/owner/{ownerId}")
+    APIResponse<Page<RestaurantResponse>> getRestaurantsByOwner(
+            @PathVariable("ownerId") Long ownerId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Page<RestaurantResponse> result = restaurantService.getRestaurantsByOwnerId(ownerId, page, size);
+        return APIResponse.<Page<RestaurantResponse>>builder()
+                .result(result)
+                .message("Get restaurants by owner")
+                .build();
+    }
 }

@@ -26,8 +26,8 @@ spring:
           filters:
             - name: RequestRateLimiter
               args:
-                redis-rate-limiter.replenishRate: 10
-                redis-rate-limiter.burstCapacity: 20
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
                 key-resolver: "#{@userKeyResolver}"
 
         - id: user-service-docs
@@ -44,8 +44,8 @@ spring:
           filters:
             - name: RequestRateLimiter
               args:
-                redis-rate-limiter.replenishRate: 2
-                redis-rate-limiter.burstCapacity: 5
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
                 key-resolver: "#{@userKeyResolver}"
 
         - id: merchant-service
@@ -65,8 +65,8 @@ spring:
           filters:
             - name: RequestRateLimiter
               args:
-                redis-rate-limiter.replenishRate: 2
-                redis-rate-limiter.burstCapacity: 5
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
                 key-resolver: "#{@userKeyResolver}"
 
         - id: merchant-service-docs
@@ -89,8 +89,9 @@ spring:
           filters:
             - name: RequestRateLimiter
               args:
-                redis-rate-limiter.replenishRate: 3
-                redis-rate-limiter.burstCapacity: 5
+                # Đặt hàng cần ổn định
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
                 key-resolver: "#{@userKeyResolver}"
 
         - id: order-service-docs
@@ -110,8 +111,8 @@ spring:
           filters:
             - name: RequestRateLimiter
               args:
-                redis-rate-limiter.replenishRate: 5
-                redis-rate-limiter.burstCapacity: 10
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
                 key-resolver: "#{@userKeyResolver}"
 
         - id: delivery-service-docs
@@ -131,8 +132,8 @@ spring:
           filters:
             - name: RequestRateLimiter
               args:
-                redis-rate-limiter.replenishRate: 5
-                redis-rate-limiter.burstCapacity: 10
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
                 key-resolver: "#{@userKeyResolver}"
 
         - id: notification-service-docs
@@ -149,6 +150,12 @@ spring:
               args:
                 patterns:
                   - /api/v1/payment/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 5
+                redis-rate-limiter.burstCapacity: 10
+                key-resolver: "#{@userKeyResolver}"
 
         - id: payment-service-docs
           uri: lb://payment-service
@@ -156,6 +163,7 @@ spring:
             - Path=/v3/api-docs/payment-service
           filters:
             - RewritePath=/v3/api-docs/payment-service, /v3/api-docs
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html

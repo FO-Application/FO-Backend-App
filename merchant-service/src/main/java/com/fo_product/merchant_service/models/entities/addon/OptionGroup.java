@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -62,6 +63,7 @@ public class OptionGroup {
     @JoinColumn(name = "product_id")
     Product product;
 
+    @Builder.Default
     @OneToMany(mappedBy = "optionGroup", cascade = CascadeType.ALL)
-    List<OptionItem> optionItems;
+    List<OptionItem> optionItems = new ArrayList<>();
 }

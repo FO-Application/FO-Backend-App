@@ -211,9 +211,27 @@ public class PartnerOrderService implements IPartnerOrderService {
     // ... Helper private method ...
     private boolean checkMerchantOwnership(Long userId, Long merchantId) {
         RestaurantDTO restaurant = getClientDTO.getRestaurantDTO(merchantId);
-        if (restaurant == null) return false;
-        if (restaurant.user() == null || !restaurant.user().id().equals(userId)) return false;
-        return true;
+        if (restaurant == null) {
+            log.error("Restaurant not found for merchantId: {}", merchantId);
+            return false;
+        }
+
+        log.info("Checking ownership -> MerchantId: {}, UserId: {}, OwnerId: {}, UserInside: {}",
+                merchantId, userId, restaurant.ownerId(), restaurant.user());
+
+        // [FIXED] Validate using ownerId directly as UserDTO might be null
+        if (restaurant.ownerId() != null) {
+            boolean match = restaurant.ownerId().equals(userId);
+            if (!match) log.warn("Ownership Mismatch! OwnerId: {} != UserId: {}", restaurant.ownerId(), userId);
+            return match;
+        }
+        
+        // Fallback to old check just in case ownerId is missing but UserDTO exists (legacy)
+        if (restaurant.user() != null) {
+            return restaurant.user().id().equals(userId);
+        }
+        
+        return false;
     }
 
     @Override

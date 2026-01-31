@@ -218,6 +218,14 @@ public class RestaurantService implements IRestaurantService {
         return user;
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Page<RestaurantResponse> getRestaurantsByOwnerId(Long ownerId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Restaurant> result = restaurantRepository.findByOwnerId(ownerId, pageable);
+        return result.map(mapper::response);
+    }
+
     private String processImageUpload(MultipartFile image, String oldImageUrl) {
         if (image == null || image.isEmpty()) {
             return null;

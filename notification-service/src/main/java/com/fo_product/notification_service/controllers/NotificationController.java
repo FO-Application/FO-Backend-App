@@ -23,7 +23,7 @@ public class NotificationController {
     // Frontend gọi API này ngay sau khi Login thành công
     @PostMapping("/device-token")
     public APIResponse<?> registerToken(@RequestBody RegisterTokenRequest request) {
-        notificationService.registerToken(request.userId(), request.fcmToken(), request.deviceType());
+        notificationService.registerToken(request);
         return APIResponse.builder()
                 .message("Success")
                 .build();

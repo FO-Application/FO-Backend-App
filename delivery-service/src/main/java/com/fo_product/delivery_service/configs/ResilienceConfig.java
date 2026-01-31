@@ -22,8 +22,6 @@ public class ResilienceConfig {
                 .permittedNumberOfCallsInHalfOpenState(3)
                 .build();
 
-
-
         return factory -> factory.configureDefault(
                 config -> new Resilience4JConfigBuilder(config)
 

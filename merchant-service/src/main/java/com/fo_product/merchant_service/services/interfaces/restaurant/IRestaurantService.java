@@ -14,4 +14,5 @@ public interface IRestaurantService {
     Page<RestaurantResponse> getAllRestaurantsByCuisine(int page, int size, String cuisineSlug);
     void deleteRestaurantById(Long id);
     Page<RestaurantResponse> getNearbyRestaurants(Double lat, Double lon, Double radius, String cuisineSlug, int page, int size);
+    Page<RestaurantResponse> getRestaurantsByOwnerId(Long ownerId, int page, int size);
 }

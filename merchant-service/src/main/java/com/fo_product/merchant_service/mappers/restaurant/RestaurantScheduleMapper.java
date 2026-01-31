@@ -6,7 +6,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class RestaurantScheduleMapper {
-
     public RestaurantScheduleResponse response(RestaurantSchedule restaurantSchedule) {
         return RestaurantScheduleResponse.builder()
                 .id(restaurantSchedule.getId())

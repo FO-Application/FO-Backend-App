@@ -17,6 +17,7 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
     boolean existsBySlug(String slug);
     Optional<Restaurant> findBySlug(String slug);
     Page<Restaurant> findByCuisinesContaining(Cuisine cuisine, Pageable pageable);
+    Page<Restaurant> findByOwnerId(Long ownerId, Pageable pageable);
 
     /**
      * Tìm nhà hàng gần nhất.

@@ -19,7 +19,7 @@ public class NotificationConsumer {
     INotificationService notificationService;
 
     // --- 1. EMAIL OTP ---
-    @KafkaListener(topics = "otp-mail-sender-topic", groupId = "notification-service-group")
+    @KafkaListener(topics = "otp-mail-sender-topic", groupId = "notification-group")
     public void sendAuthMail(MailSenderEvent event) {
         log.info("Received message: {}", event);
 
@@ -38,7 +38,7 @@ public class NotificationConsumer {
     }
 
     // --- 3. BÁO CHỦ QUÁN: CÓ ĐƠN MỚI ---
-    @KafkaListener(topics = "order-created-topic", groupId = "notification-service-group")
+    @KafkaListener(topics = "order-created-topic", groupId = "notification-group")
     public void handleOrderCreated(OrderCreatedEvent event) {
         // Gửi qua Topic Merchant để đảm bảo chủ quán nhận được
         notificationService.sendNotificationToTopic(
