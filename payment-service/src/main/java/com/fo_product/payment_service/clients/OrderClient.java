@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.RequestParam;
         fallbackFactory = OrderClientFallbackFactory.class
 )
 public interface OrderClient {
-    @PostMapping("/api/internal/orders/{orderId}/update-trans-id")
+    @PostMapping("/api/v1/internal/order/{orderId}/update-trans-id")
     void updateAppTransId(@PathVariable("orderId") Long orderId, @RequestParam("appTransId") String appTransId);
 
-    @PostMapping("/api/internal/orders/update-status-by-trans-id")
+    @PostMapping("/api/v1/internal/order/update-status-by-trans-id")
     void updateOrderStatus(@RequestParam("appTransId") String appTransId, @RequestParam("status") String status);
 }

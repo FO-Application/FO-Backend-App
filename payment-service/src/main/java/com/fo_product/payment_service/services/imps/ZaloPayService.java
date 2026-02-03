@@ -94,6 +94,9 @@ public class ZaloPayService implements IZaloPayService {
             finalResult.put(key, jsonResult.get(key));
         }
 
+        // Add app_trans_id to the response so frontend can use it for polling payment status
+        finalResult.put("app_trans_id", appTransId);
+
         return finalResult;
     }
 
@@ -169,16 +172,10 @@ public class ZaloPayService implements IZaloPayService {
             finalResult.put("zp_trans_id", result.opt("zp_trans_id"));
 
             if (returnCode == 1) {
-                try {
-                    // Gọi sang Order Service để update trạng thái thành PAID
-                    log.info("Query thấy đơn {} thành công. Đang gọi Order Service update...", appTransId);
-                    orderClient.updateOrderStatus(appTransId, "PAID");
-                    finalResult.put("order_status_update", "SUCCESS");
-                } catch (Exception e) {
-                    log.error("Lỗi update trạng thái đơn hàng: ", e);
-                    // Không throw lỗi để Client vẫn nhận được kết quả là ZaloPay đã trừ tiền
-                    finalResult.put("order_status_update", "FAILED_TO_CONNECT_ORDER_SERVICE");
-                }
+                // Gọi sang Order Service để update trạng thái thành PAID
+                log.info("Query thấy đơn {} thành công. Đang gọi Order Service update...", appTransId);
+                orderClient.updateOrderStatus(appTransId, "PAID");
+                finalResult.put("order_status_update", "SUCCESS");
             }
         } else {
             finalResult.put("return_code", -1);

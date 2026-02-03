@@ -32,6 +32,7 @@ public class SecurityConfig {
     private static final String[] PUBLIC_MATCHERS = {
             "/api/v1/order/**",
             "/api/v1/order/merchant/**",
+            "/api/v1/internal/order/**",
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html"

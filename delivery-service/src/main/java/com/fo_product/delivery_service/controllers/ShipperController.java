@@ -1,8 +1,11 @@
 package com.fo_product.delivery_service.controllers;
 
 import com.fo_product.common_lib.dtos.APIResponse;
+import com.fo_product.delivery_service.dtos.requests.ShipperRegistrationRequest;
+import com.fo_product.delivery_service.dtos.responses.ShipperProfileResponse;
 import com.fo_product.delivery_service.services.interfaces.IDeliveryService;
 import com.fo_product.delivery_service.services.interfaces.IShipperLocationService;
+import com.fo_product.delivery_service.services.interfaces.IShipperProfileService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -12,10 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/delivery/shippers")
@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ShipperController {
     IShipperLocationService shipperLocationService;
     IDeliveryService deliveryService;
+    IShipperProfileService shipperProfileService;
 
     @Operation(
             summary = "Cập nhật vị trí Shipper (Real-time)",
@@ -114,6 +115,28 @@ public class ShipperController {
         deliveryService.completeOrder(userId, orderId);
         return APIResponse.<Void>builder()
                 .message("Giao hàng thành công! Tiền đã được cộng vào ví.")
+                .build();
+    }
+    @Operation(summary = "Đăng ký thông tin Shipper", description = "Dành cho Shipper mới: Đăng ký biển số xe, loại xe", security = @SecurityRequirement(name = "bearerAuth"))
+    @PostMapping("/register")
+    public APIResponse<ShipperProfileResponse> registerShipper(
+            @AuthenticationPrincipal Jwt jwt,
+            @org.springframework.web.bind.annotation.RequestBody ShipperRegistrationRequest request
+    ) {
+        Long userId = Long.valueOf(jwt.getClaim("user-id").toString());
+        return APIResponse.<ShipperProfileResponse>builder()
+                .result(shipperProfileService.registerShipper(userId, request))
+                .message("Đăng ký thông tin thành công!")
+                .build();
+    }
+
+    @Operation(summary = "Lấy thông tin hồ sơ Shipper", description = "Kiểm tra xem User này đã đăng ký làm Shipper chưa", security = @SecurityRequirement(name = "bearerAuth"))
+    @GetMapping("/profile")
+    public APIResponse<ShipperProfileResponse> getProfile(@AuthenticationPrincipal Jwt jwt) {
+        Long userId = Long.valueOf(jwt.getClaim("user-id").toString());
+        return APIResponse.<ShipperProfileResponse>builder()
+                .result(shipperProfileService.getShipperProfile(userId))
+                .message("Lấy thông tin thành công!")
                 .build();
     }
 }

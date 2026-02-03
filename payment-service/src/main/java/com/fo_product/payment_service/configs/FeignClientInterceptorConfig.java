@@ -1,33 +1,39 @@
 package com.fo_product.payment_service.configs;
 
 import feign.RequestInterceptor;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Configuration
 @Slf4j
 public class FeignClientInterceptorConfig {
+
     @Bean
     public RequestInterceptor requestInterceptor() {
         return requestTemplate -> {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            // 1. Lấy Request hiện tại (đang gọi vào Payment Service) thông qua RequestContextHolder
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
 
-            if (authentication != null && authentication.isAuthenticated()) {
-                // Cách lấy Token CHUẨN khi dùng OAuth2 Resource Server
-                if (authentication instanceof JwtAuthenticationToken jwtToken) {
-                    String tokenValue = jwtToken.getToken().getTokenValue();
-                    requestTemplate.header("Authorization", "Bearer " + tokenValue);
-                }
-                // Fallback: Nếu không phải JWT (ví dụ chạy test)
-                else if (authentication.getCredentials() instanceof String tokenStr) {
-                    requestTemplate.header("Authorization", "Bearer " + tokenStr);
+            if (attributes != null) {
+                HttpServletRequest request = attributes.getRequest();
+
+                // 2. Lấy chuỗi Authorization (Bearer eyJhb...) từ header của request gốc
+                String authHeader = request.getHeader("Authorization");
+
+                if (authHeader != null && !authHeader.isEmpty()) {
+                    // 3. Nhét nguyên chuỗi đó vào header của Feign Request để gửi sang Order Service
+                    requestTemplate.header("Authorization", authHeader);
+                    log.info("Đã forward Authorization header sang Feign call");
+                } else {
+                    log.warn("Request gốc không có Authorization header!");
                 }
             } else {
-                log.warn("Feign Call: Không tìm thấy Authentication trong SecurityContext!");
+                // Trường hợp này xảy ra nếu gọi Feign trong một thread async hoặc background job không gắn với request
+                log.warn("Không tìm thấy Request Attributes (có thể do chạy Async?)");
             }
         };
     }
