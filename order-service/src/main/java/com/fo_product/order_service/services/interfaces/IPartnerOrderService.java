@@ -1,5 +1,6 @@
 package com.fo_product.order_service.services.interfaces;
 
+import com.fo_product.order_service.dtos.responses.MerchantStatsResponse;
 import com.fo_product.order_service.dtos.responses.OrderResponse;
 import org.springframework.data.domain.Page;
 
@@ -11,4 +12,5 @@ public interface IPartnerOrderService {
     void markOrderAsCompleted(Long orderId);
     OrderResponse markOrderAsReady(Long userId, Long orderId);
     OrderResponse getOrderById(Long orderId);
+    MerchantStatsResponse getMerchantStats(Long userId, Long merchantId);
 }

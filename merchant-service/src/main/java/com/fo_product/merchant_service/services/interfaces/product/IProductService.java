@@ -13,5 +13,6 @@ public interface IProductService {
     ProductResponse getById(Long id);
     List<ProductResponse> getAllProductsByCategory(Long categoryId);
     List<ProductResponse> getProductsByIds(List<Long> productids);
+    long countProductsByRestaurant(Long restaurantId);
     void deleteProduct(Long id);
 }

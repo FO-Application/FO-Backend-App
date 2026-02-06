@@ -132,12 +132,48 @@ public class DeliveryService implements IDeliveryService {
                     return walletRepository.save(newWallet);
                 });
 
-        // Update số dư
+        // --- XỬ LÝ COD ---
+        // Nếu là COD, Shipper thu tiền mặt từ khách (Food + Ship).
+        // Shipper giữ tiền Ship (đã có trong tay).
+        // Shipper giữ tiền Food (của quán).
+        // => Hệ thống phải TRỪ tiền Food từ ví Shipper để trả cho Quán.
+        if ("COD".equals(orderRes.paymentMethod())) {
+            BigDecimal foodMoney = orderRes.grandTotal().subtract(shippingFee);
+            if (foodMoney.compareTo(BigDecimal.ZERO) > 0) {
+                // Tr trừ ví
+                wallet.setBalance(wallet.getBalance().subtract(foodMoney));
+                walletRepository.save(wallet);
+
+                // Ghi log Trừ tiền
+                transactionRepository.save(ShipperTransaction.builder()
+                        .wallet(wallet)
+                        .amount(foodMoney.negate()) // Ghi âm
+                        .type(TransactionType.WITHDRAW) // Hoặc loại transaction khác nếu có
+                        .description("Trừ tiền thu hộ đơn COD #" + orderId)
+                        .build());
+                
+                log.info("Shipper {} thu hộ {} đ. Đã trừ ví.", shipper.getId(), foodMoney);
+            }
+        }
+
+        // --- CỘNG TIỀN SHIP (INCOME) ---
+        // (Logic cũ: Cộng thêm tiền ship vào ví)
+        // Thực tế: Nếu Shipper nhận tiền mặt, thì tiền ship shipper ĐÃ CẦM. 
+        // Code cũ đang cộng thêm vào ví ảo => Ví ảo tăng lên.
+        // Nếu muốn chuẩn:
+        // - COD: Tiền ship shipper cầm tay -> KHÔNG cộng vào ví (hoặc cộng rồi trừ ngay? Không cần).
+        // - Online: Hệ thống thu -> CỘNG vào ví shipper.
+        
+        // TUY NHIÊN, để giữ logic đơn giản cho project (như đã trao đổi), ta cứ CỘNG tiền ship vào ví như một khoản thu nhập ghi nhận.
+        // Và ở trên đã TRỪ tiền món ăn.
+        // => Ví Shipper = Cũ - Tiền Món (nếu COD) + Tiền Ship (ghi nhận).
+
+        // Update số dư (Cộng tiền ship)
         BigDecimal newBalance = wallet.getBalance().add(shippingFee);
         wallet.setBalance(newBalance);
         walletRepository.save(wallet);
 
-        // Ghi log giao dịch
+        // Ghi log giao dịch (Cộng tiền ship)
         transactionRepository.save(ShipperTransaction.builder()
                 .wallet(wallet)
                 .amount(shippingFee)
@@ -146,5 +182,61 @@ public class DeliveryService implements IDeliveryService {
                 .build());
 
         log.info("Shipper {} +{} VND. Số dư: {}", shipper.getId(), shippingFee, newBalance);
+    }
+
+    @Override
+    @Transactional
+    public void deposit(Long userId, BigDecimal amount) {
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new DeliveryException(DeliveryErrorCode.INVALID_REQUEST); // Tạm dùng error code này
+        }
+
+        Shipper shipper = shipperRepository.findByUserId(userId)
+                .orElseThrow(() -> new DeliveryException(DeliveryErrorCode.SHIPPER_NOT_FOUND));
+
+        ShipperWallet wallet = walletRepository.findByShipper_Id(shipper.getId())
+                .orElseGet(() -> {
+                     return walletRepository.save(ShipperWallet.builder()
+                            .shipper(shipper)
+                            .balance(BigDecimal.ZERO)
+                            .build());
+                });
+
+        wallet.setBalance(wallet.getBalance().add(amount));
+        walletRepository.save(wallet);
+
+        transactionRepository.save(ShipperTransaction.builder()
+                .wallet(wallet)
+                .amount(amount)
+                .type(TransactionType.INCOME) // Dùng INCOME vì DB chưa có ENUM DEPOSIT (lỗi truncated)
+                .description("Nạp tiền vào ví") 
+                .build());
+        
+        log.info("Shipper {} nạp {} VND. Số dư mới: {}", userId, amount, wallet.getBalance());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.fo_product.delivery_service.dtos.responses.ShipperWalletResponse getWalletStats(Long userId) {
+        Shipper shipper = shipperRepository.findByUserId(userId)
+                .orElseThrow(() -> new DeliveryException(DeliveryErrorCode.SHIPPER_NOT_FOUND));
+
+        ShipperWallet wallet = walletRepository.findByShipper_Id(shipper.getId())
+                .orElseGet(() -> ShipperWallet.builder()
+                        .balance(BigDecimal.ZERO)
+                        .build());
+        
+        // Tính toán thống kê từ Transaction (nếu có logic phức tạp hơn thì query DB)
+        // Hiện tại chỉ tính Balance. 
+        // Các mục Income Today/Week/Month nên query từ ShipperTransactionRepository.
+        // Tạm thời trả về 0 cho các mục Stats khác nếu chưa cần thiết, hoặc query nếu muốn xịn.
+        // Giả lập query đơn giản:
+        
+        return com.fo_product.delivery_service.dtos.responses.ShipperWalletResponse.builder()
+                .balance(wallet.getBalance())
+                .todayIncome(BigDecimal.ZERO) // TODO: Implement query
+                .weekIncome(BigDecimal.ZERO)
+                .monthIncome(BigDecimal.ZERO)
+                .build();
     }
 }

@@ -2,6 +2,7 @@ package com.fo_product.order_service.controllers;
 
 import com.fo_product.common_lib.dtos.APIResponse;
 import com.fo_product.order_service.dtos.responses.OrderResponse;
+import com.fo_product.order_service.dtos.responses.MerchantStatsResponse;
 import com.fo_product.order_service.services.interfaces.IPartnerOrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -93,6 +94,22 @@ public class MerchantOrderController {
         return APIResponse.<OrderResponse>builder()
                 .result(result)
                 .message("Đã hủy đơn hàng thành công")
+                .build();
+    }
+
+    @Operation(summary = "Lấy thống kê nhà hàng", description = "Lấy thống kê đơn hàng, doanh thu, đánh giá.")
+    @GetMapping("/{id}/stats")
+    public APIResponse<MerchantStatsResponse> getMerchantStats(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable("id") Long merchantId
+    ) {
+        Long userId = Long.valueOf(jwt.getClaim("user-id").toString());
+
+        MerchantStatsResponse result = orderService.getMerchantStats(userId, merchantId);
+
+        return APIResponse.<MerchantStatsResponse>builder()
+                .result(result)
+                .message("Get merchant stats success")
                 .build();
     }
 }

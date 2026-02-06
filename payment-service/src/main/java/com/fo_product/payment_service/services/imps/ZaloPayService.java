@@ -58,7 +58,7 @@ public class ZaloPayService implements IZaloPayService {
             put("description", "Thanh toan don hang #" + orderId);
             put("bank_code", "");
             put("item", "[]");
-            put("embed_data", "{\"redirecturl\": \"https://google.com\"}"); // Link mở lại app sau khi thanh toán
+            put("embed_data", "{\"redirecturl\": \"http://localhost:3001\"}"); // Link mở lại app sau khi thanh toán
             put("callback_url", zaloPayConfig.getCallbackUrl());
             put("expire_duration_seconds", 900); //Secconds
         }};

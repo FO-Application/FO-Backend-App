@@ -118,4 +118,16 @@ public class ProductController {
                 .message("Product successfully deleted")
                 .build();
     }
+    @Operation(summary = "Lấy đếm sản phẩm của nhà hàng", description = "Đếm số lượng sản phẩm của một nhà hàng")
+    @GetMapping("/count")
+    APIResponse<Long> countProductsByRestaurant(
+            @Parameter(description = "ID nhà hàng", example = "1")
+            @RequestParam Long restaurantId
+    ) {
+        long count = productService.countProductsByRestaurant(restaurantId);
+        return APIResponse.<Long>builder()
+                .result(count)
+                .message("Product count successfully retrieved")
+                .build();
+    }
 }

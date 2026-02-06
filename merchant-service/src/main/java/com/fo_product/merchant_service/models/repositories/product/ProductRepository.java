@@ -12,4 +12,5 @@ import java.util.List;
 public interface ProductRepository extends JpaRepository<Product, Long> {
     boolean existsByNameAndCategory_Restaurant(String name, Restaurant categoryRestaurant);
     List<Product> findAllByCategory(Category category);
+    long countByCategory_RestaurantId(Long restaurantId);
 }

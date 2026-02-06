@@ -50,6 +50,16 @@ public class MerchantClientFallbackFactory implements FallbackFactory<MerchantCl
 
                 throw new OrderException(OrderErrorCode.SERVICE_UNAVAILABLE);
             }
+
+
+            @Override
+            public APIResponse<Long> countProductsByRestaurant(Long restaurantId) {
+                if (cause instanceof FeignException fe) {
+                    int status = fe.status();
+                    handleSecurityException(status);
+                }
+                throw new OrderException(OrderErrorCode.SERVICE_UNAVAILABLE);
+            }
         };
     }
 

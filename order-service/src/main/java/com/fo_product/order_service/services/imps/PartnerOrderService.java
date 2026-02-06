@@ -13,7 +13,13 @@ import com.fo_product.order_service.models.entities.OrderItem;
 import com.fo_product.order_service.models.enums.OrderStatus;
 import com.fo_product.order_service.models.enums.PaymentMethod;
 import com.fo_product.order_service.models.repositories.OrderRepository;
+import com.fo_product.order_service.models.repositories.ReviewRepository;
 import com.fo_product.order_service.services.interfaces.IPartnerOrderService;
+import com.fo_product.order_service.dtos.responses.MerchantStatsResponse;
+import com.fo_product.order_service.clients.MerchantClient;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -33,9 +39,11 @@ import java.util.stream.Collectors;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class PartnerOrderService implements IPartnerOrderService {
     OrderRepository orderRepository;
+    ReviewRepository reviewRepository;
     OrderMapper mapper;
     KafkaProducerService kafkaProducerService;
     GetClientDTO getClientDTO;
+    MerchantClient merchantClient;
 
     @Override
     @Transactional(readOnly = true)
@@ -240,5 +248,44 @@ public class PartnerOrderService implements IPartnerOrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderException(OrderErrorCode.ORDER_NOT_EXIST));
         return mapper.response(order);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public MerchantStatsResponse getMerchantStats(Long userId, Long merchantId) {
+        if (!checkMerchantOwnership(userId, merchantId)) {
+             throw new OrderException(OrderErrorCode.INVALID_OWNER);
+        }
+
+        LocalDateTime startOfDay = LocalDateTime.now().with(LocalTime.MIN);
+        LocalDateTime endOfDay = LocalDateTime.now().with(LocalTime.MAX);
+
+        long ordersToday = orderRepository.countByMerchantIdAndCreatedAtBetween(merchantId, startOfDay, endOfDay);
+
+        BigDecimal totalRevenue = orderRepository.sumGrandTotalByMerchantIdAndStatusCompleted(merchantId);
+        if (totalRevenue == null) totalRevenue = BigDecimal.ZERO;
+
+        Double averageRating = reviewRepository.getAverageRatingByMerchantId(merchantId);
+        if (averageRating == null) averageRating = 0.0;
+        // Round to 1 decimal place
+        averageRating = Math.round(averageRating * 10.0) / 10.0;
+
+        // Call Merchant Service
+        long menuItems = 0;
+        try {
+            var response = merchantClient.countProductsByRestaurant(merchantId);
+             if (response != null && response.getResult() != null) {
+                menuItems = response.getResult();
+             }
+        } catch (Exception e) {
+            log.error("Error calling merchant-service for stats", e);
+        }
+
+        return MerchantStatsResponse.builder()
+                .ordersToday(ordersToday)
+                .totalRevenue(totalRevenue)
+                .averageRating(averageRating)
+                .menuItems(menuItems)
+                .build();
     }
 }

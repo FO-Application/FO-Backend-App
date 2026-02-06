@@ -23,4 +23,7 @@ public interface MerchantClient {
 
     @GetMapping("/api/v1/product/products")
     APIResponse<List<ProductDTO>> getAllProductsByIds(@RequestParam List<Long> productIds);
+
+    @GetMapping("/api/v1/product/count")
+    APIResponse<Long> countProductsByRestaurant(@RequestParam Long restaurantId);
 }

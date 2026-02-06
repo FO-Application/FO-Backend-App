@@ -33,7 +33,8 @@ public enum MerchantErrorCode implements ErrorCode{
     COORDINATE_NOT_VALID(4020, "Coordinate not valid", HttpStatus.BAD_REQUEST),
     SERVICE_UNAVAILABLE(4021, "Service Unavailable", HttpStatus.SERVICE_UNAVAILABLE),
     USER_NOT_EXIST(4022, "User is not exist", HttpStatus.NOT_FOUND),
-
+    INVALID_AMOUNT(4023, "Invalid amount", HttpStatus.BAD_REQUEST),
+    INSUFFICIENT_BALANCE(4024, "Insufficient balance", HttpStatus.BAD_REQUEST),
     ;
     int code;
     String message;

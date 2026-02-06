@@ -15,4 +15,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     Page<Review> findByMerchantId(Long merchantId, Pageable pageable);
 
     Optional<Review> findByOrder_Id(Long orderId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT AVG(r.rating) FROM Review r WHERE r.merchantId = :merchantId")
+    Double getAverageRatingByMerchantId(Long merchantId);
 }

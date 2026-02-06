@@ -51,6 +51,8 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       client-id: delivery-service-producer
+      properties:
+        spring.json.add.type.headers: true
 
     consumer:
       group-id: delivery-service-group

@@ -1,6 +1,7 @@
 package com.fo_product.notification_service.services.imps;
 
 import com.fo_product.notification_service.dtos.request.RegisterTokenRequest;
+import com.fo_product.notification_service.dtos.response.NotificationResponse;
 import com.fo_product.notification_service.models.entities.Notification;
 import com.fo_product.notification_service.models.entities.UserDeviceToken;
 import com.fo_product.notification_service.models.repositories.NotificationRepository;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,9 +34,9 @@ public class NotificationService implements INotificationService {
     @Transactional
     //Hàm cho front end đăng ký token
     public void registerToken(RegisterTokenRequest request) {
-        var existingToken = userDeviceTokenRepository.findByUserIdAndFcmToken(request.userId(), request.fcmToken());
+        List<UserDeviceToken> existingTokens = userDeviceTokenRepository.findByUserIdAndFcmToken(request.userId(), request.fcmToken());
 
-        if (existingToken.isEmpty()) {
+        if (existingTokens.isEmpty()) {
             UserDeviceToken userDeviceToken = UserDeviceToken.builder()
                     .userId(request.userId())
                     .fcmToken(request.fcmToken())
@@ -42,6 +44,12 @@ public class NotificationService implements INotificationService {
                     .build();
 
             userDeviceTokenRepository.save(userDeviceToken);
+        } else if (existingTokens.size() > 1) {
+            // Clean up duplicates: keep the first one, delete the rest
+            log.warn("Found {} duplicate tokens for user {}. Cleaning up...", existingTokens.size(), request.userId());
+            for (int i = 1; i < existingTokens.size(); i++) {
+                userDeviceTokenRepository.delete(existingTokens.get(i));
+            }
         }
 
         subscribeTopic(request);
@@ -66,13 +74,14 @@ public class NotificationService implements INotificationService {
     }
 
     @Override
-    public void sendNotification(Long userId, String title, String body, Long orderId) {
+    public void sendNotification(Long userId, String title, String body, Long orderId, java.util.Map<String, String> data) {
         //B1: Lưu lịch sử vào CSDL
         Notification notification = Notification.builder()
                 .recipientId(userId)
                 .title(title)
                 .message(body)
                 .referenceId(orderId)
+                .isRead(false)
                 .build();
 
         notificationRepository.save(notification);
@@ -84,14 +93,21 @@ public class NotificationService implements INotificationService {
         //B3: Gửi Firebase cho từng token
         for (UserDeviceToken token : userDeviceTokens) {
             try {
-                Message message = Message.builder()
+                // Build base message
+                var messageBuilder = Message.builder()
                         .setToken(token.getFcmToken())
                         .setNotification(com.google.firebase.messaging.Notification.builder()
                                 .setTitle(title)
                                 .setBody(body)
                                 .build())
-                        .putData("orderId", String.valueOf(orderId))
-                        .build();
+                        .putData("orderId", String.valueOf(orderId));
+                
+                // Add extra data if present
+                if (data != null) {
+                    messageBuilder.putAllData(data);
+                }
+
+                Message message = messageBuilder.build();
 
                 FirebaseMessaging.getInstance().send(message);
             } catch (FirebaseMessagingException e) {
@@ -112,13 +128,14 @@ public class NotificationService implements INotificationService {
     @Override
     public void sendNotificationToTopic(String topic, String title, String body, Long orderId) {
         try {
-            // 1. Lưu log vào DB (Optional - tùy bạn muốn lưu hay không)
-            // Nếu lưu thì để recipientId = null hoặc 0 vì gửi cho nhiều người
+            // 1. Lưu log vào DB với topic để có thể query sau
             Notification notification = Notification.builder()
                     .recipientId(0L) // 0 đại diện cho Topic
-                    .title(title + " [Topic: " + topic + "]")
+                    .title(title)
                     .message(body)
                     .referenceId(orderId)
+                    .topic(topic) // Lưu topic để query history
+                    .isRead(false)
                     .build();
             notificationRepository.save(notification);
 
@@ -130,6 +147,7 @@ public class NotificationService implements INotificationService {
                             .setBody(body)
                             .build())
                     .putData("orderId", String.valueOf(orderId))
+                    .putData("notificationId", String.valueOf(notification.getId()))
                     .build();
 
             FirebaseMessaging.getInstance().send(message);
@@ -138,5 +156,60 @@ public class NotificationService implements INotificationService {
         } catch (Exception e) {
             log.error("Lỗi gửi FCM Topic: ", e);
         }
+    }
+
+    // ========== HISTORY & MANAGEMENT METHODS ==========
+
+    @Override
+    public List<NotificationResponse> getNotificationsByMerchant(Long merchantId) {
+        String topic = "merchant-orders-" + merchantId;
+        List<Notification> notifications = notificationRepository.findByTopicOrderByCreatedAtDesc(topic);
+        
+        return notifications.stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void markAsRead(Long notificationId) {
+        notificationRepository.findById(notificationId).ifPresent(notification -> {
+            notification.setIsRead(true);
+            notificationRepository.save(notification);
+        });
+    }
+
+    @Override
+    @Transactional
+    public void markAllAsRead(Long merchantId) {
+        String topic = "merchant-orders-" + merchantId;
+        notificationRepository.markAllAsReadByTopic(topic);
+    }
+
+    @Override
+    @Transactional
+    public void deleteNotification(Long notificationId) {
+        notificationRepository.deleteById(notificationId);
+    }
+
+    @Override
+    @Transactional
+    public void deleteAllNotifications(Long merchantId) {
+        String topic = "merchant-orders-" + merchantId;
+        notificationRepository.deleteByTopic(topic);
+    }
+
+    // ========== HELPER METHODS ==========
+
+    private NotificationResponse toResponse(Notification notification) {
+        return NotificationResponse.builder()
+                .id(notification.getId())
+                .title(notification.getTitle())
+                .message(notification.getMessage())
+                .referenceId(notification.getReferenceId())
+                .topic(notification.getTopic())
+                .isRead(notification.getIsRead())
+                .createdAt(notification.getCreatedAt())
+                .build();
     }
 }

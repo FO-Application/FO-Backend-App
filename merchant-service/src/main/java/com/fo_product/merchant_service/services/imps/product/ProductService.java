@@ -162,6 +162,12 @@ public class ProductService implements IProductService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public long countProductsByRestaurant(Long restaurantId) {
+        return productRepository.countByCategory_RestaurantId(restaurantId);
+    }
+
+    @Override
     @Transactional
     @Caching(
             evict = {

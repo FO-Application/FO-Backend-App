@@ -15,7 +15,8 @@ public enum DeliveryErrorCode implements ErrorCode {
     SHIPPER_NOT_FOUND(6002, "Shipper not found", HttpStatus.NOT_FOUND),
     DELIVERY_NOT_FOUND(6003, "Delivery not found", HttpStatus.NOT_FOUND),
     SERVICE_UNAVAILABLE(6004, "Service Unavailable", HttpStatus.SERVICE_UNAVAILABLE),
-
+    INVALID_REQUEST(6005, "Invalid request", HttpStatus.BAD_REQUEST),
+    FORBIDDEN(6006, "You do not have permission", HttpStatus.FORBIDDEN)
     ;
 
     int code;

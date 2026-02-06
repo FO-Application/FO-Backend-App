@@ -3,7 +3,9 @@ package com.fo_product.delivery_service.controllers;
 import com.fo_product.common_lib.dtos.APIResponse;
 import com.fo_product.delivery_service.dtos.requests.ShipperRegistrationRequest;
 import com.fo_product.delivery_service.dtos.responses.ShipperProfileResponse;
+import com.fo_product.delivery_service.kafka.events.ShipperFoundEvent;
 import com.fo_product.delivery_service.services.interfaces.IDeliveryService;
+import com.fo_product.delivery_service.services.interfaces.IOrderMatchingService;
 import com.fo_product.delivery_service.services.interfaces.IShipperLocationService;
 import com.fo_product.delivery_service.services.interfaces.IShipperProfileService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,6 +19,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/delivery/shippers")
 @RequiredArgsConstructor
@@ -26,6 +30,7 @@ public class ShipperController {
     IShipperLocationService shipperLocationService;
     IDeliveryService deliveryService;
     IShipperProfileService shipperProfileService;
+    IOrderMatchingService orderMatchingService;
 
     @Operation(
             summary = "Cập nhật vị trí Shipper (Real-time)",
@@ -123,10 +128,27 @@ public class ShipperController {
             @AuthenticationPrincipal Jwt jwt,
             @org.springframework.web.bind.annotation.RequestBody ShipperRegistrationRequest request
     ) {
+        // Check Role
+        String scope = jwt.getClaim("scope").toString();
+        if (!scope.contains("SHIPPER")) {
+            throw new com.fo_product.delivery_service.exceptions.DeliveryException(com.fo_product.delivery_service.exceptions.code.DeliveryErrorCode.FORBIDDEN);
+        }
+
         Long userId = Long.valueOf(jwt.getClaim("user-id").toString());
         return APIResponse.<ShipperProfileResponse>builder()
                 .result(shipperProfileService.registerShipper(userId, request))
                 .message("Đăng ký thông tin thành công!")
+                .build();
+    }
+
+    @Operation(summary = "Lấy danh sách đơn hàng đang chờ nhận (Polling)", description = "Dùng để kiểm tra đơn mới nếu lỡ Push Notification. Nên gọi mỗi 5-10s.", security = @SecurityRequirement(name = "bearerAuth"))
+    @GetMapping("/pending-orders")
+    public APIResponse<List<ShipperFoundEvent>> getPendingOrders(@AuthenticationPrincipal Jwt jwt) {
+        Long userId = Long.valueOf(jwt.getClaim("user-id").toString());
+        // Shipper ID == User ID (giả định)
+        return APIResponse.<java.util.List<com.fo_product.delivery_service.kafka.events.ShipperFoundEvent>>builder()
+                .result(orderMatchingService.getPendingOffers(userId))
+                .message("Lấy danh sách đơn chờ thành công!")
                 .build();
     }
 
@@ -137,6 +159,30 @@ public class ShipperController {
         return APIResponse.<ShipperProfileResponse>builder()
                 .result(shipperProfileService.getShipperProfile(userId))
                 .message("Lấy thông tin thành công!")
+                .build();
+    }
+
+    @Operation(summary = "Nạp tiền vào ví (Giả lập)", description = "API dùng để nạp tiền vào ví Shipper (Demo)", security = @SecurityRequirement(name = "bearerAuth"))
+    @PostMapping("/wallet/deposit")
+    public APIResponse<Void> deposit(
+            @AuthenticationPrincipal Jwt jwt,
+            @Parameter(description = "Số tiền muốn nạp")
+            @RequestParam java.math.BigDecimal amount
+    ) {
+        Long userId = Long.valueOf(jwt.getClaim("user-id").toString());
+        deliveryService.deposit(userId, amount);
+        return APIResponse.<Void>builder()
+                .message("Nạp tiền thành công!")
+                .build();
+    }
+
+    @Operation(summary = "Xem thông tin Ví & Thống kê", description = "Lấy số dư ví và thu nhập", security = @SecurityRequirement(name = "bearerAuth"))
+    @GetMapping("/wallet")
+    public APIResponse<com.fo_product.delivery_service.dtos.responses.ShipperWalletResponse> getWalletStats(@AuthenticationPrincipal Jwt jwt) {
+        Long userId = Long.valueOf(jwt.getClaim("user-id").toString());
+        return APIResponse.<com.fo_product.delivery_service.dtos.responses.ShipperWalletResponse>builder()
+                .result(deliveryService.getWalletStats(userId))
+                .message("Lấy thông tin ví thành công!")
                 .build();
     }
 }
