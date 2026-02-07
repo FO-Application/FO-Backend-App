@@ -16,7 +16,11 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Page<Order> findByMerchantId(Long merchantId, Pageable pageable);
     Optional<Order> findByAppTransId(String appTransId);
     //Lấy đơn của quán theo trạng thái cụ thể
+    //Lấy đơn của quán theo trạng thái cụ thể
     Page<Order> findByMerchantIdAndOrderStatus(Long merchantId, OrderStatus orderStatus, Pageable pageable);
+    
+    // Support fetching multiple statuses (e.g. CREATED and PAID)
+    Page<Order> findByMerchantIdAndOrderStatusIn(Long merchantId, java.util.List<OrderStatus> statuses, Pageable pageable);
 
     long countByMerchantIdAndCreatedAtBetween(Long merchantId, java.time.LocalDateTime start, java.time.LocalDateTime end);
 

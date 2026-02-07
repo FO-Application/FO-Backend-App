@@ -5,6 +5,7 @@ import com.fo_product.delivery_service.helpers.GetClientDTO;
 import com.fo_product.delivery_service.kafka.KafkaProducerService;
 import com.fo_product.delivery_service.kafka.events.OrderConfirmedEvent;
 import com.fo_product.delivery_service.kafka.events.ShipperFoundEvent;
+import com.fo_product.delivery_service.models.repositories.DeliveryRepository;
 import com.fo_product.delivery_service.services.interfaces.IOrderMatchingService;
 import com.google.gson.Gson;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class OrderMatchingService implements IOrderMatchingService {
     private final KafkaProducerService kafkaProducerService;
     private final RedisTemplate<String, Object> redisTemplate;
     private final GetClientDTO getClientDTO;
+    private final DeliveryRepository deliveryRepository;
     private final Gson gson = new Gson();
 
     private static final String PENDING_ORDER_KEY = "pending_matching_orders";
@@ -151,10 +153,23 @@ public class OrderMatchingService implements IOrderMatchingService {
                 // Để nhanh, ta gọi lại Order Service lấy thông tin tên quán (nếu cần), hoặc dùng data lưu sẵn.
                 // Lưu ý: OrderConfirmedEvent đã có lat/lon/fee. Thiếu tên quán.
                 
+                // [FIX] Check if order is already accepted/delivered
+                if (deliveryRepository.existsByOrderId(orderEvent.orderId())) {
+                    // Order is already taken. Clean up from this shipper's view.
+                    redisTemplate.opsForHash().delete(key, String.valueOf(orderEvent.orderId()));
+                    continue;
+                }
+
                 // Lấy lại thông tin quán từ Order Service (có thể cache)
                 try {
                     OrderDTO orderRes = getClientDTO.getOrderDTO(orderEvent.orderId());
                     
+                    // Optional: Check status from Order Service (if CANCELED)
+                    if (orderRes.orderStatus().equals("CANCELED")) {
+                         redisTemplate.opsForHash().delete(key, String.valueOf(orderEvent.orderId()));
+                         continue;
+                    }
+
                     results.add(ShipperFoundEvent.builder()
                             .shipperId(shipperId)
                             .orderId(orderEvent.orderId())

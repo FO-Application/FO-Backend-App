@@ -17,4 +17,6 @@ public interface IWalletService {
     byte[] exportTransactions(Instant startDate, Instant endDate, TransactionType type);
     List<DailyStatResponse> getDailyStatistics();
     WalletResponse withdraw(BigDecimal amount);
+    
+    WalletResponse deposit(BigDecimal amount);
 }

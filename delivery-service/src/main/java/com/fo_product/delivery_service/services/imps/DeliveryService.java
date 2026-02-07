@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -89,8 +90,19 @@ public class DeliveryService implements IDeliveryService {
 
     @Override
     public void updatePickedUp(Long userId, Long orderId) {
-        Delivery delivery = deliveryRepository.findByOrderId(orderId)
-                .orElseThrow(() -> new DeliveryException(DeliveryErrorCode.DELIVERY_NOT_FOUND));
+        // [FIX] Handle duplicate deliveries (resilience)
+        List<Delivery> deliveries = deliveryRepository.findAllByOrderId(orderId);
+        
+        if (deliveries.isEmpty()) {
+            throw new DeliveryException(DeliveryErrorCode.DELIVERY_NOT_FOUND);
+        }
+
+        Delivery delivery = deliveries.get(0); // Pick the first one
+        if (deliveries.size() > 1) {
+            log.warn("Found {} delivery records for order {}. Using the first one (ID: {}). Possible duplication bug.", 
+                    deliveries.size(), orderId, delivery.getId());
+            // Optional: Logic to delete duplicates if needed, but for now just proceed
+        }
 
         delivery.setStatus(DeliveryStatus.DELIVERING);
         deliveryRepository.save(delivery);
@@ -102,8 +114,18 @@ public class DeliveryService implements IDeliveryService {
     @Override
     @Transactional // Transaction cho việc cộng tiền ví
     public void completeOrder(Long userId, Long orderId) {
-        Delivery delivery = deliveryRepository.findByOrderId(orderId)
-                .orElseThrow(() -> new DeliveryException(DeliveryErrorCode.DELIVERY_NOT_FOUND));
+        // [FIX] Handle duplicate deliveries (resilience)
+        List<Delivery> deliveries = deliveryRepository.findAllByOrderId(orderId);
+
+        if (deliveries.isEmpty()) {
+            throw new DeliveryException(DeliveryErrorCode.DELIVERY_NOT_FOUND);
+        }
+
+        Delivery delivery = deliveries.get(0); // Pick the first one
+        if (deliveries.size() > 1) {
+            log.warn("Found {} delivery records for order {}. Using the first one (ID: {}).", 
+                    deliveries.size(), orderId, delivery.getId());
+        }
 
         delivery.setStatus(DeliveryStatus.COMPLETED);
         deliveryRepository.save(delivery);

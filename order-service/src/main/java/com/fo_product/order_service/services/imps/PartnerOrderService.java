@@ -55,6 +55,12 @@ public class PartnerOrderService implements IPartnerOrderService {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
         if (status != null && !status.isEmpty()) {
+            if (status.equals("CREATED")) {
+                // Return both CREATED and PAID orders for "New Orders" tab
+                java.util.List<OrderStatus> statuses = java.util.List.of(OrderStatus.CREATED, OrderStatus.PAID);
+                return orderRepository.findByMerchantIdAndOrderStatusIn(merchantId, statuses, pageable)
+                        .map(mapper::response);
+            }
             return orderRepository.findByMerchantIdAndOrderStatus(merchantId, OrderStatus.valueOf(status), pageable)
                     .map(mapper::response);
         } else {

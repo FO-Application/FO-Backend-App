@@ -22,6 +22,7 @@ public class Delivery {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
+    @Column(unique = true)
     Long orderId;
 
     @Column(name = "pickup_location")

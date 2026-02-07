@@ -89,4 +89,12 @@ public class WalletController {
                 .result(walletService.withdraw(amount))
                 .build();
     }
+    
+    @Operation(summary = "Nạp tiền", description = "Chủ nhà hàng dùng để nạp tiền (giả lập)")
+    @PostMapping("/deposit")
+    public APIResponse<WalletResponse> deposit(@RequestParam BigDecimal amount) {
+        return APIResponse.<WalletResponse>builder()
+                .result(walletService.deposit(amount))
+                .build();
+    }
 }

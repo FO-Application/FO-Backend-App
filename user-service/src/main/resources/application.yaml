@@ -8,6 +8,7 @@ spring:
     password: ${USER_DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
     producer:

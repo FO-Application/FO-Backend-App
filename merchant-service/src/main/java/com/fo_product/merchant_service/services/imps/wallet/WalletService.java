@@ -218,6 +218,32 @@ public class WalletService implements IWalletService {
         return mapper.response(wallet);
     }
 
+    @Override
+    @Transactional
+    public WalletResponse deposit(BigDecimal amount) {
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new MerchantException(MerchantErrorCode.INVALID_AMOUNT);
+        }
+
+        Wallet wallet = getMyWalletEntity();
+        
+        // Add to balance
+        wallet.setBalance(wallet.getBalance().add(amount));
+        walletRepository.save(wallet);
+
+        // Create Transaction Record
+        WalletTransaction transaction = WalletTransaction.builder()
+                .wallet(wallet)
+                .amount(amount) // Positive amount for deposit
+                .transactionType(TransactionType.DEPOSIT)
+                .description("Nạp tiền vào ví")
+                .build();
+        
+        walletTransactionRepository.save(transaction);
+
+        return mapper.response(wallet);
+    }
+    
     private Wallet getMyWalletEntity() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = (Jwt) authentication.getPrincipal(); // Cast to Jwt
