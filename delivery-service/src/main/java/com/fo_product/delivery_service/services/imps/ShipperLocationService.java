@@ -21,12 +21,14 @@ import java.util.stream.Collectors;
 public class ShipperLocationService implements IShipperLocationService {
     //Key naỳ giống tên bảng trong DB
     private static final String SHIPPER_GEO_KEY = "online_shippers";
+    private static final String HEARTBEAT_KEY_PREFIX = "shipper:heartbeat:";
+    private static final long HEARTBEAT_TTL_SECONDS = 15; // Shipper mất kết nối 15s = offline
 
     private final RedisTemplate<String, Object> redisTemplate;
 
     @Override
     /*
-    Shipper gửi tọa độ lên -> lưu vào redis
+    Shipper gửi tọa độ lên -> lưu vào redis + heartbeat
      */
     public void updateLocation(Long shipperId, double latitude, double longitude) {
         //Lưu shipper id kèm theo tọa độ
@@ -35,12 +37,18 @@ public class ShipperLocationService implements IShipperLocationService {
                 new Point(longitude, latitude), //Redis nhận long lat, ngược với google maps(lat, long)
                 String.valueOf(shipperId)
         );
+
+        // Set heartbeat key với TTL (cứ mỗi lần gửi location sẽ refresh TTL)
+        String heartbeatKey = HEARTBEAT_KEY_PREFIX + shipperId;
+        redisTemplate.opsForValue().set(heartbeatKey, "1", java.time.Duration.ofSeconds(HEARTBEAT_TTL_SECONDS));
+
         log.info("Đã cập nhật vị trí Shipper {}: [{}, {}]", shipperId, latitude, longitude);
     }
 
     @Override
     /**
      * Tìm shipper gần quán ăn nhất (trong bán kính radius km)
+     * Lọc bỏ shipper đã mất heartbeat (tắt máy, mất mạng)
      */
     public List<Long> findNearbyShippers(double merchantLat, double merchantLng, double radiusKm) {
         Circle circle = new Circle(
@@ -60,6 +68,7 @@ public class ShipperLocationService implements IShipperLocationService {
 
         return results.getContent().stream()
                 .map(geoResult -> Long.parseLong((String) geoResult.getContent().getName()))
+                .filter(this::isShipperAlive) // Lọc bỏ shipper đã mất heartbeat
                 .collect(Collectors.toList());
     }
 
@@ -69,5 +78,16 @@ public class ShipperLocationService implements IShipperLocationService {
      */
     public void removeShipper(Long shipperId) {
         redisTemplate.opsForZSet().remove(SHIPPER_GEO_KEY, String.valueOf(shipperId));
+        // Xóa heartbeat key
+        redisTemplate.delete(HEARTBEAT_KEY_PREFIX + shipperId);
+        log.info("Shipper {} đã offline. Đã xóa khỏi Redis.", shipperId);
+    }
+
+    @Override
+    /**
+     * Check xem shipper còn sống (heartbeat key còn tồn tại) hay không
+     */
+    public boolean isShipperAlive(Long shipperId) {
+        return Boolean.TRUE.equals(redisTemplate.hasKey(HEARTBEAT_KEY_PREFIX + shipperId));
     }
 }

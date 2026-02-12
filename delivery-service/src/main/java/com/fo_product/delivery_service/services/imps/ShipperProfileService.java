@@ -56,4 +56,13 @@ public class ShipperProfileService implements IShipperProfileService {
                 .isAvailable(shipper.isAvailable())
                 .build();
     }
+
+    @Override
+    @Transactional
+    public void updateOnlineStatus(Long userId, boolean isOnline) {
+        shipperRepository.findByUserId(userId).ifPresent(shipper -> {
+            shipper.setOnline(isOnline);
+            shipperRepository.save(shipper);
+        });
+    }
 }

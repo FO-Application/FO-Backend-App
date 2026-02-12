@@ -48,6 +48,8 @@ public class ShipperController {
     ) {
         Long shipperId = Long.valueOf(jwt.getClaim("user-id").toString());
         shipperLocationService.updateLocation(shipperId, lat, lon);
+        // Đồng bộ trạng thái online vào DB
+        shipperProfileService.updateOnlineStatus(shipperId, true);
         return APIResponse.<Void>builder()
                 .message("Location updated")
                 .build();
@@ -64,6 +66,8 @@ public class ShipperController {
     ) {
         Long shipperId = Long.valueOf(jwt.getClaim("user-id").toString());
         shipperLocationService.removeShipper(shipperId);
+        // Đồng bộ trạng thái offline vào DB
+        shipperProfileService.updateOnlineStatus(shipperId, false);
         return APIResponse.<Void>builder()
                 .message("Shipper is now offline")
                 .build();
