@@ -14,6 +14,9 @@ public record ReviewResponse(
         @Schema(description = "ID người viết đánh giá", example = "10")
         Long userId,
 
+        @Schema(description = "Tên người viết đánh giá", example = "Nguyễn Văn A")
+        String userName,
+
         @Schema(description = "Số sao đã chấm", example = "5.0")
         Double rating,
 

@@ -6,10 +6,11 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class ReviewMapper {
-    public ReviewResponse response (Review review) {
+    public ReviewResponse response(Review review, String userName) {
         return ReviewResponse.builder()
                 .id(review.getId())
                 .userId(review.getUserId())
+                .userName(userName)
                 .rating(review.getRating())
                 .comment(review.getComment())
                 .createdAt(review.getCreatedAt())

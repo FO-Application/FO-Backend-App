@@ -2,10 +2,12 @@ package com.fo_product.order_service.services.imps;
 
 import com.fo_product.order_service.dtos.requests.ReviewRequest;
 import com.fo_product.order_service.dtos.responses.ReviewResponse;
+import com.fo_product.order_service.dtos.feigns.UserDTO;
 import com.fo_product.order_service.exceptions.OrderException;
 import com.fo_product.order_service.exceptions.ReviewException;
 import com.fo_product.order_service.exceptions.codes.OrderErrorCode;
 import com.fo_product.order_service.exceptions.codes.ReviewErrorCode;
+import com.fo_product.order_service.helpers.GetClientDTO;
 import com.fo_product.order_service.kafka.KafkaProducerService;
 import com.fo_product.order_service.kafka.events.ReviewCreatedEvent;
 import com.fo_product.order_service.mappers.ReviewMapper;
@@ -33,6 +35,21 @@ public class ReviewService implements IReviewService {
     ReviewRepository reviewRepository;
     ReviewMapper mapper;
     KafkaProducerService kafkaProducerService;
+    GetClientDTO getClientDTO;
+
+    private String getUserName(Long userId) {
+        try {
+            UserDTO user = getClientDTO.getUserDTO(userId);
+            if (user != null) {
+                String name = (user.firstName() != null ? user.firstName() : "") +
+                        (user.lastName() != null ? " " + user.lastName() : "");
+                return name.trim().isEmpty() ? "Khách hàng" : name.trim();
+            }
+        } catch (Exception e) {
+            // Fallback if user-service is unavailable
+        }
+        return "Khách hàng";
+    }
 
     @Override
     @Transactional
@@ -66,7 +83,7 @@ public class ReviewService implements IReviewService {
 
         kafkaProducerService.sendReviewCreatedEvent(reviewCreatedEvent);
 
-        return mapper.response(result);
+        return mapper.response(result, getUserName(userId));
     }
 
     @Override
@@ -76,7 +93,7 @@ public class ReviewService implements IReviewService {
 
         Page<Review> reviews = reviewRepository.findByMerchantId(merchantId, pageable);
 
-        return reviews.map(mapper::response);
+        return reviews.map(review -> mapper.response(review, getUserName(review.getUserId())));
     }
 
     @Override
@@ -85,6 +102,7 @@ public class ReviewService implements IReviewService {
         Review review = reviewRepository.findByOrder_Id(orderId)
                 .orElseThrow(() -> new ReviewException(ReviewErrorCode.REVIEW_NOT_EXIST));
 
-        return mapper.response(review);
+        return mapper.response(review, getUserName(review.getUserId()));
     }
 }
+
