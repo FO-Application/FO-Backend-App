@@ -9,8 +9,5 @@ import java.util.Optional;
 
 @Repository
 public interface ShipperRepository extends JpaRepository<Shipper, Long> {
-    @Query(value = "SELECT * FROM shippers s WHERE s.is_online AND s.is_available = true ORDER BY RAND() LIMIT 1", nativeQuery = true)
-    Optional<Shipper> findRandomAvailableShipper();
-
     Optional<Shipper> findByUserId(Long userId);
 }

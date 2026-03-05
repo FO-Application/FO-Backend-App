@@ -32,7 +32,14 @@ public class OptionItemService implements IOptionItemService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "cacheOptionItems", allEntries = true)
+    @Caching(
+            evict = {
+                    @CacheEvict(value = "cacheOptionItems", allEntries = true),
+                    @CacheEvict(value = "cacheOptionGroups", allEntries = true),
+                    @CacheEvict(value = "product_details", allEntries = true),
+                    @CacheEvict(value = "cacheProducts", allEntries = true)
+            }
+    )
     public OptionItemResponse createOptionItem(OptionItemRequest request) {
         OptionGroup optionGroup = optionGroupRepository.findById(request.optionGroupId())
                 .orElseThrow(() -> new MerchantException(MerchantErrorCode.OPTION_GROUP_NOT_EXIST));
@@ -58,7 +65,10 @@ public class OptionItemService implements IOptionItemService {
     @Caching(
             evict = {
                     @CacheEvict(value = "cacheOptionItems", allEntries = true),
-                    @CacheEvict(value = "optionItem_details", key = "#id")
+                    @CacheEvict(value = "optionItem_details", key = "#id"),
+                    @CacheEvict(value = "cacheOptionGroups", allEntries = true),
+                    @CacheEvict(value = "product_details", allEntries = true),
+                    @CacheEvict(value = "cacheProducts", allEntries = true)
             }
     )
     public OptionItemResponse updateOptionItem(Long id, OptionItemPatchRequest request) {
@@ -109,7 +119,10 @@ public class OptionItemService implements IOptionItemService {
     @Caching(
             evict = {
                     @CacheEvict(value = "cacheOptionItems", allEntries = true),
-                    @CacheEvict(value = "optionItem_details", key = "#id")
+                    @CacheEvict(value = "optionItem_details", key = "#id"),
+                    @CacheEvict(value = "cacheOptionGroups", allEntries = true),
+                    @CacheEvict(value = "product_details", allEntries = true),
+                    @CacheEvict(value = "cacheProducts", allEntries = true)
             }
     )
     public void deleteOptionItem(Long id) {

@@ -179,31 +179,24 @@ public class DeliveryService implements IDeliveryService {
         }
 
         // --- CỘNG TIỀN SHIP (INCOME) ---
-        // (Logic cũ: Cộng thêm tiền ship vào ví)
-        // Thực tế: Nếu Shipper nhận tiền mặt, thì tiền ship shipper ĐÃ CẦM. 
-        // Code cũ đang cộng thêm vào ví ảo => Ví ảo tăng lên.
-        // Nếu muốn chuẩn:
-        // - COD: Tiền ship shipper cầm tay -> KHÔNG cộng vào ví (hoặc cộng rồi trừ ngay? Không cần).
-        // - Online: Hệ thống thu -> CỘNG vào ví shipper.
-        
-        // TUY NHIÊN, để giữ logic đơn giản cho project (như đã trao đổi), ta cứ CỘNG tiền ship vào ví như một khoản thu nhập ghi nhận.
-        // Và ở trên đã TRỪ tiền món ăn.
-        // => Ví Shipper = Cũ - Tiền Món (nếu COD) + Tiền Ship (ghi nhận).
+        // Chỉ cộng shippingFee vào ví cho thanh toán ONLINE (hệ thống thu tiền, cần trả ship cho shipper).
+        // Với COD: shipper đã cầm tiền ship trong tay rồi → KHÔNG cộng thêm (tránh tính đúp).
+        if (!"COD".equals(orderRes.paymentMethod())) {
+            BigDecimal newBalance = wallet.getBalance().add(shippingFee);
+            wallet.setBalance(newBalance);
+            walletRepository.save(wallet);
 
-        // Update số dư (Cộng tiền ship)
-        BigDecimal newBalance = wallet.getBalance().add(shippingFee);
-        wallet.setBalance(newBalance);
-        walletRepository.save(wallet);
+            transactionRepository.save(ShipperTransaction.builder()
+                    .wallet(wallet)
+                    .amount(shippingFee)
+                    .type(TransactionType.INCOME)
+                    .description("Thu nhập phí ship đơn hàng #" + orderId)
+                    .build());
 
-        // Ghi log giao dịch (Cộng tiền ship)
-        transactionRepository.save(ShipperTransaction.builder()
-                .wallet(wallet)
-                .amount(shippingFee)
-                .type(TransactionType.INCOME)
-                .description("Thu nhập từ đơn hàng #" + orderId)
-                .build());
-
-        log.info("Shipper {} +{} VND. Số dư: {}", shipper.getId(), shippingFee, newBalance);
+            log.info("Shipper {} +{} VND (Online). Số dư: {}", shipper.getId(), shippingFee, newBalance);
+        } else {
+            log.info("Shipper {} - Đơn COD, tiền ship đã cầm tay. Không cộng ví.", shipper.getId());
+        }
     }
 
     @Override

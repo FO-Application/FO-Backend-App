@@ -34,6 +34,9 @@ public record OrderRequest(
         @Schema(description = "Danh sách các món muốn đặt")
         @NotEmpty(message = "NOT_EMPTY")
         @Valid
-        List<OrderItemRequest> items
+        List<OrderItemRequest> items,
+
+        @Schema(description = "Ghi chú cho đơn hàng (VD: Phở không hành, ít cay...)", example = "Phở không hành")
+        String descriptionOrder
 ) {
 }

@@ -217,7 +217,7 @@ public class PartnerOrderService implements IPartnerOrderService {
         OrderCompletedEvent event = OrderCompletedEvent.builder()
                 .orderId(order.getId())
                 .merchantId(order.getMerchantId())
-                .orderAmount(order.getGrandTotal())
+                .orderAmount(order.getSubTotal())
                 .build();
         kafkaProducerService.sendOrderCompletedEvent(event);
     }

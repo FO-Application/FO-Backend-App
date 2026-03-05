@@ -15,23 +15,6 @@ spring:
       resilience4j:
         disable-time-limiter: true
 
-  kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      client-id: payment-service-producer
-      properties:
-        spring.json.add.type.headers: true
-
-    consumer:
-      group-id: payment-service-group
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      auto-offset-reset: earliest
-      properties:
-        spring.json.trusted.packages: "*" #Accept deserialize every objects (DTO)
-
 server:
   port: ${PAYMENT_SERVICE_PORT}
   error:

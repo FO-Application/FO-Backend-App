@@ -10,6 +10,5 @@ import java.util.Optional;
 @Repository
 public interface DeliveryRepository extends JpaRepository<Delivery,Long> {
     boolean existsByOrderId(Long orderId);
-    Optional<Delivery> findByOrderId(Long orderId);
     List<Delivery> findAllByOrderId(Long orderId);
 }

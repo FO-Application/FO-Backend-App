@@ -174,111 +174,189 @@ CREATED → PAID → PREPARING → READY → PICKED_UP → DELIVERING → COMPLE
 
 ## API Endpoints
 
-### User Service (`/api/v1/auth`, `/api/v1/user`)
+> **Base path**: Tất cả API được truy cập qua API Gateway (`http://localhost:8080`).
+
+### User Service — Authentication (`/api/v1/auth`)
 
 | Method | Endpoint | Mô tả |
 |--------|----------|-------|
-| POST | `/auth/register/customer` | Đăng ký khách hàng |
+| POST | `/auth/register/customer` | Đăng ký khách hàng (gửi OTP qua Kafka) |
 | POST | `/auth/register/merchant` | Đăng ký chủ quán |
 | POST | `/auth/register/shipper` | Đăng ký shipper |
-| POST | `/auth/verify` | Xác thực OTP + tạo tài khoản |
-| POST | `/auth/resend-otp` | Gửi lại OTP |
-| POST | `/auth/login` | Đăng nhập |
-| POST | `/auth/login/firebase` | Đăng nhập Social (Google/FB) |
-| POST | `/auth/refresh` | Refresh token |
-| POST | `/auth/logout` | Đăng xuất |
-| POST | `/auth/forgot-password` | Quên mật khẩu (gửi OTP) |
-| POST | `/auth/reset-password` | Đặt lại mật khẩu |
+| POST | `/auth/verify` | Xác thực OTP → tạo tài khoản chính thức |
+| POST | `/auth/resend-otp` | Gửi lại mã OTP |
+| POST | `/auth/login` | Đăng nhập → nhận JWT Cookie (access_token + refresh_token) |
+| POST | `/auth/login/firebase` | Đăng nhập Social (Google/Facebook) qua Firebase Auth |
+| POST | `/auth/refresh` | Tự động gia hạn access_token từ refresh_token |
+| POST | `/auth/logout` | Đăng xuất → xóa Cookie + blacklist token |
+| GET | `/auth/forgot-password` | Quên mật khẩu (gửi OTP qua email) |
+| POST | `/auth/reset-password` | Đặt lại mật khẩu mới (sau khi verify OTP) |
 | GET | `/auth/verify-otp` | Xác thực OTP quên mật khẩu |
-| GET | `/user/me` | Lấy thông tin bản thân |
-| GET | `/user/{userId}` | Lấy chi tiết user |
-| GET | `/user` | Danh sách user (phân trang) |
-| PUT | `/user/{userId}` | Cập nhật user |
+
+### User Service — User Management (`/api/v1/user`)
+
+| Method | Endpoint | Mô tả |
+|--------|----------|-------|
+| GET | `/user/me` | Lấy thông tin bản thân (từ JWT) |
+| GET | `/user/{userId}` | Lấy chi tiết user theo ID |
+| GET | `/user` | Danh sách user (phân trang: `page`, `size`) |
+| PUT | `/user/{userId}` | Cập nhật thông tin user |
 | DELETE | `/user/{userId}` | Xóa user |
 
-### Merchant Service
+### Merchant Service — Restaurant (`/api/v1/restaurant`)
 
 | Method | Endpoint | Mô tả |
 |--------|----------|-------|
-| POST | `/restaurant` | Tạo nhà hàng |
-| PUT | `/restaurant/{id}` | Cập nhật nhà hàng |
+| POST | `/restaurant` | Tạo nhà hàng (multipart: `data` JSON + `image`) |
+| PUT | `/restaurant/{id}` | Cập nhật nhà hàng (multipart: `data` + `image` optional) |
 | GET | `/restaurant/{id}` | Chi tiết nhà hàng |
-| GET | `/restaurant` | Danh sách (phân trang) |
-| GET | `/restaurant/nearby` | Tìm gần đây (lat/lon/radius) |
-| GET | `/restaurant/cuisine/{slug}` | Lọc theo loại ẩm thực |
-| GET | `/restaurant/owner/{ownerId}` | Nhà hàng theo chủ |
+| GET | `/restaurant` | Danh sách nhà hàng (phân trang) |
+| GET | `/restaurant/nearby` | Tìm nhà hàng gần đây (`lat`, `lon`, `radius`, `cuisine`, `page`, `size`) |
+| GET | `/restaurant/cuisine/{slug}` | Lọc nhà hàng theo loại ẩm thực (phân trang) |
+| GET | `/restaurant/owner/{ownerId}` | Lấy nhà hàng theo chủ sở hữu (phân trang) |
 | DELETE | `/restaurant/{id}` | Xóa nhà hàng |
-| CRUD | `/cuisine/**` | Quản lý loại ẩm thực |
-| CRUD | `/category/**` | Quản lý danh mục món |
-| CRUD | `/product/**` | Quản lý món ăn |
-| CRUD | `/option-group/**` | Quản lý nhóm tùy chọn |
-| CRUD | `/option-item/**` | Quản lý tùy chọn (topping) |
-| CRUD | `/restaurant-schedule/**` | Quản lý lịch hoạt động |
 
-### Wallet (`/api/v1/wallet`)
+### Merchant Service — Cuisine (`/api/v1/cuisine`)
 
 | Method | Endpoint | Mô tả |
 |--------|----------|-------|
-| GET | `/wallet` | Xem số dư ví |
-| GET | `/wallet/transactions` | Lịch sử giao dịch (filter + phân trang) |
-| GET | `/wallet/export` | Xuất CSV giao dịch |
+| POST | `/cuisine` | Tạo loại ẩm thực (multipart: `data` JSON + `image`) |
+| PUT | `/cuisine/{id}` | Cập nhật ẩm thực (multipart: `data` + `image` optional) |
+| GET | `/cuisine/{id}` | Chi tiết loại ẩm thực |
+| GET | `/cuisine` | Toàn bộ danh sách ẩm thực |
+| DELETE | `/cuisine/{id}` | Xóa loại ẩm thực |
+
+### Merchant Service — Category (`/api/v1/category`)
+
+| Method | Endpoint | Mô tả |
+|--------|----------|-------|
+| POST | `/category` | Tạo danh mục món ăn |
+| PUT | `/category/{id}` | Cập nhật danh mục |
+| GET | `/category/{id}` | Chi tiết danh mục |
+| GET | `/category/restaurant/{slug}` | Danh sách danh mục theo nhà hàng |
+| DELETE | `/category/{id}` | Xóa danh mục |
+
+### Merchant Service — Product (`/api/v1/product`)
+
+| Method | Endpoint | Mô tả |
+|--------|----------|-------|
+| POST | `/product` | Tạo sản phẩm (multipart: `data` JSON + `image`) |
+| PUT | `/product/{id}` | Cập nhật sản phẩm (multipart: `data` + `image` optional) |
+| GET | `/product/{id}` | Chi tiết sản phẩm |
+| GET | `/product/category/{categoryId}` | Danh sách sản phẩm theo danh mục |
+| GET | `/product/products?productIds=1,2,3` | Lấy nhiều sản phẩm theo danh sách ID |
+| GET | `/product/count?restaurantId=1` | Đếm số sản phẩm của nhà hàng |
+| DELETE | `/product/{id}` | Xóa sản phẩm |
+
+### Merchant Service — OptionGroup & OptionItem (`/api/v1/option-group`, `/api/v1/option-item`)
+
+| Method | Endpoint | Mô tả |
+|--------|----------|-------|
+| CRUD | `/option-group/**` | Quản lý nhóm tùy chọn (OptionGroup) |
+| CRUD | `/option-item/**` | Quản lý tùy chọn bổ sung / Topping (OptionItem) |
+
+### Merchant Service — Schedule (`/api/v1/restaurant-schedule`)
+
+| Method | Endpoint | Mô tả |
+|--------|----------|-------|
+| POST | `/restaurant-schedule` | Tạo lịch hoạt động nhà hàng |
+| PUT | `/restaurant-schedule/{id}` | Cập nhật lịch |
+| GET | `/restaurant-schedule/{id}` | Chi tiết lịch |
+| GET | `/restaurant-schedule/restaurant/{slug}` | Tất cả lịch theo nhà hàng (slug) |
+| DELETE | `/restaurant-schedule/{id}` | Xóa lịch |
+
+### Merchant Service — Wallet (`/api/v1/wallet`)
+
+| Method | Endpoint | Mô tả |
+|--------|----------|-------|
+| GET | `/wallet` | Xem số dư ví Merchant |
+| GET | `/wallet/transactions` | Lịch sử giao dịch (filter: `startDate`, `endDate`, `type` + phân trang) |
+| GET | `/wallet/export` | Xuất CSV giao dịch (filter: `startDate`, `endDate`, `type`) |
 | GET | `/wallet/statistics` | Thống kê doanh thu theo ngày |
-| POST | `/wallet/withdraw` | Rút tiền |
-| POST | `/wallet/deposit` | Nạp tiền |
+| POST | `/wallet/withdraw?amount=X` | Rút tiền |
+| POST | `/wallet/deposit?amount=X` | Nạp tiền (giả lập) |
 
-### Order Service
-
-| Method | Endpoint | Mô tả |
-|--------|----------|-------|
-| POST | `/order` | Tạo đơn hàng (checkout) |
-| GET | `/order` | Lịch sử đơn hàng |
-| GET | `/order/{id}` | Chi tiết đơn |
-| PATCH | `/order/{id}/cancel` | Khách hủy đơn |
-| GET | `/management/order/merchant/{id}` | Danh sách đơn của quán |
-| PUT | `/management/order/merchant/{id}/confirm` | Quán confirm đơn |
-| PUT | `/management/order/merchant/{id}/ready` | Quán báo món xong |
-| PUT | `/management/order/merchant/{id}/cancel` | Quán hủy đơn |
-| GET | `/management/order/merchant/{id}/stats` | Thống kê nhà hàng |
-
-### Review (`/api/v1/review`)
+### Merchant Service — File Upload (`/api/v1/file`)
 
 | Method | Endpoint | Mô tả |
 |--------|----------|-------|
-| POST | `/review` | Viết đánh giá |
-| GET | `/review/merchant/{merchantId}` | Đánh giá của quán |
-| GET | `/review/order/{orderId}` | Đánh giá của đơn |
+| POST | `/file/upload` | Upload file ảnh lên MinIO |
 
-### Delivery Service (`/api/v1/delivery/shippers`)
+### Order Service — Customer (`/api/v1/order`)
 
 | Method | Endpoint | Mô tả |
 |--------|----------|-------|
-| POST | `/location` | Cập nhật vị trí (+ heartbeat TTL 15s + isOnline=true) |
-| POST | `/offline` | Đi offline (xóa Redis + heartbeat + isOnline=false) |
-| POST | `/register` | Đăng ký shipper (thông tin xe) |
-| GET | `/profile` | Xem profile shipper |
-| POST | `/accept` | Nhận đơn giao hàng |
-| POST | `/picked-up` | Đã lấy hàng |
-| POST | `/complete` | Đã giao xong |
-| GET | `/pending-orders` | Poll đơn đang chờ |
+| POST | `/order` | Tạo đơn hàng (checkout) — tự động tính phí ship GPS |
+| GET | `/order` | Lịch sử đơn hàng của tôi (phân trang) |
+| GET | `/order/{id}` | Chi tiết đơn hàng |
+| PATCH | `/order/{id}/cancel` | Khách hủy đơn (chỉ khi trạng thái CREATED) |
+
+### Order Service — Merchant (`/api/v1/management/order/merchant`)
+
+| Method | Endpoint | Mô tả |
+|--------|----------|-------|
+| GET | `/management/order/merchant/{id}` | Danh sách đơn của quán (filter: `status`, phân trang) |
+| PUT | `/management/order/merchant/{id}/confirm` | Xác nhận đơn → PREPARING → trigger tìm Shipper |
+| PUT | `/management/order/merchant/{id}/ready` | Báo món xong → READY → push noti Shipper |
+| PUT | `/management/order/merchant/{id}/cancel` | Quán hủy đơn (CREATED/PAID/PREPARING) |
+| GET | `/management/order/merchant/{id}/stats` | Thống kê đơn hàng, doanh thu, đánh giá |
+
+### Order Service — Delivery Internal (`/api/v1/shipping/order`)
+
+| Method | Endpoint | Mô tả |
+|--------|----------|-------|
+| GET | `/shipping/order/{id}` | Lấy chi tiết đơn (Feign Client từ Delivery Service) |
+| PUT | `/shipping/order/{id}/delivering` | Cập nhật trạng thái → DELIVERING |
+| PUT | `/shipping/order/{id}/completed` | Cập nhật trạng thái → COMPLETED |
+
+### Order Service — Payment Internal (`/api/v1/internal/order`)
+
+| Method | Endpoint | Mô tả |
+|--------|----------|-------|
+| POST | `/internal/order/{orderId}/update-trans-id` | Lưu mã giao dịch ZaloPay (appTransId) |
+| POST | `/internal/order/update-status-by-trans-id` | Cập nhật trạng thái đơn theo mã giao dịch ZaloPay |
+
+### Order Service — Review (`/api/v1/review`)
+
+| Method | Endpoint | Mô tả |
+|--------|----------|-------|
+| POST | `/review` | Viết đánh giá (chỉ khi đơn COMPLETED + chưa đánh giá) |
+| GET | `/review/merchant/{merchantId}` | Đánh giá của quán (phân trang) |
+| GET | `/review/order/{orderId}` | Đánh giá của một đơn hàng |
+
+### Delivery Service — Shipper (`/api/v1/delivery/shippers`)
+
+| Method | Endpoint | Mô tả |
+|--------|----------|-------|
+| POST | `/shippers/location?lat=X&lon=Y` | Cập nhật vị trí GPS (+ heartbeat TTL 15s + set online) |
+| POST | `/shippers/offline` | Đi offline (xóa Redis GEO + heartbeat + set offline) |
+| POST | `/shippers/register` | Đăng ký shipper (thông tin xe, biển số) |
+| GET | `/shippers/profile` | Xem profile shipper |
+| POST | `/shippers/accept?orderId=X` | Nhận đơn giao hàng (DB Unique Lock) |
+| POST | `/shippers/picked-up?orderId=X` | Đã lấy hàng tại quán |
+| POST | `/shippers/complete?orderId=X` | Đã giao xong → cộng tiền ví shipper |
+| GET | `/shippers/pending-orders` | Poll danh sách đơn đang chờ shipper |
+| POST | `/shippers/deposit?amount=X` | Nạp tiền ví shipper |
+| GET | `/shippers/wallet-stats` | Xem thống kê ví shipper |
 
 ### Payment Service (`/api/v1/payment`)
 
 | Method | Endpoint | Mô tả |
 |--------|----------|-------|
-| POST | `/zalopay/create` | Tạo link thanh toán ZaloPay |
-| POST | `/callback` | Webhook callback từ ZaloPay |
-| POST | `/zalopay/query` | Truy vấn trạng thái đơn |
+| POST | `/payment/zalopay/create?orderId=X&amount=Y` | Tạo link thanh toán ZaloPay → trả về `order_url` |
+| POST | `/payment/callback` | Webhook callback từ ZaloPay Server (HMAC SHA256) |
+| POST | `/payment/zalopay/query?appTransId=X` | Truy vấn trạng thái giao dịch ZaloPay |
 
 ### Notification Service (`/api/v1/notification`)
 
 | Method | Endpoint | Mô tả |
 |--------|----------|-------|
-| POST | `/device-token` | Đăng ký FCM token |
-| GET | `/history/{merchantId}` | Lịch sử thông báo |
-| PUT | `/{id}/read` | Đánh dấu đã đọc |
-| PUT | `/read-all/{merchantId}` | Đánh dấu tất cả đã đọc |
-| DELETE | `/{id}` | Xóa thông báo |
-| DELETE | `/delete-all/{merchantId}` | Xóa tất cả thông báo |
+| POST | `/notification/device-token` | Đăng ký FCM token (gọi sau khi login) |
+| GET | `/notification/history/{merchantId}` | Lịch sử thông báo |
+| PUT | `/notification/{id}/read` | Đánh dấu đã đọc |
+| PUT | `/notification/read-all/{merchantId}` | Đánh dấu tất cả đã đọc |
+| DELETE | `/notification/{id}` | Xóa một thông báo |
+| DELETE | `/notification/delete-all/{merchantId}` | Xóa tất cả thông báo |
 
 ---
 

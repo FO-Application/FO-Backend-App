@@ -64,6 +64,6 @@ public class OptionGroup {
     Product product;
 
     @Builder.Default
-    @OneToMany(mappedBy = "optionGroup", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "optionGroup", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     List<OptionItem> optionItems = new ArrayList<>();
 }

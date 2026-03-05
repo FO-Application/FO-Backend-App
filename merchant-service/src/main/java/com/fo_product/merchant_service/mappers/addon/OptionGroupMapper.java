@@ -19,6 +19,7 @@ public class OptionGroupMapper {
                         optionItem -> OptionItemResponse.builder()
                                 .id(optionItem.getId())
                                 .name(optionItem.getName())
+                                .priceAdjustment(optionItem.getPriceAdjustment())
                                 .isAvailable(optionItem.isAvailable())
                                 .optionGroupName(optionItem.getOptionGroup().getName())
                                 .build()

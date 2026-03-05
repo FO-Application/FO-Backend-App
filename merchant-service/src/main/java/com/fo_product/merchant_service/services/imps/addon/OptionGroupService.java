@@ -32,8 +32,13 @@ public class OptionGroupService implements IOptionGroupService {
 
     @Override
     @Transactional
-    // Cache: Xóa theo productId để tối ưu (hoặc allEntries cũng tạm chấp nhận)
-    @CacheEvict(value = "cacheOptionGroups", key = "#request.productId()")
+    @Caching(
+            evict = {
+                    @CacheEvict(value = "cacheOptionGroups", key = "#request.productId()"),
+                    @CacheEvict(value = "product_details", key = "#request.productId()"),
+                    @CacheEvict(value = "cacheProducts", allEntries = true)
+            }
+    )
     public OptionGroupResponse createOptionGroup(OptionGroupRequest request) {
         Product product = productRepository.findById(request.productId())
                 .orElseThrow(() -> new MerchantException(MerchantErrorCode.PRODUCT_NOT_EXIST));
@@ -65,7 +70,9 @@ public class OptionGroupService implements IOptionGroupService {
     @Caching(
             evict = {
                     @CacheEvict(value = "cacheOptionGroups", allEntries = true),
-                    @CacheEvict(value = "optionGroup_details", key = "#id")
+                    @CacheEvict(value = "optionGroup_details", key = "#id"),
+                    @CacheEvict(value = "product_details", allEntries = true),
+                    @CacheEvict(value = "cacheProducts", allEntries = true)
             }
     )
     public OptionGroupResponse updateOptionGroup(Long id, OptionGroupPatchRequest request) {
@@ -131,7 +138,9 @@ public class OptionGroupService implements IOptionGroupService {
     @Caching(
             evict = {
                     @CacheEvict(value = "cacheOptionGroups", allEntries = true),
-                    @CacheEvict(value = "optionGroup_details", key = "#id")
+                    @CacheEvict(value = "optionGroup_details", key = "#id"),
+                    @CacheEvict(value = "product_details", allEntries = true),
+                    @CacheEvict(value = "cacheProducts", allEntries = true)
             }
     )
     public void deleteOptionGroup(Long id) {

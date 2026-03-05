@@ -98,6 +98,7 @@ public class CustomerOrderService implements ICustomerOrderService {
 
                 .orderStatus(OrderStatus.CREATED)
                 .paymentMethod(PaymentMethod.valueOf(request.paymentMethod()))
+                .descriptionOrder(request.descriptionOrder())
                 .build();
 
         // 4. Xử lý món ăn

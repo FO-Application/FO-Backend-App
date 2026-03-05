@@ -71,7 +71,7 @@ public class InternalOrderService implements IInternalOrderService {
                         .orderId(savedOrder.getId())
                         .merchantId(savedOrder.getMerchantId())
                         .ownerId(restaurant.ownerId())
-                        .amount(savedOrder.getGrandTotal())
+                        .amount(savedOrder.getSubTotal())
                         .paymentMethod(PaymentMethod.ZALOPAY.name())
                         .paidAt(LocalDateTime.now())
                         .build();

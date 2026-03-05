@@ -123,7 +123,6 @@ public class OrderMatchingService implements IOrderMatchingService {
     }
 
     // --- Helper Methods cho Pending Offers ---
-
     private void addPendingOffer(Long shipperId, OrderConfirmedEvent orderEvent) {
         String key = "shipper:offers:" + shipperId;
         String offerValue = gson.toJson(orderEvent); // Lưu full event để Front-end hiển thị chi tiết
