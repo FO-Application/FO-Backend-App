@@ -1,0 +1,16 @@
+# Dev profile - Bật lại debug logging khi chạy local
+# Sử dụng: java -jar app.jar --spring.profiles.active=dev
+# Hoặc: SPRING_PROFILES_ACTIVE=dev
+
+spring:
+  jpa:
+    show-sql: true
+  mail:
+    properties:
+      mail:
+        debug: true
+
+logging:
+  level:
+    org.springframework.mail: DEBUG
+    org.springframework.kafka: INFO

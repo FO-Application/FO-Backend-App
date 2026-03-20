@@ -16,7 +16,7 @@ COPY payment-service/src src
 RUN mvn clean package -DskipTests -Dfile.encoding=UTF-8
 
 # --- GIAI ĐOẠN 2: RUN ---
-FROM eclipse-temurin:21-jdk-alpine
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=build /app/payment-service/target/*.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]

@@ -1,0 +1,25 @@
+# Git
+.git
+.github
+
+# IDE
+.idea
+.vscode
+.metadata
+*.iml
+*.iws
+*.ipr
+
+# Build output
+**/target
+
+# Data directories
+minio_data
+
+# Documentation
+*.md
+*.docx
+*.drawio
+
+# Secrets
+.env

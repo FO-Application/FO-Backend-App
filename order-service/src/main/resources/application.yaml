@@ -51,7 +51,7 @@ spring:
     open-in-view: true
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         default_batch_fetch_size: 100
@@ -93,7 +93,7 @@ jwt:
 
 logging:
   level:
-    org.springframework.security: DEBUG
+    root: INFO
 
 management:
   endpoints:

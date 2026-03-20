@@ -39,7 +39,7 @@ spring:
     open-in-view: true
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         default_batch_fetch_size: 100
@@ -83,10 +83,7 @@ openapi:
 
 logging:
   level:
-    org.springframework.security: DEBUG
-    org.springframework.web: DEBUG
-    org.springdoc: DEBUG
-    io.swagger.v3: DEBUG
+    root: INFO
 
 management:
   endpoints:

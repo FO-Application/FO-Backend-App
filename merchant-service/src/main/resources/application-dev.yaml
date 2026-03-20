@@ -1,0 +1,7 @@
+# Dev profile - Bật lại show-sql khi chạy local
+# Sử dụng: java -jar app.jar --spring.profiles.active=dev
+# Hoặc: SPRING_PROFILES_ACTIVE=dev
+
+spring:
+  jpa:
+    show-sql: true
