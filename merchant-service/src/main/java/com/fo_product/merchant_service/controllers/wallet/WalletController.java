@@ -31,10 +31,10 @@ import java.util.List;
 public class WalletController {
     IWalletService walletService;
 
-    @Operation(summary = "Xem số dư Ví", description = "Lấy thông tin ví hiện tại của Merchant đang đăng nhập")
+    @Operation(summary = "Xem số dư Ví", description = "Lấy thông vị của nhà hàng")
     @GetMapping
-    public APIResponse<WalletResponse> getMyWallet() {
-        WalletResponse result = walletService.getMyWallet();
+    public APIResponse<WalletResponse> getMyWallet(@RequestParam Long restaurantId) {
+        WalletResponse result = walletService.getMyWallet(restaurantId);
         return APIResponse.<WalletResponse>builder()
                 .result(result)
                 .message("Get wallet success")
@@ -44,13 +44,14 @@ public class WalletController {
     @Operation(summary = "Xem lịch sử giao dịch", description = "Lấy danh sách biến động số dư, hỗ trợ lọc theo ngày và loại giao dịch")
     @GetMapping("/transactions")
     public APIResponse<Page<WalletTransactionResponse>> getMyTransactions(
+            @RequestParam Long restaurantId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant endDate,
             @RequestParam(required = false) TransactionType type
     ) {
-        Page<WalletTransactionResponse> result = walletService.getMyTransactions(page, size, startDate, endDate, type);
+        Page<WalletTransactionResponse> result = walletService.getMyTransactions(restaurantId, page, size, startDate, endDate, type);
         return APIResponse.<Page<WalletTransactionResponse>>builder()
                 .result(result)
                 .message("Get transactions success")
@@ -60,11 +61,12 @@ public class WalletController {
     @Operation(summary = "Xuất báo cáo giao dịch", description = "Xuất lịch sử giao dịch ra file CSV")
     @GetMapping("/export")
     public ResponseEntity<ByteArrayResource> exportTransactions(
+            @RequestParam Long restaurantId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant endDate,
             @RequestParam(required = false) TransactionType type
     ) {
-        byte[] data = walletService.exportTransactions(startDate, endDate, type);
+        byte[] data = walletService.exportTransactions(restaurantId, startDate, endDate, type);
         ByteArrayResource resource = new ByteArrayResource(data);
         
         return ResponseEntity.ok()
@@ -76,25 +78,25 @@ public class WalletController {
 
     @Operation(summary = "Thống kê doanh thu", description = "Lấy thống kê thu chi theo ngày")
     @GetMapping("/statistics")
-    public APIResponse<List<DailyStatResponse>> getDailyStatistics() {
+    public APIResponse<List<DailyStatResponse>> getDailyStatistics(@RequestParam Long restaurantId) {
         return APIResponse.<List<DailyStatResponse>>builder()
-                .result(walletService.getDailyStatistics())
+                .result(walletService.getDailyStatistics(restaurantId))
                 .build();
     }
 
     @Operation(summary = "Rút tiền", description = "Chủ nhà hàng dùng để rút tiền")
     @PostMapping("/withdraw")
-    public APIResponse<WalletResponse> withdraw(@RequestParam BigDecimal amount) {
+    public APIResponse<WalletResponse> withdraw(@RequestParam Long restaurantId, @RequestParam BigDecimal amount) {
         return APIResponse.<WalletResponse>builder()
-                .result(walletService.withdraw(amount))
+                .result(walletService.withdraw(restaurantId, amount))
                 .build();
     }
     
     @Operation(summary = "Nạp tiền", description = "Chủ nhà hàng dùng để nạp tiền (giả lập)")
     @PostMapping("/deposit")
-    public APIResponse<WalletResponse> deposit(@RequestParam BigDecimal amount) {
+    public APIResponse<WalletResponse> deposit(@RequestParam Long restaurantId, @RequestParam BigDecimal amount) {
         return APIResponse.<WalletResponse>builder()
-                .result(walletService.deposit(amount))
+                .result(walletService.deposit(restaurantId, amount))
                 .build();
     }
 }

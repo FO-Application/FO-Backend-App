@@ -4,6 +4,7 @@ import com.fo_product.common_lib.dtos.APIResponse;
 import com.fo_product.order_service.clients.MerchantClient;
 import com.fo_product.order_service.dtos.feigns.ProductDTO;
 import com.fo_product.order_service.dtos.feigns.RestaurantDTO;
+import com.fo_product.order_service.dtos.feigns.SystemRulesDTO;
 import com.fo_product.order_service.exceptions.MerchantException;
 import com.fo_product.order_service.exceptions.OrderException;
 import com.fo_product.order_service.exceptions.UserException;
@@ -59,6 +60,18 @@ public class MerchantClientFallbackFactory implements FallbackFactory<MerchantCl
                     handleSecurityException(status);
                 }
                 throw new OrderException(OrderErrorCode.SERVICE_UNAVAILABLE);
+            }
+
+            @Override
+            public APIResponse<SystemRulesDTO> getSystemRules() {
+                if (cause instanceof FeignException fe) {
+                    int status = fe.status();
+                    handleSecurityException(status);
+                }
+                return APIResponse.<SystemRulesDTO>builder()
+                        .result(new SystemRulesDTO(20.0, 20.0, 15000.0, 5000.0, false))
+                        .message("Fallback used")
+                        .build();
             }
         };
     }

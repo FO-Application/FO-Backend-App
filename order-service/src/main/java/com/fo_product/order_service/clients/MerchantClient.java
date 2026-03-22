@@ -5,6 +5,7 @@ import com.fo_product.order_service.clients.factories.MerchantClientFallbackFact
 import com.fo_product.order_service.configs.FeignClientInterceptorConfig;
 import com.fo_product.order_service.dtos.feigns.ProductDTO;
 import com.fo_product.order_service.dtos.feigns.RestaurantDTO;
+import com.fo_product.order_service.dtos.feigns.SystemRulesDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,4 +27,7 @@ public interface MerchantClient {
 
     @GetMapping("/api/v1/product/count")
     APIResponse<Long> countProductsByRestaurant(@RequestParam Long restaurantId);
+
+    @GetMapping("/api/v1/system/rules")
+    APIResponse<SystemRulesDTO> getSystemRules();
 }

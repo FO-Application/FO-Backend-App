@@ -21,6 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
+import com.fo_product.merchant_service.dtos.SystemRulesDTO;
+import com.fo_product.merchant_service.services.imps.SystemRuleService;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -29,11 +32,17 @@ public class KafkaConsumerService {
     WalletRepository walletRepository;
     RestaurantRepository restaurantRepository;
     WalletTransactionRepository walletTransactionRepository;
+    SystemRuleService systemRuleService;
 
     @KafkaListener(topics = "order-completed-topic", groupId = "merchant-service-group")
     @Transactional
     public void handleOrderCompleted(OrderCompletedEvent event) {
         log.info("Merchant Service: Nhận tiền từ đơn hàng {}", event.orderId());
+
+        if (walletTransactionRepository.existsByOrderIdAndTransactionType(event.orderId(), TransactionType.ORDER_INCOME)) {
+            log.warn("Idempotency check: Bỏ qua event OrderCompleted do doanh thu đã được cộng cho đơn {}", event.orderId());
+            return;
+        }
 
         Wallet wallet = walletRepository.findByRestaurant_Id(event.merchantId())
                 .orElseGet(() -> {
@@ -45,19 +54,24 @@ public class KafkaConsumerService {
                             .build());
                 });
         BigDecimal amount = event.orderAmount();
-        wallet.setBalance(wallet.getBalance().add(amount));
+        SystemRulesDTO rules = systemRuleService.getRules();
+        double platformFeePct = rules != null ? rules.getPlatformFeePercentage() : 10.0;
+        BigDecimal platformCut = amount.multiply(BigDecimal.valueOf(platformFeePct / 100.0));
+        BigDecimal actualIncome = amount.subtract(platformCut);
+
+        wallet.setBalance(wallet.getBalance().add(actualIncome));
         walletRepository.save(wallet);
 
         WalletTransaction walletTransaction = WalletTransaction.builder()
                 .wallet(wallet)
-                .amount(amount)
+                .amount(actualIncome)
                 .transactionType(TransactionType.ORDER_INCOME)
                 .orderId(event.orderId())
-                .description("Thu nhập từ đơn hàng #" + event.orderId())
+                .description(String.format("Thu nhập đơn #%d (Đã trừ %.0f%% chiết khấu)", event.orderId(), platformFeePct))
                 .build();
 
         walletTransactionRepository.save(walletTransaction);
-        log.info("Đã cộng {} vào ví ID {}", amount, wallet.getId());
+        log.info("Đã cộng {} vào ví ID {} (Thu nhập thực tế sau chiết khấu)", actualIncome, wallet.getId());
     }
 
     @KafkaListener(topics = "review-created-topic", groupId = "merchant-service-group")

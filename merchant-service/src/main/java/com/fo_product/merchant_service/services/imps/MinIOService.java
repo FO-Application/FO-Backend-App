@@ -28,6 +28,7 @@ public class MinIOService implements IMinIOService {
     String bucketName;
 
     // Khởi tạo Bucket nếu chưa tồn tại
+    @jakarta.annotation.PostConstruct
     private void afterPropertiesSet() {
         try {
             initBucket();

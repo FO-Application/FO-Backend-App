@@ -97,4 +97,26 @@ public class MailSenderService implements IMailSenderService {
             log.error("Failed to send delivery email to {}: {}", to, e.getMessage());
         }
     }
+
+    @Async
+    @Override
+    public void sendApprovalEmail(String to, String subject, String messageBody) {
+        try {
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
+
+            helper.setFrom(mailFrom);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText("<div style='font-family: Arial;'>" +
+                           "<h2 style='color: #16a34a;'>" + subject + "</h2>" +
+                           "<p style='font-size: 16px;'>" + messageBody + "</p>" +
+                           "</div>", true);
+
+            javaMailSender.send(message);
+            log.info("Approval email sent successfully to: {}", to);
+        } catch (MessagingException e) {
+            log.error("Failed to send approval email to {}: {}", to, e.getMessage());
+        }
+    }
 }

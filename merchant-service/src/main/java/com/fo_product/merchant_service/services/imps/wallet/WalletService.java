@@ -29,6 +29,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import jakarta.persistence.criteria.Predicate;
 import java.math.BigDecimal;
@@ -39,6 +42,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -53,6 +57,7 @@ public class WalletService implements IWalletService {
     RestaurantRepository restaurantRepository;
     WalletMapper mapper;
     KafkaTemplate<String, Object> kafkaTemplate; // Injected KafkaTemplate
+    ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     @Transactional
@@ -69,15 +74,15 @@ public class WalletService implements IWalletService {
 
     @Override
     @Transactional
-    public WalletResponse getMyWallet() {
-        Wallet wallet = getMyWalletEntity();
+    public WalletResponse getMyWallet(Long restaurantId) {
+        Wallet wallet = getMyWalletEntity(restaurantId);
         return mapper.response(wallet);
     }
 
     @Override
     @Transactional
-    public Page<WalletTransactionResponse> getMyTransactions(int page, int size, Instant startDate, Instant endDate, TransactionType type) {
-        Wallet wallet = getMyWalletEntity();
+    public Page<WalletTransactionResponse> getMyTransactions(Long restaurantId, int page, int size, Instant startDate, Instant endDate, TransactionType type) {
+        Wallet wallet = getMyWalletEntity(restaurantId);
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         
         Specification<WalletTransaction> spec = (root, query, cb) -> {
@@ -103,9 +108,9 @@ public class WalletService implements IWalletService {
 
     @Override
     @Transactional
-    public byte[] exportTransactions(Instant startDate, Instant endDate, TransactionType type) {
+    public byte[] exportTransactions(Long restaurantId, Instant startDate, Instant endDate, TransactionType type) {
         // Implement simplified CSV export
-        Wallet wallet = getMyWalletEntity();
+        Wallet wallet = getMyWalletEntity(restaurantId);
         
         Specification<WalletTransaction> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -143,34 +148,28 @@ public class WalletService implements IWalletService {
     }
 
     @Override
-    @Transactional
-    public List<DailyStatResponse> getDailyStatistics() {
-        Wallet wallet = getMyWalletEntity();
-        // Get transactions for last 7 days (optimized from 30)
+    @Transactional(readOnly = true)
+    public List<DailyStatResponse> getDailyStatistics(Long restaurantId) {
+        Wallet wallet = getMyWalletEntity(restaurantId);
         LocalDateTime startDate = LocalDateTime.now().minusDays(7);
         
-        List<WalletTransaction> transactions = walletTransactionRepository.findAllByWalletAndCreatedAtAfter(wallet, startDate);
+        List<Object[]> nativeStats = walletTransactionRepository.getDailyStatisticsNative(wallet.getId(), startDate);
         
-        Map<LocalDate, Map<String, BigDecimal>> grouped = transactions.stream()
-            .collect(Collectors.groupingBy(
-                tx -> tx.getCreatedAt().toLocalDate(),
-                Collectors.groupingBy(
-                    tx -> tx.getAmount().compareTo(BigDecimal.ZERO) >= 0 ? "INCOME" : "EXPENSE",
-                    Collectors.reducing(BigDecimal.ZERO, WalletTransaction::getAmount, BigDecimal::add)
-                )
-            ));
+        Map<LocalDate, DailyStatResponse> statMap = new HashMap<>();
+        for (Object[] row : nativeStats) {
+            LocalDate date = ((java.sql.Date) row[0]).toLocalDate();
+            BigDecimal income = new BigDecimal(row[1].toString());
+            BigDecimal expense = new BigDecimal(row[2].toString());
+            statMap.put(date, DailyStatResponse.builder()
+                    .date(date).income(income).expense(expense).build());
+        }
 
         List<DailyStatResponse> response = new ArrayList<>();
         // Last 7 days
         for (int i = 6; i >= 0; i--) {
             LocalDate date = LocalDate.now().minusDays(i);
-            Map<String, BigDecimal> dayStats = grouped.getOrDefault(date, Map.of());
-            
-            response.add(DailyStatResponse.builder()
-                    .date(date)
-                    .income(dayStats.getOrDefault("INCOME", BigDecimal.ZERO))
-                    .expense(dayStats.getOrDefault("EXPENSE", BigDecimal.ZERO).abs())
-                    .build());
+            response.add(statMap.getOrDefault(date, DailyStatResponse.builder()
+                    .date(date).income(BigDecimal.ZERO).expense(BigDecimal.ZERO).build()));
         }
         
         return response;
@@ -178,12 +177,12 @@ public class WalletService implements IWalletService {
 
     @Override
     @Transactional
-    public WalletResponse withdraw(BigDecimal amount) {
+    public WalletResponse withdraw(Long restaurantId, BigDecimal amount) {
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new MerchantException(MerchantErrorCode.INVALID_AMOUNT);
         }
 
-        Wallet wallet = getMyWalletEntity();
+        Wallet wallet = getLockedMyWalletEntity(restaurantId);
         
         if (wallet.getBalance().compareTo(amount) < 0) {
             throw new MerchantException(MerchantErrorCode.INSUFFICIENT_BALANCE);
@@ -203,12 +202,12 @@ public class WalletService implements IWalletService {
         
         walletTransactionRepository.save(transaction);
         
-        // Publish Event to Notification Service
+        // Publish Event locally to be processed AFTER_COMMIT
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = (Jwt) authentication.getPrincipal();
         Long userId = (Long) jwt.getClaims().get("user-id");
         
-        kafkaTemplate.send("wallet-withdrawal-topic", WalletWithdrawalEvent.builder()
+        applicationEventPublisher.publishEvent(WalletWithdrawalEvent.builder()
                 .userId(userId)
                 .amount(amount)
                 .transactionId(transaction.getId())
@@ -220,12 +219,12 @@ public class WalletService implements IWalletService {
 
     @Override
     @Transactional
-    public WalletResponse deposit(BigDecimal amount) {
+    public WalletResponse deposit(Long restaurantId, BigDecimal amount) {
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new MerchantException(MerchantErrorCode.INVALID_AMOUNT);
         }
 
-        Wallet wallet = getMyWalletEntity();
+        Wallet wallet = getLockedMyWalletEntity(restaurantId);
         
         // Add to balance
         wallet.setBalance(wallet.getBalance().add(amount));
@@ -244,13 +243,17 @@ public class WalletService implements IWalletService {
         return mapper.response(wallet);
     }
     
-    private Wallet getMyWalletEntity() {
+    private Wallet getMyWalletEntity(Long restaurantId) {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = (Jwt) authentication.getPrincipal(); // Cast to Jwt
         Long userId = (Long) jwt.getClaims().get("user-id"); // Get user-id claim
 
-        Restaurant restaurant = restaurantRepository.findByOwnerId(userId)
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new MerchantException(MerchantErrorCode.RESTAURANT_NOT_EXIST));
+
+        if (!restaurant.getOwnerId().equals(userId)) {
+            throw new MerchantException(MerchantErrorCode.UNAUTHORIZED_RESTAURANT_ACCESS);
+        }
 
         return walletRepository.findByRestaurant_Id(restaurant.getId())
                 .orElseGet(() -> {
@@ -260,5 +263,33 @@ public class WalletService implements IWalletService {
                             .balance(BigDecimal.ZERO)
                             .build());
                 });
+    }
+
+    private Wallet getLockedMyWalletEntity(Long restaurantId) {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+        Long userId = (Long) jwt.getClaims().get("user-id");
+
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.RESTAURANT_NOT_EXIST));
+
+        if (!restaurant.getOwnerId().equals(userId)) {
+            throw new MerchantException(MerchantErrorCode.UNAUTHORIZED_RESTAURANT_ACCESS);
+        }
+
+        return walletRepository.findLockedByRestaurant_Id(restaurant.getId())
+                .orElseGet(() -> {
+                    log.info("Creating new locked wallet for restaurant {}", restaurant.getId());
+                    return walletRepository.save(Wallet.builder()
+                            .restaurant(restaurant)
+                            .balance(BigDecimal.ZERO)
+                            .build());
+                });
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void sendKafkaMessageAfterCommit(WalletWithdrawalEvent event) {
+        kafkaTemplate.send("wallet-withdrawal-topic", event);
+        log.info("Successfully sent WalletWithdrawalEvent to Kafka for transaction: {}", event.getTransactionId());
     }
 }

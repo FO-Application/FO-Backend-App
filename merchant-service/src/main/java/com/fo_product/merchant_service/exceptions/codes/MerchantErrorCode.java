@@ -35,6 +35,8 @@ public enum MerchantErrorCode implements ErrorCode{
     USER_NOT_EXIST(4022, "User is not exist", HttpStatus.NOT_FOUND),
     INVALID_AMOUNT(4023, "Invalid amount", HttpStatus.BAD_REQUEST),
     INSUFFICIENT_BALANCE(4024, "Insufficient balance", HttpStatus.BAD_REQUEST),
+    UNAUTHORIZED_RESTAURANT_ACCESS(4025, "Unauthorized restaurant access", HttpStatus.UNAUTHORIZED),
+
     ;
     int code;
     String message;

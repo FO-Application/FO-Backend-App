@@ -171,6 +171,15 @@ public class NotificationService implements INotificationService {
     }
 
     @Override
+    public List<NotificationResponse> getNotificationsByTopic(String topic) {
+        List<Notification> notifications = notificationRepository.findByTopicOrderByCreatedAtDesc(topic);
+        
+        return notifications.stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     @Transactional
     public void markAsRead(Long notificationId) {
         notificationRepository.findById(notificationId).ifPresent(notification -> {

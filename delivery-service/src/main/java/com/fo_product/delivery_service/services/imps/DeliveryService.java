@@ -1,8 +1,9 @@
 package com.fo_product.delivery_service.services.imps;
 
+import com.fo_product.delivery_service.clients.MerchantClient;
 import com.fo_product.delivery_service.clients.OrderClient;
 import com.fo_product.delivery_service.dtos.feigns.OrderDTO;
-import com.fo_product.delivery_service.dtos.feigns.UserDTO; // Import UserDTO
+import com.fo_product.delivery_service.dtos.feigns.UserDTO;
 import com.fo_product.delivery_service.exceptions.DeliveryException;
 import com.fo_product.delivery_service.exceptions.code.DeliveryErrorCode;
 import com.fo_product.delivery_service.helpers.GetClientDTO;
@@ -26,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -39,10 +41,12 @@ public class DeliveryService implements IDeliveryService {
     ShipperRepository shipperRepository;
     OrderMatchingService orderMatchingService;
     OrderClient orderClient;
+    MerchantClient merchantClient;
     ShipperWalletRepository walletRepository;
     ShipperTransactionRepository transactionRepository;
     GetClientDTO getClientDTO;
     KafkaProducerService kafkaProducerService;
+    TransactionTemplate transactionTemplate;
 
     @Override
     @Transactional // Quan trọng để đảm bảo tính toàn vẹn
@@ -112,40 +116,32 @@ public class DeliveryService implements IDeliveryService {
     }
 
     @Override
-    @Transactional // Transaction cho việc cộng tiền ví
     public void completeOrder(Long userId, Long orderId) {
-        // [FIX] Handle duplicate deliveries (resilience)
-        List<Delivery> deliveries = deliveryRepository.findAllByOrderId(orderId);
-
-        if (deliveries.isEmpty()) {
-            throw new DeliveryException(DeliveryErrorCode.DELIVERY_NOT_FOUND);
-        }
-
-        Delivery delivery = deliveries.get(0); // Pick the first one
-        if (deliveries.size() > 1) {
-            log.warn("Found {} delivery records for order {}. Using the first one (ID: {}).", 
-                    deliveries.size(), orderId, delivery.getId());
-        }
-
-        delivery.setStatus(DeliveryStatus.COMPLETED);
-        deliveryRepository.save(delivery);
-
-        // Gọi Order Service chốt đơn
-        orderClient.markAsCompleted(orderId);
-
-        // Logic cộng tiền ví
+        // Lấy thông tin đơn hàng trước khi mở Transaction DB
         OrderDTO orderRes = getClientDTO.getOrderDTO(orderId);
         BigDecimal shippingFee = orderRes.shippingFee();
 
-        if (shippingFee == null || shippingFee.compareTo(BigDecimal.ZERO) <= 0) {
-            log.warn("Đơn hàng {} có phí ship = 0", orderId);
-            return;
-        }
+        // Mở Transaction DB cục bộ
+        transactionTemplate.execute(status -> {
+            List<Delivery> deliveries = deliveryRepository.findAllByOrderId(orderId);
 
-        Shipper shipper = delivery.getShipper();
+            if (deliveries.isEmpty()) {
+                throw new DeliveryException(DeliveryErrorCode.DELIVERY_NOT_FOUND);
+            }
 
-        // Tìm hoặc tạo ví mới
-        ShipperWallet wallet = walletRepository.findByShipper_Id(shipper.getId())
+            Delivery delivery = deliveries.get(0); // Pick the first one
+            delivery.setStatus(DeliveryStatus.COMPLETED);
+            deliveryRepository.save(delivery);
+
+            if (shippingFee == null || shippingFee.compareTo(BigDecimal.ZERO) <= 0) {
+                log.warn("Đơn hàng {} có phí ship = 0", orderId);
+                return null;
+            }
+
+            Shipper shipper = delivery.getShipper();
+
+            // Tìm hoặc tạo ví mới (SỬ DỤNG PESSIMISTIC LOCK)
+            ShipperWallet wallet = walletRepository.findLockedByShipper_Id(shipper.getId())
                 .orElseGet(() -> {
                     ShipperWallet newWallet = ShipperWallet.builder()
                             .shipper(shipper)
@@ -154,6 +150,17 @@ public class DeliveryService implements IDeliveryService {
                     return walletRepository.save(newWallet);
                 });
 
+        double platformFeePct = 20.0;
+        try {
+            var rulesRes = merchantClient.getSystemRules();
+            if (rulesRes != null && rulesRes.getResult() != null) {
+                platformFeePct = rulesRes.getResult().driverFeePercentage();
+            }
+        } catch(Exception e) {
+            log.warn("Lỗi lấy cấu hình System Rules, dùng mặc định 20%", e);
+        }
+        final BigDecimal platformShipCut = shippingFee.multiply(BigDecimal.valueOf(platformFeePct / 100.0));
+
         // --- XỬ LÝ COD ---
         // Nếu là COD, Shipper thu tiền mặt từ khách (Food + Ship).
         // Shipper giữ tiền Ship (đã có trong tay).
@@ -161,20 +168,22 @@ public class DeliveryService implements IDeliveryService {
         // => Hệ thống phải TRỪ tiền Food từ ví Shipper để trả cho Quán.
         if ("COD".equals(orderRes.paymentMethod())) {
             BigDecimal foodMoney = orderRes.grandTotal().subtract(shippingFee);
-            if (foodMoney.compareTo(BigDecimal.ZERO) > 0) {
-                // Tr trừ ví
-                wallet.setBalance(wallet.getBalance().subtract(foodMoney));
+            BigDecimal totalDeduction = foodMoney.add(platformShipCut);
+
+            if (totalDeduction.compareTo(BigDecimal.ZERO) > 0) {
+                // Trừ ví
+                wallet.setBalance(wallet.getBalance().subtract(totalDeduction));
                 walletRepository.save(wallet);
 
                 // Ghi log Trừ tiền
                 transactionRepository.save(ShipperTransaction.builder()
                         .wallet(wallet)
-                        .amount(foodMoney.negate()) // Ghi âm
+                        .amount(totalDeduction.negate()) // Ghi âm
                         .type(TransactionType.WITHDRAW) // Hoặc loại transaction khác nếu có
-                        .description("Trừ tiền thu hộ đơn COD #" + orderId)
+                        .description(String.format("Trừ tiền thu hộ đơn COD #%d và phí nền tảng %.0f%%", orderId, platformFeePct))
                         .build());
                 
-                log.info("Shipper {} thu hộ {} đ. Đã trừ ví.", shipper.getId(), foodMoney);
+                log.info("Shipper {} thu hộ {} đ và phí nền tảng {} đ. Đã trừ ví.", shipper.getId(), foodMoney, platformShipCut);
             }
         }
 
@@ -182,20 +191,33 @@ public class DeliveryService implements IDeliveryService {
         // Chỉ cộng shippingFee vào ví cho thanh toán ONLINE (hệ thống thu tiền, cần trả ship cho shipper).
         // Với COD: shipper đã cầm tiền ship trong tay rồi → KHÔNG cộng thêm (tránh tính đúp).
         if (!"COD".equals(orderRes.paymentMethod())) {
-            BigDecimal newBalance = wallet.getBalance().add(shippingFee);
+            BigDecimal actualShipIncome = shippingFee.subtract(platformShipCut);
+
+            BigDecimal newBalance = wallet.getBalance().add(actualShipIncome);
             wallet.setBalance(newBalance);
             walletRepository.save(wallet);
 
             transactionRepository.save(ShipperTransaction.builder()
                     .wallet(wallet)
-                    .amount(shippingFee)
+                    .amount(actualShipIncome)
                     .type(TransactionType.INCOME)
-                    .description("Thu nhập phí ship đơn hàng #" + orderId)
+                    .description(String.format("Thu nhập phí ship đơn #%d (Đã trừ %.0f%% phí nền tảng)", orderId, platformFeePct))
                     .build());
 
-            log.info("Shipper {} +{} VND (Online). Số dư: {}", shipper.getId(), shippingFee, newBalance);
+            log.info("Shipper {} +{} VND (Online). Số dư: {}", shipper.getId(), actualShipIncome, newBalance);
         } else {
-            log.info("Shipper {} - Đơn COD, tiền ship đã cầm tay. Không cộng ví.", shipper.getId());
+                log.info("Shipper {} - Đơn COD, tiền ship đã cầm tay. Không cộng ví.", shipper.getId());
+            }
+            
+            return null; // Kết thúc logic trong DB
+        });
+
+        // GỌI API EXTERNAL RA KHỎI @Transactional DB
+        try {
+            orderClient.markAsCompleted(orderId);
+            log.info("Đã gọi Order Service chốt đơn {} thành công", orderId);
+        } catch (Exception e) {
+            log.error("Lỗi mạng khi gọi Order Service chốt đơn {}. DB Delivery đã lưu thành công nên KHÔNG BỊ mất tiền Shipper.", orderId, e);
         }
     }
 
@@ -209,7 +231,7 @@ public class DeliveryService implements IDeliveryService {
         Shipper shipper = shipperRepository.findByUserId(userId)
                 .orElseThrow(() -> new DeliveryException(DeliveryErrorCode.SHIPPER_NOT_FOUND));
 
-        ShipperWallet wallet = walletRepository.findByShipper_Id(shipper.getId())
+        ShipperWallet wallet = walletRepository.findLockedByShipper_Id(shipper.getId())
                 .orElseGet(() -> {
                      return walletRepository.save(ShipperWallet.builder()
                             .shipper(shipper)

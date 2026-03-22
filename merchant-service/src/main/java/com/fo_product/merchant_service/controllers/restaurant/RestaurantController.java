@@ -161,4 +161,37 @@ public class RestaurantController {
                 .message("Get restaurants by owner")
                 .build();
     }
+
+    @Operation(summary = "Phê duyệt nhà hàng (Admin)", description = "Cấp quyền bắt đầu hoạt động cho nhà hàng")
+    @PutMapping("/admin/{restaurantId}/approve")
+    APIResponse<?> approveRestaurant(
+            @Parameter(description = "ID nhà hàng", example = "1")
+            @PathVariable("restaurantId") Long id
+    ) {
+        restaurantService.approveRestaurant(id);
+        return APIResponse.builder()
+                .message("Phê duyệt nhà hàng thành công")
+                .build();
+    }
+
+    @Operation(summary = "Khóa nhà hàng (Admin)", description = "Ngừng hoạt động nhà hàng")
+    @PutMapping("/admin/{restaurantId}/block")
+    APIResponse<?> blockRestaurant(
+            @Parameter(description = "ID nhà hàng", example = "1")
+            @PathVariable("restaurantId") Long id
+    ) {
+        restaurantService.blockRestaurant(id);
+        return APIResponse.builder()
+                .message("Khóa (Suspend) nhà hàng thành công")
+                .build();
+    }
+
+    @Operation(summary = "Đếm số nhà hàng đang chờ duyệt", description = "Đếm số lượng nhà hàng mới tạo và chưa được kích hoạt")
+    @GetMapping("/admin/pending-count")
+    public APIResponse<Long> countPendingRestaurants() {
+        return APIResponse.<Long>builder()
+                .result(restaurantService.countPendingRestaurants())
+                .message("Success")
+                .build();
+    }
 }

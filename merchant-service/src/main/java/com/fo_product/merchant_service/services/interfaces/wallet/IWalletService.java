@@ -12,11 +12,10 @@ import java.util.List;
 
 public interface IWalletService {
     void createWallet(Long restaurantId);
-    WalletResponse getMyWallet();
-    Page<WalletTransactionResponse> getMyTransactions(int page, int size, Instant startDate, Instant endDate, TransactionType type);
-    byte[] exportTransactions(Instant startDate, Instant endDate, TransactionType type);
-    List<DailyStatResponse> getDailyStatistics();
-    WalletResponse withdraw(BigDecimal amount);
-    
-    WalletResponse deposit(BigDecimal amount);
+    WalletResponse getMyWallet(Long restaurantId);
+    Page<WalletTransactionResponse> getMyTransactions(Long restaurantId, int page, int size, Instant startDate, Instant endDate, TransactionType type);
+    byte[] exportTransactions(Long restaurantId, Instant startDate, Instant endDate, TransactionType type);
+    List<DailyStatResponse> getDailyStatistics(Long restaurantId);
+    WalletResponse withdraw(Long restaurantId, BigDecimal amount);
+    WalletResponse deposit(Long restaurantId, BigDecimal amount);
 }

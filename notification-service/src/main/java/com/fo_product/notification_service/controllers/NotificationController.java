@@ -43,6 +43,15 @@ public class NotificationController {
                 .build();
     }
 
+    @GetMapping("/topic/{topic}")
+    @Operation(summary = "Lấy lịch sử thông báo theo topic")
+    public APIResponse<List<NotificationResponse>> getNotificationsByTopic(@PathVariable String topic) {
+        return APIResponse.<List<NotificationResponse>>builder()
+                .result(notificationService.getNotificationsByTopic(topic))
+                .message("Success")
+                .build();
+    }
+
     // ========== MARK AS READ ==========
 
     @PutMapping("/{id}/read")

@@ -32,6 +32,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.fo_product.merchant_service.kafka.KafkaProducerService;
+import com.fo_product.merchant_service.kafka.events.MailSenderEvent;
+
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -41,6 +44,7 @@ public class RestaurantService implements IRestaurantService {
     IMinIOService minIOService;
     RestaurantMapper mapper;
     GetClientDTO getClientDTO;
+    KafkaProducerService kafkaProducerService;
 
     @Override
     @Transactional
@@ -70,12 +74,19 @@ public class RestaurantService implements IRestaurantService {
                 .imageFileUrl(imageUrl)
                 .ratingAverage(0.0)
                 .reviewCount(0)
-                .isActive(true)
+                .isActive(false)
                 .isOpen(true)
                 .cuisines(cuisines)
                 .build();
 
         Restaurant result = restaurantRepository.save(restaurant);
+
+        kafkaProducerService.sendRestaurantLifecycleEvent(com.fo_product.merchant_service.kafka.events.RestaurantLifecycleEvent.builder()
+                .restaurantId(result.getId())
+                .restaurantName(result.getName())
+                .ownerEmail(user.email())
+                .action("CREATED")
+                .build());
 
         return mapper.response(result);
     }
@@ -149,6 +160,14 @@ public class RestaurantService implements IRestaurantService {
         Restaurant restaurant = restaurantRepository.findById(id)
                 .orElseThrow(() -> new MerchantException(MerchantErrorCode.RESTAURANT_NOT_EXIST));
 
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof org.springframework.security.oauth2.jwt.Jwt jwt) {
+            Long userId = (Long) jwt.getClaims().get("user-id");
+            if (restaurant.getOwnerId().equals(userId) && !restaurant.isActive()) {
+                throw new MerchantException(MerchantErrorCode.UNAUTHORIZED_RESTAURANT_ACCESS);
+            }
+        }
+
         return mapper.response(restaurant);
     }
 
@@ -219,11 +238,51 @@ public class RestaurantService implements IRestaurantService {
     }
 
     @Override
+    @Transactional
+    public void approveRestaurant(Long id) {
+        Restaurant restaurant = restaurantRepository.findById(id)
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.RESTAURANT_NOT_EXIST));
+
+        if (!restaurant.isActive()) {
+            restaurant.setActive(true);
+            restaurantRepository.save(restaurant);
+
+            UserDTO owner = getClientDTO.getUserDTO(restaurant.getOwnerId());
+            if (owner != null && owner.email() != null) {
+                kafkaProducerService.sendRestaurantLifecycleEvent(com.fo_product.merchant_service.kafka.events.RestaurantLifecycleEvent.builder()
+                        .restaurantId(restaurant.getId())
+                        .restaurantName(restaurant.getName())
+                        .ownerEmail(owner.email())
+                        .action("APPROVED")
+                        .build());
+            }
+        }
+    }
+
+    @Override
+    @Transactional
+    public void blockRestaurant(Long id) {
+        Restaurant restaurant = restaurantRepository.findById(id)
+                .orElseThrow(() -> new MerchantException(MerchantErrorCode.RESTAURANT_NOT_EXIST));
+
+        if (restaurant.isActive()) {
+            restaurant.setActive(false);
+            restaurantRepository.save(restaurant);
+        }
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public Page<RestaurantResponse> getRestaurantsByOwnerId(Long ownerId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Restaurant> result = restaurantRepository.findByOwnerId(ownerId, pageable);
         return result.map(mapper::response);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countPendingRestaurants() {
+        return restaurantRepository.countByIsActive(false);
     }
 
     private String processImageUpload(MultipartFile image, String oldImageUrl) {

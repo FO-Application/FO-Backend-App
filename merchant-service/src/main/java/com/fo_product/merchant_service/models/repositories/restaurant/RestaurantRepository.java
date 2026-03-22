@@ -13,6 +13,7 @@ import java.util.Optional;
 
 @Repository
 public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
+    long countByIsActive(boolean isActive);
     boolean existsByName(String name);
     boolean existsBySlug(String slug);
     Optional<Restaurant> findBySlug(String slug);

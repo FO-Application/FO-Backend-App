@@ -5,13 +5,39 @@ import com.fo_product.order_service.dtos.responses.OrderItemResponse;
 import com.fo_product.order_service.dtos.responses.OrderResponse;
 import com.fo_product.order_service.dtos.responses.ReviewResponse;
 import com.fo_product.order_service.models.entities.Order;
+import com.fo_product.order_service.clients.UserClient;
+import com.fo_product.order_service.dtos.feigns.UserDTO;
+import com.fo_product.common_lib.dtos.APIResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class OrderMapper {
+    UserClient userClient;
+
     public OrderResponse response(Order order) {
+        String driverName = null;
+        if (order.getShipperId() != null) {
+            try {
+                APIResponse<UserDTO> apiResponse = userClient.getUserById(order.getShipperId());
+                if (apiResponse != null && apiResponse.getResult() != null) {
+                    UserDTO user = apiResponse.getResult();
+                    driverName = (user.lastName() != null ? user.lastName() + " " : "") + 
+                                 (user.firstName() != null ? user.firstName() : "");
+                    driverName = driverName.trim();
+                }
+            } catch (Exception e) {
+                driverName = "Tài xế (ID: " + order.getShipperId() + ")";
+            }
+        }
+
         return OrderResponse.builder()
                 .id(order.getId())
+                .driverName(driverName)
                 .userId(order.getUserId())
                 .merchantId(order.getMerchantId())
                 .merchantName(order.getMerchantName())

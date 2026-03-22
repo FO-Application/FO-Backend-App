@@ -16,6 +16,9 @@ public record OrderResponse(
         @Schema(description = "ID của người dùng đặt hàng", example = "505")
         Long userId,
 
+        @Schema(description = "Tên tài xế/người giao hàng", example = "Nguyễn Văn A")
+        String driverName,
+
         // --- Thông tin Quán (Snapshot) ---
         @Schema(description = "ID của nhà hàng/quán ăn", example = "20")
         Long merchantId,

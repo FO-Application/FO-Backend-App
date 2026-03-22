@@ -13,6 +13,7 @@ public interface INotificationService {
     
     // History & Management
     List<NotificationResponse> getNotificationsByMerchant(Long merchantId);
+    List<NotificationResponse> getNotificationsByTopic(String topic);
     void markAsRead(Long notificationId);
     void markAllAsRead(Long merchantId);
     void deleteNotification(Long notificationId);

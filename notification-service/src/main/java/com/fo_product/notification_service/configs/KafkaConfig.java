@@ -55,7 +55,8 @@ public class KafkaConfig {
             "com.fo_product.shipper_service.events.ShipperFoundEvent:com.fo_product.notification_service.events.ShipperFoundEvent," +
             "com.fo_product.shipper_service.events.ShipperAssignedEvent:com.fo_product.notification_service.events.ShipperAssignedEvent," +
             "com.fo_product.wallet_service.events.WalletWithdrawalEvent:com.fo_product.notification_service.events.WalletWithdrawalEvent," +
-            "com.fo_product.user_service.kafka.events.MailSenderEvent:com.fo_product.notification_service.events.MailSenderEvent"
+            "com.fo_product.user_service.kafka.events.MailSenderEvent:com.fo_product.notification_service.events.MailSenderEvent," +
+            "com.fo_product.merchant_service.kafka.events.RestaurantLifecycleEvent:com.fo_product.notification_service.events.RestaurantLifecycleEvent"
         );
         
         // Default type if mapping fails or header missing (optional, but good for robustness)

@@ -7,44 +7,37 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 @Component
 @Slf4j
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Order(1)
 public class RoleSeeder implements CommandLineRunner {
     RoleRepository roleRepository;
 
     @Override
     public void run(String... args) throws Exception {
-        log.info("Data seeder is running...");
-
-        if (isTableEmpty()) {
-            List<Role> roles = List.of(
-                Role.builder()
-                    .name("CUSTOMER")
-                    .description("Represents the end-user seeking to purchase products and request delivery services.")
-                    .build(),
-
-                Role.builder()
-                    .name("MERCHANT")
-                    .description("A role designed to administer business operations and serve customers on the application.")
-                    .build(),
-
-                Role.builder()
-                    .name("SHIPPER")
-                    .description("A role designed to ship orders and serve customers on the application.")
-                    .build()
-            );
-            roleRepository.saveAll(roles);
-            log.info("All roles have been seeded successfully!");
-        }
+        log.info("Role seeder is running...");
+        
+        createRoleIfNotFound("CUSTOMER", "Represents the end-user seeking to purchase products and request delivery services.");
+        createRoleIfNotFound("MERCHANT", "A role designed to administer business operations and serve customers on the application.");
+        createRoleIfNotFound("SHIPPER", "A role designed to ship orders and serve customers on the application.");
+        createRoleIfNotFound("SUPER_ADMIN", "System administrator with full access to all resources.");
+        
+        log.info("Role seeder completed!");
     }
 
-    private boolean isTableEmpty() {
-        return roleRepository.count() == 0;
+    private void createRoleIfNotFound(String name, String description) {
+        if (roleRepository.findByName(name).isEmpty()) {
+            Role role = Role.builder()
+                    .name(name)
+                    .description(description)
+                    .build();
+            roleRepository.save(role);
+            log.info("Seeded missing role: {}", name);
+        }
     }
 }

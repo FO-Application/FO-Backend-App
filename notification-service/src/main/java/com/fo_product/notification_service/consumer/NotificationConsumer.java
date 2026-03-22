@@ -25,6 +25,8 @@ public class NotificationConsumer {
 
         if ("REGISTER".equals(event.eventType()) || "FORGOT_PASSWORD".equals(event.eventType())) {
             mailSenderService.sendOtpEmail(event.recipientEmail(), event.otpCode(), event.subject());
+        } else if ("RESTAURANT_APPROVED".equals(event.eventType())) {
+            mailSenderService.sendApprovalEmail(event.recipientEmail(), event.subject(), event.otpCode());
         } else {
             log.error("event type not valid");
         }
@@ -170,5 +172,30 @@ public class NotificationConsumer {
                 body,
                 event.getTransactionId()
         );
+    }
+
+    // --- 10. BÁO NHÀ HÀNG & ADMIN (LIFECYCLE TẠO MỚI/DUYỆT) ---
+    @KafkaListener(topics = "restaurant-lifecycle-topic", groupId = "notification-service-group-v3")
+    public void listenRestaurantLifecycle(RestaurantLifecycleEvent event) {
+        log.info("Nhận RestaurantLifecycleEvent: {}", event);
+        if ("CREATED".equals(event.action())) {
+            // 1. Gửi form mail riêng biệt "Đang chờ duyệt" cho Owner
+            String subject = "FastBoss: Nhà hàng của bạn đang chờ duyệt";
+            String body = "Nhà hàng '" + event.restaurantName() + "' đã được tiếp nhận thông tin. Vui lòng chờ Ban quản trị phê duyệt và ủy quyền để có thể bắt đầu kinh doanh.";
+            mailSenderService.sendApprovalEmail(event.ownerEmail(), subject, body);
+
+            // 2. Bắn thông báo Firebase cho Admin (Topic admin-notifications)
+            notificationService.sendNotificationToTopic(
+                    "admin-notifications",
+                    "Nhà hàng mới cần duyệt",
+                    "Quán '" + event.restaurantName() + "' vừa đăng ký và đang chờ Admin xét duyệt.",
+                    event.restaurantId()
+            );
+        } else if ("APPROVED".equals(event.action())) {
+            // Gửi form mail riêng biệt "Ủy quyền thành công" cho Owner
+            String subject = "FastBoss: Ủy quyền nhà hàng thành công!";
+            String body = "Chúc mừng! Cửa hàng '" + event.restaurantName() + "' đã được Admin phê duyệt (ủy quyền) và sẵn sàng hoạt động trên nền tảng FastBoss.";
+            mailSenderService.sendApprovalEmail(event.ownerEmail(), subject, body);
+        }
     }
 }

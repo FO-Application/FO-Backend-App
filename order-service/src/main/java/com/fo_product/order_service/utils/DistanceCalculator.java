@@ -1,11 +1,19 @@
 package com.fo_product.order_service.utils;
 
+import com.fo_product.order_service.clients.MerchantClient;
+import com.fo_product.order_service.dtos.feigns.SystemRulesDTO;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class DistanceCalculator {
+
+    private final MerchantClient merchantClient;
 
     // Bán kính trái đất (km)
     private static final int EARTH_RADIUS = 6371;
@@ -55,24 +63,22 @@ public class DistanceCalculator {
      * - Trên 2km: Mỗi km tiếp theo cộng thêm 5.000đ
      */
     public BigDecimal calculateShippingFee(double distanceKm) {
-        // Giá mở cửa (Base fee) cho 2km đầu
-        BigDecimal baseFee = BigDecimal.valueOf(15000);
-        double baseDistance = 2.0;
+        SystemRulesDTO rules = null;
+        try {
+            rules = merchantClient.getSystemRules().getResult();
+        } catch (Exception e) {
+            log.warn("Lỗi gọi System Rules, dùng mặc định: {}", e.getMessage());
+        }
 
-        // Giá cho mỗi km tiếp theo
-        BigDecimal pricePerKm = BigDecimal.valueOf(5000);
+        BigDecimal baseFee = BigDecimal.valueOf(rules != null ? rules.baseDeliveryFee() : 15000.0);
+        double baseDistance = 3.0;
+        BigDecimal pricePerKm = BigDecimal.valueOf(rules != null ? rules.perKmFee() : 5000.0);
 
         if (distanceKm <= baseDistance) {
             return baseFee;
         } else {
-            // Tính số km dư ra (VD: đi 3.5km thì dư 1.5km)
             double extraKm = distanceKm - baseDistance;
-
-            // Tính tiền phần dư
             BigDecimal extraFee = pricePerKm.multiply(BigDecimal.valueOf(extraKm));
-
-            // Tổng = Giá gốc + Giá dư
-            // Làm tròn tiền về hàng trăm (VD: 22500 -> 23000 hoặc để nguyên tùy bạn)
             return baseFee.add(extraFee);
         }
     }
